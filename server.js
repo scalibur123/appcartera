@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const PORT = process.env.PORT || 3000;
 const CACHE_FILE = path.join(__dirname, 'price-cache.json');
-const POLYGON_KEY = 'jEHJVVzQxYGf9M9pF3JXvIp_uvpN48nU';
+const POLYGON_KEY = 'EKlEqJSMfkDTjzO9k_Y1qUuUCCpp_ll';
 function loadCache() {
   try { return JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8')); } catch { return {}; }
 }
