@@ -158,7 +158,7 @@ function setStatus(s,t){document.getElementById('sdot').className='dot '+s;docum
 async function fetchBatch(tickers){
   const symbols=tickers.join(',');
   try{
-    const r=await fetch(`/.netlify/functions/prices?symbols=${encodeURIComponent(symbols)}`,{signal:AbortSignal.timeout(15000)});
+    const r=await fetch(`/?symbols=${encodeURIComponent(symbols)}`,{signal:AbortSignal.timeout(15000)});
     const data=await r.json();
     const out={};
     for(const q of (data?.quoteResponse?.result||[])) out[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent||0};
