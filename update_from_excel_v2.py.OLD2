@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+"""
+update_from_excel_v2.py  (CORREGIDO para formato real de Mario)
+
+Lee el Excel y regenera:
+  1. index.html con la const C actualizada (UNA LINEA, formato compacto)
+  2. tickers.json con el mapa ticker_excel -> simbolo_yahoo resuelto
+
+Formato de cada item en const C (compatible con index.html actual de Mario):
+  {"tckr":"...","nombre":"...","titulos":N,"coste_eur":N,"precio_medio":N,
+   "moneda":"...","banco":"-","objetivo":null,"symbol":"..."}
+
+CAMPO NUEVO: "symbol" -> simbolo Yahoo resuelto (ej. "AMP.MC" en vez de "AMP")
+El frontend/backend deben usar item.symbol para llamar a Yahoo.
+"""
+
+import openpyxl
+import json
+import re
+import sys
+from pathlib import Path
+from datetime import datetime
+
+HOME = Path.home()
+PROYECTO = HOME / "APPCARTERA_NUEVA"
+EXCEL = HOME / "AppCartera_Data" / "PLUSVALIAS BOLSA 26_APP.xlsm"
+HOJA = "2026"
+FILA_INI = 5
+FILA_FIN = 258
+INDEX_HTML = PROYECTO / "index.html"
+TICKERS_JSON = PROYECTO / "tickers.json"
+OVERRIDE_JSON = PROYECTO / "tickers_override.json"
+
+SFX_DEFAULT_EUR = ".MC"
+SFX_POR_PATRON = {
+    r"^[A-Z]+[0-9]$": ".DE",
+}
+
+
+def cargar_overrides():
+    if OVERRIDE_JSON.exists():
+        with open(OVERRIDE_JSON, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return {k: v for k, v in data.items() if not k.startswith("_")}
+    return {}
+
+
+def resolver_simbolo_yahoo(ticker, moneda, overrides):
+    if ticker in overrides:
+        return overrides[ticker], "override"
+    if "." in ticker or "=" in ticker:
+        return ticker, "ya_tenia_sufijo"
+    if moneda == "USD":
+        return ticker, "usd_directo"
+    if moneda == "EUR":
+        for patron, sfx in SFX_POR_PATRON.items():
+            if re.match(patron, ticker):
+                return ticker + sfx, f"patron_{sfx}"
+        return ticker + SFX_DEFAULT_EUR, "default_madrid"
+    return ticker, "moneda_desconocida"
+
+
+def leer_excel_agregado():
+    """Lee Excel agrupando por ticker. Devuelve lista en orden de aparicion."""
+    if not EXCEL.exists():
+        print(f"Excel no encontrado: {EXCEL}")
+        sys.exit(1)
+
+    wb = openpyxl.load_workbook(EXCEL, data_only=True, keep_vba=False)
+    ws = wb[HOJA]
+
+    posiciones = {}
+    orden = []
+    for row in range(FILA_INI, FILA_FIN + 1):
+        ticker = ws[f"D{row}"].value
+        if not ticker or not str(ticker).strip():
+            continue
+        ticker = str(ticker).strip()
+        titulos = ws[f"K{row}"].value or 0
+        coste_eur = ws[f"N{row}"].value or 0
+        moneda = ws[f"G{row}"].value
+        precio_excel = ws[f"E{row}"].value
+        nombre_raw = ws[f"B{row}"].value
+
+        # Limpiar nombre: si es #VALUE! u otro error, dejar como tckr
+        if isinstance(nombre_raw, str) and "#" in nombre_raw:
+            nombre = "#VALUE!"
+        elif nombre_raw is None:
+            nombre = "#VALUE!"
+        else:
+            nombre = str(nombre_raw)
+
+        if ticker not in posiciones:
+            posiciones[ticker] = {
+                "tckr": ticker,
+                "nombre": nombre,
+                "titulos": 0,
+                "coste_eur": 0,
+                "moneda": moneda,
+                "precio_excel": precio_excel,
+                "banco": "-",
+                "objetivo": None,
+            }
+            orden.append(ticker)
+        posiciones[ticker]["titulos"] += titulos
+        posiciones[ticker]["coste_eur"] += coste_eur
+
+    return [posiciones[t] for t in orden]
+
+
+def construir_const_C_compacta(posiciones, ticker_map):
+    """Genera const C=[...] en UNA SOLA LINEA, formato Mario."""
+    items = []
+    for p in posiciones:
+        tckr = p["tckr"]
+        sym = ticker_map[tckr]["yahoo"]
+        coste = round(p["coste_eur"], 4)
+        titulos = round(p["titulos"], 4) if p["titulos"] != int(p["titulos"]) else int(p["titulos"])
+        # precio_medio = coste / titulos
+        precio_medio = round(coste / titulos, 4) if titulos else 0
+        # Formato compacto JSON
+        item_json = {
+            "tckr": tckr,
+            "nombre": p["nombre"],
+            "titulos": float(titulos),
+            "coste_eur": coste,
+            "precio_medio": precio_medio,
+            "moneda": p["moneda"],
+            "banco": "-",
+            "objetivo": None,
+            "symbol": sym,
+        }
+        items.append(json.dumps(item_json, ensure_ascii=False, separators=(",", ":")))
+    return "const C=[" + ",".join(items) + "];"
+
+
+def actualizar_index_html(const_C_linea):
+    if not INDEX_HTML.exists():
+        print(f"index.html no encontrado: {INDEX_HTML}")
+        sys.exit(1)
+
+    html = INDEX_HTML.read_text(encoding="utf-8")
+
+    # Regex tolerante: "const C" + opcional espacios + "=" + "[" ... "]" + ";"
+    # En tu index.html es todo una linea: const C=[{...},{...}];
+    pattern = re.compile(r"const\s+C\s*=\s*\[.*?\]\s*;", re.DOTALL)
+
+    if not pattern.search(html):
+        print("ERROR: no se encontro const C=[...] en index.html")
+        # Diagnostico: mostrar el inicio del const C si existe
+        idx = html.find("const C")
+        if idx >= 0:
+            print("Encontre 'const C' en posicion", idx)
+            print("Contexto:", html[idx:idx+200])
+        sys.exit(1)
+
+    nuevo_html = pattern.sub(const_C_linea, html, count=1)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup = INDEX_HTML.parent / f"index.html.backup_{timestamp}"
+    backup.write_text(html, encoding="utf-8")
+    INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
+    print(f"OK index.html actualizado. Backup: {backup.name}")
+
+
+def main():
+    print(f"Leyendo Excel: {EXCEL}")
+    posiciones = leer_excel_agregado()
+    print(f"OK {len(posiciones)} tickers unicos cargados (filas {FILA_INI}-{FILA_FIN})")
+
+    overrides = cargar_overrides()
+    print(f"OK {len(overrides)} overrides manuales cargados")
+
+    ticker_map = {}
+    stats = {}
+    for p in posiciones:
+        sym, fuente = resolver_simbolo_yahoo(p["tckr"], p["moneda"], overrides)
+        ticker_map[p["tckr"]] = {
+            "yahoo": sym,
+            "moneda": p["moneda"],
+            "titulos": float(p["titulos"]),
+            "coste_eur": round(p["coste_eur"], 4),
+            "precio_excel": p["precio_excel"] if isinstance(p["precio_excel"], (int, float)) else None,
+            "fuente_resolucion": fuente,
+        }
+        stats[fuente] = stats.get(fuente, 0) + 1
+
+    print(f"\nResolucion de simbolos:")
+    for fuente, n in sorted(stats.items(), key=lambda x: -x[1]):
+        print(f"   {fuente}: {n}")
+
+    with open(TICKERS_JSON, "w", encoding="utf-8") as f:
+        json.dump(ticker_map, f, indent=2, ensure_ascii=False)
+    print(f"\nOK Guardado {TICKERS_JSON}")
+
+    const_C = construir_const_C_compacta(posiciones, ticker_map)
+    actualizar_index_html(const_C)
+
+    print("\nLISTO. Siguiente paso:")
+    print("   python3 validate.py --max=20    (rapido, primeros 20)")
+    print("   python3 validate.py             (completo)")
+
+
+if __name__ == "__main__":
+    main()

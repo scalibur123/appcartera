@@ -1,0 +1,159 @@
+#!/bin/bash
+# fix_definitivo.sh - Arregla los 45 errores 404 + valida + sube a GitHub
+# Uso:  bash fix_definitivo.sh
+
+set -e
+cd ~/APPCARTERA_NUEVA
+
+echo "============================================="
+echo "  Fix definitivo AppCartera"
+echo "============================================="
+echo ""
+
+# 1. Backup del override actual
+if [ -f tickers_override.json ]; then
+    cp tickers_override.json tickers_override.json.bak
+    echo "Backup creado: tickers_override.json.bak"
+fi
+
+# 2. Generar el override completo basado en MIC codes de la columna B
+echo "Generando tickers_override.json completo..."
+cat > tickers_override.json << 'OVERRIDE_EOF'
+{
+  "_comment": "Mapa MANUAL ticker_excel -> simbolo_yahoo. Generado desde columna B del Excel (MIC codes).",
+  "_version": "v3 - todos los 45 errores corregidos",
+
+  "ANA": "ANA.MC",
+  "ACX": "ACX.MC",
+  "ALM": "ALM.MC",
+  "AMP": "AMP.MC",
+  "MTS": "MTS.MC",
+  "A3M": "A3M.MC",
+  "ADX": "ADX.MC",
+  "CABK": "CABK.MC",
+  "CLNX": "CLNX.MC",
+  "CIE": "CIE.MC",
+  "DOM": "DOM.MC",
+  "ENC": "ENC.MC",
+  "ENG": "ENG.MC",
+  "FAE": "FAE.MC",
+  "FDR": "FDR.MC",
+  "GEST": "GEST.MC",
+  "HBX": "HBX.MC",
+  "IAG": "IAG.MC",
+  "IBE": "IBE.MC",
+  "ITX": "ITX.MC",
+  "COL": "COL.MC",
+  "LDA": "LDA.MC",
+  "OHLA": "OHLA.MC",
+  "ORY": "ORY.MC",
+  "PHM": "PHM.MC",
+  "PUIG": "PUIG.MC",
+  "REP": "REP.MC",
+  "ROVI": "ROVI.MC",
+  "SCYR": "SCYR.MC",
+  "SOL": "SOL.MC",
+  "SQRL": "SQRL.MC",
+  "TEF": "TEF.MC",
+  "TUB": "TUB.MC",
+  "TRG": "TRG.MC",
+  "VIS": "VIS.MC",
+  "NTGY": "NTGY.MC",
+
+  "ADS": "ADS.DE",
+  "BAYN": "BAYN.DE",
+  "BMW": "BMW.DE",
+  "BEI": "BEI.DE",
+  "BNR": "BNR.DE",
+  "CON": "CON.DE",
+  "AMV0": "AMV0.DE",
+  "DTG": "DTG.DE",
+  "LHA": "LHA.DE",
+  "DB1": "DB1.DE",
+  "EVK": "EVK.DE",
+  "FRA": "FRA.DE",
+  "FNTN": "FNTN.DE",
+  "HFG": "HFG.DE",
+  "BOSS": "BOSS.DE",
+  "JEN": "JEN.DE",
+  "LEG": "LEG.DE",
+  "PAH3": "PAH3.DE",
+  "SAP": "SAP.DE",
+  "SHL": "SHL.DE",
+  "SIX2": "SIX2.DE",
+  "S92": "S92.DE",
+  "SY1": "SY1.DE",
+  "TUI1": "TUI1.DE",
+  "VNA": "VNA.DE",
+  "WCH": "WCH.DE",
+  "ZAL": "ZAL.DE",
+  "EDP": "EDP.DE",
+
+  "EGLA": "EGLA.MI",
+  "INW": "INW.MI",
+  "MFEB": "MFEB.MI",
+  "MONC": "MONC.MI",
+  "NEXI": "NEXI.MI",
+  "ARIS": "ARIS.MI",
+  "SPM": "SPM.MI",
+  "STLAM": "STLAM.MI",
+  "YACHT": "YACHT.MI",
+
+  "ACA": "ACA.PA",
+  "ALO": "ALO.PA",
+  "CA": "CA.PA",
+  "ERF": "ERF.PA",
+  "LI": "LI.PA",
+  "ALHG": "ALHG.PA",
+  "SAN": "SAN.PA",
+  "SW": "SW.PA",
+  "TE": "TE.PA",
+  "TEP": "TEP.PA",
+  "DG": "DG.PA",
+  "VRLA": "VRLA.PA",
+  "WLN": "WLN.PA",
+
+  "AKZA": "AKZA.AS",
+  "ARCAD": "ARCAD.AS",
+  "HAVAS": "HAVAS.AS",
+  "INPST": "INPST.AS",
+  "OCI": "OCI.AS",
+  "LIGHT": "LIGHT.AS",
+
+  "ABI": "ABI.BR",
+  "AED": "AED.BR",
+  "SYENS": "SYENS.BR",
+
+  "ENXB": "ENXB.PA",
+
+  "UPM": "UPM.HE"
+}
+OVERRIDE_EOF
+
+echo "OK: tickers_override.json con $(grep -c '\.[A-Z][A-Z]"' tickers_override.json) overrides"
+echo ""
+
+# 3. Regenerar index.html y tickers.json
+echo "Regenerando index.html y tickers.json..."
+python3 update_from_excel_v3.py
+echo ""
+
+# 4. Validar
+echo "Validando contra Yahoo Finance (~70s)..."
+python3 validate.py || true
+echo ""
+
+# 5. Preguntar si subir a GitHub
+read -p "Si los resultados son buenos, subir a GitHub? [s/N] " RESP
+if [[ "$RESP" =~ ^[sS]$ ]]; then
+    git add -A
+    git commit -m "fix: tickers_override.json con todos los MIC codes correctos (45 errores 404 resueltos)"
+    git push
+    echo ""
+    echo "OK: Cambios subidos a GitHub. Render redesplegara en 2-3 min."
+fi
+
+echo ""
+echo "============================================="
+echo "  Fix completado"
+echo "============================================="

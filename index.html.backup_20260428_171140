@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AppCartera">
+<meta name="theme-color" content="#0e0f11">
+<title>AppCartera</title>
+<style>
+:root{--bg:#0e0f11;--surface:#16181c;--surface2:#1e2026;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#f0f0f0;--muted:#6b7280;--green:#22c55e;--green-dim:rgba(34,197,94,0.1);--green-border:rgba(34,197,94,0.25);--amber:#f59e0b;--amber-dim:rgba(245,158,11,0.1);--amber-border:rgba(245,158,11,0.25);--red:#ef4444;--red-dim:rgba(239,68,68,0.08)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;padding-bottom:90px;-webkit-font-smoothing:antialiased}
+.header{padding:52px 18px 14px;display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--border)}
+.header-title{font-size:11px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;font-weight:500}
+.header-status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:4px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;flex-shrink:0}
+.dot.loading{background:var(--amber);animation:pulse 1s ease-in-out infinite}
+.dot.ok{background:var(--green)}
+.dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+.refresh-btn{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--muted);font-size:13px;padding:8px 14px;cursor:pointer;font-weight:500}
+.progress-bar{height:2px}
+.progress-fill{height:2px;background:var(--amber);width:0%;transition:width .3s ease}
+.progress-fill.done{background:var(--green)}
+.nav{display:flex;padding:10px 18px;gap:6px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:10}
+.nav-btn{flex:1;padding:9px 4px;background:transparent;border:1px solid transparent;border-radius:10px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s}
+.nav-btn.active{background:var(--surface2);border-color:var(--border);color:var(--text);font-weight:500}
+.section{display:none;padding:14px 18px}
+.section.active{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.card-label{font-size:10px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:14px;font-weight:500}
+.plusv-row{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)}
+.plusv-row:last-child{border-bottom:none}
+.plusv-label{font-size:13px;color:var(--muted)}
+.plusv-val{font-size:20px;font-weight:500}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.stat{border-radius:16px;padding:16px 14px;cursor:pointer;border:1px solid transparent}
+.stat.green-s{background:var(--green-dim);border-color:var(--green-border)}
+.stat.amber-s{background:var(--amber-dim);border-color:var(--amber-border)}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:8px}
+.stat-num{font-size:52px;font-weight:600;line-height:1;letter-spacing:-.03em}
+.stat-num.green{color:var(--green)}
+.stat-num.amber{color:var(--amber)}
+.stat-hint{font-size:10px;color:var(--muted);margin-top:8px}
+.filters{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.filter-btn{padding:7px 12px;background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--muted);font-size:12px;cursor:pointer;white-space:nowrap}
+.filter-btn.active{background:var(--surface2);border-color:var(--border2);color:var(--text);font-weight:500}
+.search-wrap{position:relative;margin-bottom:12px}
+.search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;padding:10px 14px 10px 38px;outline:none;-webkit-appearance:none}
+.search-input::placeholder{color:var(--muted)}
+.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none}
+.list-count{font-size:11px;color:var(--muted);margin-bottom:10px}
+.list-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.list-row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)}
+.list-row:last-child{border-bottom:none}
+.row-left{display:flex;flex-direction:column;gap:5px;min-width:0}
+.row-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;margin-left:10px}
+.tckr{font-size:14px;font-weight:600;color:var(--text)}
+.banco-pill{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);width:fit-content}
+.price-val{font-size:14px;font-weight:500}
+.price-val.at-obj{color:var(--green)}
+.price-val.near-obj{color:var(--amber)}
+.price-val.normal{color:var(--text)}
+.price-sub{font-size:10px;color:var(--muted);text-align:right}
+.pill{font-size:10px;padding:3px 8px;border-radius:8px;font-weight:500}
+.pill.pos{background:var(--green-dim);color:var(--green)}
+.pill.neg{background:var(--amber-dim);color:var(--amber)}
+.pill.loss{background:var(--red-dim);color:var(--red)}
+.mensual-val{font-size:20px;font-weight:500}
+.mensual-val.green{color:var(--green)}
+.empty{text-align:center;padding:30px 0;color:var(--muted);font-size:13px}
+.note{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.7}
+.dbg{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:11px;color:var(--muted);margin-bottom:10px;font-family:monospace;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="header-title">AppCartera 2026</div>
+    <div class="header-status"><span class="dot loading" id="sdot"></span><span id="stxt">Iniciando…</span></div>
+  </div>
+  <button class="refresh-btn" onclick="startLoad()">↻</button>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+<div class="nav">
+  <button class="nav-btn active" onclick="showTab('resumen',this)">Resumen</button>
+  <button class="nav-btn" onclick="showTab('cartera',this)">Cartera</button>
+  <button class="nav-btn" onclick="showTab('diana',this)">Diana</button>
+  <button class="nav-btn" onclick="showTab('mensual',this)">Mensual</button>
+</div>
+
+<div id="eurusd-display" style="text-align:center;padding:6px 0;font-size:11px;color:var(--muted)">Cambio EUR/USD: --</div><div id="resumen" class="section active">
+  <div class="dbg" id="dbg">Iniciando…</div>
+  <div class="card">
+    <div class="card-label">Plusvalías 2026 · en vivo</div>
+    <div class="plusv-row"><span class="plusv-label">Brutas</span><span class="plusv-val" id="pv-b" style="color:var(--muted)">—</span></div>
+    <div class="plusv-row"><span class="plusv-label">Netas</span><span class="plusv-val" id="pv-n" style="color:var(--muted)">—</span></div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat green-s" onclick="goToDiana('neg')"><div class="stat-label">En objetivo ✓</div><div class="stat-num green" id="cnt-neg">—</div><div class="stat-hint">Ver →</div></div>
+    <div class="stat amber-s" onclick="goToDiana('warn')"><div class="stat-label">Pendientes &lt;7%</div><div class="stat-num amber" id="cnt-warn">—</div><div class="stat-hint">Ver →</div></div>
+  </div>
+  <p class="note">Datos del Excel del 22 abr 2026. Pulsa ↻ para actualizar.</p>
+</div>
+
+<div id="cartera" class="section">
+  <div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" type="search" placeholder="Buscar ticker…" id="csearch" oninput="renderCartera()" autocomplete="off" autocorrect="off" autocapitalize="characters"></div>
+  <div class="filters">
+    <button class="filter-btn active" id="cf-all" onclick="fC('all',this)">Todos</button>
+    <button class="filter-btn" id="cf-EUR" onclick="fC('EUR',this)">€</button>
+    <button class="filter-btn" id="cf-USD" onclick="fC('USD',this)">$</button>
+    <button class="filter-btn" id="cf-ING" onclick="fC('ING',this)">ING</button>
+    <button class="filter-btn" id="cf-R4" onclick="fC('R4',this)">R4</button>
+    <button class="filter-btn" id="cf-IBKR" onclick="fC('IBKR',this)">IBKR</button>
+  </div>
+  <div class="list-count" id="c-count"></div>
+  <div class="list-card" id="c-list"><div class="empty">Cargando…</div></div>
+</div>
+
+<div id="diana" class="section">
+  <div class="filters">
+    <button class="filter-btn active" id="df-all" onclick="fD('all',this)">Todos</button>
+    <button class="filter-btn" id="df-neg" onclick="fD('neg',this)">En objetivo ✓</button>
+    <button class="filter-btn" id="df-warn" onclick="fD('warn',this)">Pendientes</button>
+    <button class="filter-btn" id="df-ING" onclick="fD('ING',this)">ING</button>
+    <button class="filter-btn" id="df-R4" onclick="fD('R4',this)">R4</button>
+    <button class="filter-btn" id="df-IBKR" onclick="fD('IBKR',this)">IBKR</button>
+  </div>
+  <div class="list-count" id="d-count"></div>
+  <div class="list-card" id="d-list"><div class="empty">Cargando…</div></div>
+</div>
+
+<div id="mensual" class="section">
+  <div class="card">
+    <div class="card-label">Total año · Bolsa + dividendos</div>
+    <div class="plusv-row"><span class="plusv-label">Bruto</span><span class="mensual-val green">95.877,16 €</span></div>
+    <div class="plusv-row"><span class="plusv-label">Neto</span><span class="mensual-val green">77.403,26 €</span></div>
+  </div>
+  <div class="card">
+    <div class="card-label">Equivalencia salarial</div>
+    <div class="plusv-row"><span class="plusv-label">Equivale a</span><span class="mensual-val green">116.200 € brutos</span></div>
+  </div>
+</div>
+
+<script>
+const C=[{"tckr":"ABEO","nombre":"#VALUE!","titulos":800.0,"coste_eur":4922.3,"precio_medio":6.1529,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"ABCL","nombre":"#VALUE!","titulos":2941.0,"coste_eur":10227.89,"precio_medio":3.4777,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"ACHC","nombre":"#VALUE!","titulos":203.0,"coste_eur":4246.18,"precio_medio":20.9171,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"ANA","nombre":"#VALUE!","titulos":79.0,"coste_eur":7448.46,"precio_medio":94.2843,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ACX","nombre":"#VALUE!","titulos":1199.0,"coste_eur":14990.07,"precio_medio":12.5021,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ADS","nombre":"#VALUE!","titulos":59.0,"coste_eur":9145.0,"precio_medio":155.0,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ADT","nombre":"#VALUE!","titulos":1300.0,"coste_eur":9200.94,"precio_medio":7.0776,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"AMD","nombre":"#VALUE!","titulos":38.0,"coste_eur":5822.55,"precio_medio":153.2251,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"AED","nombre":"#VALUE!","titulos":178.0,"coste_eur":11976.6,"precio_medio":67.2843,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"A","nombre":"#VALUE!","titulos":74.0,"coste_eur":7598.4,"precio_medio":102.6811,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"AKZA","nombre":"#VALUE!","titulos":190.0,"coste_eur":11351.0,"precio_medio":59.7421,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ALM","nombre":"#VALUE!","titulos":789.0,"coste_eur":11991.55,"precio_medio":15.1984,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"AOSL","nombre":"#VALUE!","titulos":200.0,"coste_eur":8064.45,"precio_medio":40.3222,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"ALO","nombre":"#VALUE!","titulos":366.0,"coste_eur":10018.42,"precio_medio":27.3727,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"AMRC","nombre":"#VALUE!","titulos":170.0,"coste_eur":4718.12,"precio_medio":27.7536,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"AMP","nombre":"#VALUE!","titulos":41782.0,"coste_eur":9999.86,"precio_medio":0.2393,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ABI","nombre":"#VALUE!","titulos":220.0,"coste_eur":12035.8,"precio_medio":54.7082,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ABUS","nombre":"#VALUE!","titulos":1500.0,"coste_eur":5393.87,"precio_medio":3.5959,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"ARCAD","nombre":"#VALUE!","titulos":325.0,"coste_eur":12001.0,"precio_medio":36.9262,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"MTS","nombre":"#VALUE!","titulos":733.0,"coste_eur":15123.68,"precio_medio":20.6326,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ARIS","nombre":"#VALUE!","titulos":2693.0,"coste_eur":12012.32,"precio_medio":4.4606,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ASAN","nombre":"#VALUE!","titulos":987.0,"coste_eur":12530.57,"precio_medio":12.6956,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"A3M","nombre":"#VALUE!","titulos":2385.0,"coste_eur":12033.55,"precio_medio":5.0455,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ADX","nombre":"#VALUE!","titulos":6796.0,"coste_eur":10495.03,"precio_medio":1.5443,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"BKR","nombre":"#VALUE!","titulos":115.0,"coste_eur":5296.41,"precio_medio":46.0557,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"BLCO","nombre":"#VALUE!","titulos":248.0,"coste_eur":4741.81,"precio_medio":19.1202,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"BAX","nombre":"#VALUE!","titulos":180.0,"coste_eur":7221.36,"precio_medio":40.1187,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"BAYN","nombre":"#VALUE!","titulos":400.0,"coste_eur":12220.44,"precio_medio":30.5511,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"BMW","nombre":"#VALUE!","titulos":120.0,"coste_eur":10049.4,"precio_medio":83.745,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"BEI","nombre":"#VALUE!","titulos":130.0,"coste_eur":12354.6,"precio_medio":95.0354,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"BSY","nombre":"#VALUE!","titulos":133.0,"coste_eur":6962.96,"precio_medio":52.3531,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"BCRX","nombre":"#VALUE!","titulos":487.0,"coste_eur":3612.41,"precio_medio":7.4177,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"BTDR","nombre":"#VALUE!","titulos":772.0,"coste_eur":6612.75,"precio_medio":8.5657,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"BHVN","nombre":"#VALUE!","titulos":150.0,"coste_eur":7907.2,"precio_medio":52.7147,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"BNR","nombre":"#VALUE!","titulos":195.0,"coste_eur":11217.75,"precio_medio":57.5269,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"AI","nombre":"#VALUE!","titulos":235.0,"coste_eur":7671.94,"precio_medio":32.6465,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"CABK","nombre":"#VALUE!","titulos":6050.0,"coste_eur":29604.4,"precio_medio":4.8933,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"CZR","nombre":"#VALUE!","titulos":400.0,"coste_eur":8683.68,"precio_medio":21.7092,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"CALM","nombre":"#VALUE!","titulos":120.0,"coste_eur":8943.32,"precio_medio":74.5277,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"CA","nombre":"#VALUE!","titulos":500.0,"coste_eur":6937.64,"precio_medio":13.8753,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"CLNX","nombre":"#VALUE!","titulos":219.0,"coste_eur":7011.54,"precio_medio":32.0162,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"CERT","nombre":"#VALUE!","titulos":900.0,"coste_eur":9298.5,"precio_medio":10.3317,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"CRNC","nombre":"#VALUE!","titulos":1087.0,"coste_eur":10016.52,"precio_medio":9.2148,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"CHPT","nombre":"#VALUE!","titulos":100.0,"coste_eur":3807.12,"precio_medio":38.0712,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"CVX","nombre":"#VALUE!","titulos":81.0,"coste_eur":11358.48,"precio_medio":140.2282,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"CIE","nombre":"#VALUE!","titulos":399.0,"coste_eur":11002.53,"precio_medio":27.5753,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"YOU","nombre":"#VALUE!","titulos":350.0,"coste_eur":10354.59,"precio_medio":29.5845,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"COIN","nombre":"#VALUE!","titulos":23.0,"coste_eur":4130.69,"precio_medio":179.5953,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"CNDT","nombre":"#VALUE!","titulos":1900.0,"coste_eur":6556.29,"precio_medio":3.4507,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"CON","nombre":"#VALUE!","titulos":150.0,"coste_eur":6963.0,"precio_medio":46.42,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"AMV0","nombre":"#VALUE!","titulos":75.0,"coste_eur":2034.0,"precio_medio":27.12,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ACA","nombre":"#VALUE!","titulos":827.0,"coste_eur":14942.35,"precio_medio":18.0681,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"CRBP","nombre":"#VALUE!","titulos":456.0,"coste_eur":4078.15,"precio_medio":8.9433,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"DTG","nombre":"#VALUE!","titulos":320.0,"coste_eur":11295.0,"precio_medio":35.2969,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"DHR","nombre":"#VALUE!","titulos":36.0,"coste_eur":9086.99,"precio_medio":252.4163,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"DDOG","nombre":"#VALUE!","titulos":78.0,"coste_eur":10774.59,"precio_medio":138.1358,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"LHA","nombre":"#VALUE!","titulos":1200.0,"coste_eur":9783.0,"precio_medio":8.1525,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"DB1","nombre":"#VALUE!","titulos":45.0,"coste_eur":10590.0,"precio_medio":235.3333,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"DOCU","nombre":"#VALUE!","titulos":156.0,"coste_eur":10986.1,"precio_medio":70.4237,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"EDP","nombre":"#VALUE!","titulos":5000.0,"coste_eur":16609.0,"precio_medio":3.3218,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"EDIT","nombre":"#VALUE!","titulos":4500.0,"coste_eur":8997.21,"precio_medio":1.9994,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"ENG","nombre":"#VALUE!","titulos":495.0,"coste_eur":7000.05,"precio_medio":14.1415,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ENC","nombre":"#VALUE!","titulos":9045.0,"coste_eur":31623.23,"precio_medio":3.4962,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"EGLA","nombre":"#VALUE!","titulos":2000.0,"coste_eur":8555.0,"precio_medio":4.2775,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ENXB","nombre":"#VALUE!","titulos":100.0,"coste_eur":12835.0,"precio_medio":128.35,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ERF","nombre":"#VALUE!","titulos":233.0,"coste_eur":14973.6,"precio_medio":64.2644,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"EVK","nombre":"#VALUE!","titulos":624.0,"coste_eur":11986.44,"precio_medio":19.209,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"FAE","nombre":"#VALUE!","titulos":3640.0,"coste_eur":10497.55,"precio_medio":2.8839,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"YACHT","nombre":"#VALUE!","titulos":2529.0,"coste_eur":8568.02,"precio_medio":3.3879,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"FDR","nombre":"#VALUE!","titulos":469.0,"coste_eur":12016.4,"precio_medio":25.6213,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"FIVN","nombre":"#VALUE!","titulos":125.0,"coste_eur":7919.17,"precio_medio":63.3534,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"FTV","nombre":"#VALUE!","titulos":100.0,"coste_eur":6153.48,"precio_medio":61.5348,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"FRA","nombre":"#VALUE!","titulos":190.0,"coste_eur":14992.0,"precio_medio":78.9053,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"FNTN","nombre":"#VALUE!","titulos":450.0,"coste_eur":12867.0,"precio_medio":28.5933,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"FUBO","nombre":"#VALUE!","titulos":100.0,"coste_eur":1608.21,"precio_medio":16.0821,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"GLXY","nombre":"#VALUE!","titulos":300.0,"coste_eur":7404.99,"precio_medio":24.6833,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"GEHC","nombre":"#VALUE!","titulos":89.0,"coste_eur":7331.26,"precio_medio":82.3737,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"GNTX","nombre":"#VALUE!","titulos":440.0,"coste_eur":9121.9,"precio_medio":20.7316,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"GEST","nombre":"#VALUE!","titulos":2165.0,"coste_eur":14996.8,"precio_medio":6.9269,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"GIII","nombre":"#VALUE!","titulos":280.0,"coste_eur":6306.43,"precio_medio":22.523,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"DOM","nombre":"#VALUE!","titulos":4000.0,"coste_eur":13700.0,"precio_medio":3.425,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"GFS","nombre":"#VALUE!","titulos":260.0,"coste_eur":14304.36,"precio_medio":55.0168,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"HAVAS","nombre":"#VALUE!","titulos":452.0,"coste_eur":6536.9,"precio_medio":14.4622,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"HBX","nombre":"#VALUE!","titulos":1098.0,"coste_eur":11989.37,"precio_medio":10.9193,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"HFG","nombre":"#VALUE!","titulos":1000.0,"coste_eur":11445.0,"precio_medio":11.445,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"HRMY","nombre":"#VALUE!","titulos":400.0,"coste_eur":11831.86,"precio_medio":29.5797,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"BOSS","nombre":"#VALUE!","titulos":300.0,"coste_eur":11394.0,"precio_medio":37.98,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"IBE","nombre":"#VALUE!","titulos":3051.0,"coste_eur":14146.13,"precio_medio":4.6366,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ITX","nombre":"#VALUE!","titulos":643.0,"coste_eur":19030.21,"precio_medio":29.596,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"INW","nombre":"#VALUE!","titulos":1000.0,"coste_eur":9925.0,"precio_medio":9.925,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"COL","nombre":"#VALUE!","titulos":1792.0,"coste_eur":10014.21,"precio_medio":5.5883,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"INPST","nombre":"#VALUE!","titulos":749.0,"coste_eur":11999.0,"precio_medio":16.02,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"IAG","nombre":"#VALUE!","titulos":1000.0,"coste_eur":8210.0,"precio_medio":8.21,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"INTU","nombre":"#VALUE!","titulos":13.0,"coste_eur":8361.11,"precio_medio":643.1623,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"ISRG","nombre":"#VALUE!","titulos":20.0,"coste_eur":9343.97,"precio_medio":467.1983,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"IOVA","nombre":"#VALUE!","titulos":491.0,"coste_eur":5677.85,"precio_medio":11.5639,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"IRDM","nombre":"#VALUE!","titulos":250.0,"coste_eur":7239.64,"precio_medio":28.9586,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"IREN","nombre":"#VALUE!","titulos":109.0,"coste_eur":4739.49,"precio_medio":43.4816,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"JKHY","nombre":"#VALUE!","titulos":77.0,"coste_eur":11313.9,"precio_medio":146.9337,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"JEN","nombre":"#VALUE!","titulos":418.0,"coste_eur":9846.36,"precio_medio":23.5559,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"KVUE","nombre":"#VALUE!","titulos":300.0,"coste_eur":5835.63,"precio_medio":19.4521,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"KLAR","nombre":"#VALUE!","titulos":93.0,"coste_eur":2428.44,"precio_medio":26.1122,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"LI","nombre":"#VALUE!","titulos":400.0,"coste_eur":13127.0,"precio_medio":32.8175,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ROVI","nombre":"#VALUE!","titulos":124.0,"coste_eur":5971.94,"precio_medio":48.1608,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"SWIM","nombre":"#VALUE!","titulos":1130.0,"coste_eur":6235.9,"precio_medio":5.5185,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"LEG","nombre":"#VALUE!","titulos":133.0,"coste_eur":10970.54,"precio_medio":82.4853,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"LWLG","nombre":"#VALUE!","titulos":800.0,"coste_eur":5296.22,"precio_medio":6.6203,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"LBTYA","nombre":"#VALUE!","titulos":515.0,"coste_eur":4691.13,"precio_medio":9.109,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"LDA","nombre":"#VALUE!","titulos":9416.0,"coste_eur":11016.11,"precio_medio":1.1699,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ALHG","nombre":"#VALUE!","titulos":10000.0,"coste_eur":15520.77,"precio_medio":1.5521,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"MARA","nombre":"#VALUE!","titulos":366.0,"coste_eur":5349.06,"precio_medio":14.6149,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"MAS","nombre":"#VALUE!","titulos":120.0,"coste_eur":9285.41,"precio_medio":77.3784,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"MKC","nombre":"#VALUE!","titulos":125.0,"coste_eur":9492.46,"precio_medio":75.9397,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"MDT","nombre":"#VALUE!","titulos":100.0,"coste_eur":8207.68,"precio_medio":82.0768,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"MFEB","nombre":"#VALUE!","titulos":3153.0,"coste_eur":14657.53,"precio_medio":4.6488,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"MSFT","nombre":"#VALUE!","titulos":23.0,"coste_eur":9677.47,"precio_medio":420.7597,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"MSTR","nombre":"#VALUE!","titulos":24.83,"coste_eur":3861.4,"precio_medio":155.5135,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"MRNA","nombre":"#VALUE!","titulos":69.0,"coste_eur":6863.17,"precio_medio":99.4662,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"MONC","nombre":"#VALUE!","titulos":120.0,"coste_eur":7940.0,"precio_medio":66.1667,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"MOH","nombre":"#VALUE!","titulos":20.0,"coste_eur":3034.61,"precio_medio":151.7304,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"MTX","nombre":"#VALUE!","titulos":50.0,"coste_eur":2971.31,"precio_medio":59.4262,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"NTGY","nombre":"#VALUE!","titulos":489.0,"coste_eur":12997.72,"precio_medio":26.5802,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"NEOV","nombre":"#VALUE!","titulos":450.0,"coste_eur":2271.87,"precio_medio":5.0486,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"NEXI","nombre":"#VALUE!","titulos":2000.0,"coste_eur":11946.0,"precio_medio":5.973,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"NOV","nombre":"#VALUE!","titulos":358.0,"coste_eur":5712.29,"precio_medio":15.9561,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"OHLA","nombre":"#VALUE!","titulos":30063.0,"coste_eur":9999.86,"precio_medio":0.3326,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"OCI","nombre":"#VALUE!","titulos":425.0,"coste_eur":2788.28,"precio_medio":6.5607,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"OGN","nombre":"#VALUE!","titulos":520.0,"coste_eur":9571.08,"precio_medio":18.4059,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"OC","nombre":"#VALUE!","titulos":94.0,"coste_eur":10224.49,"precio_medio":108.7712,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"ORY","nombre":"#VALUE!","titulos":7676.0,"coste_eur":27336.86,"precio_medio":3.5613,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"PCRX","nombre":"#VALUE!","titulos":490.0,"coste_eur":11093.92,"precio_medio":22.6406,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"PGY","nombre":"#VALUE!","titulos":300.0,"coste_eur":6078.04,"precio_medio":20.2601,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"PGEN","nombre":"#VALUE!","titulos":1100.0,"coste_eur":3257.81,"precio_medio":2.9616,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"PHM","nombre":"#VALUE!","titulos":484.0,"coste_eur":20729.39,"precio_medio":42.8293,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"POOL","nombre":"#VALUE!","titulos":25.0,"coste_eur":9611.88,"precio_medio":384.4752,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"PAH3","nombre":"#VALUE!","titulos":403.0,"coste_eur":15252.43,"precio_medio":37.8472,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"PRZO","nombre":"#VALUE!","titulos":3378.0,"coste_eur":4365.81,"precio_medio":1.2924,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"PUIG","nombre":"#VALUE!","titulos":550.0,"coste_eur":10001.25,"precio_medio":18.1841,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"RAL","nombre":"#VALUE!","titulos":33.0,"coste_eur":1343.63,"precio_medio":40.7161,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"REP","nombre":"#VALUE!","titulos":1047.0,"coste_eur":15567.95,"precio_medio":14.8691,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"RGTI","nombre":"#VALUE!","titulos":296.56,"coste_eur":4238.5,"precio_medio":14.2922,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"RGEN","nombre":"#VALUE!","titulos":38.13,"coste_eur":4238.81,"precio_medio":111.1674,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"RIOT","nombre":"#VALUE!","titulos":400.0,"coste_eur":5254.74,"precio_medio":13.1368,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"SCYR","nombre":"#VALUE!","titulos":6141.0,"coste_eur":14998.6,"precio_medio":2.4424,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"SPM","nombre":"#VALUE!","titulos":4795.0,"coste_eur":11087.07,"precio_medio":2.3122,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"SAN","nombre":"#VALUE!","titulos":119.0,"coste_eur":9999.1,"precio_medio":84.0261,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"SAP","nombre":"#VALUE!","titulos":45.0,"coste_eur":12162.75,"precio_medio":270.2833,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"SDGR","nombre":"#VALUE!","titulos":387.0,"coste_eur":8654.09,"precio_medio":22.362,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"ST","nombre":"#VALUE!","titulos":300.0,"coste_eur":8088.97,"precio_medio":26.9632,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"S","nombre":"#VALUE!","titulos":325.0,"coste_eur":8955.16,"precio_medio":27.5543,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"SHL","nombre":"#VALUE!","titulos":180.0,"coste_eur":9112.2,"precio_medio":50.6233,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"LIGHT","nombre":"#VALUE!","titulos":530.0,"coste_eur":11982.4,"precio_medio":22.6083,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"SIX2","nombre":"#VALUE!","titulos":200.0,"coste_eur":14815.0,"precio_medio":74.075,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"S92","nombre":"#VALUE!","titulos":155.0,"coste_eur":9609.5,"precio_medio":61.9968,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"SNDL","nombre":"#VALUE!","titulos":4278.0,"coste_eur":7759.19,"precio_medio":1.8137,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"SNOW","nombre":"#VALUE!","titulos":30.0,"coste_eur":4392.25,"precio_medio":146.4084,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"SW","nombre":"#VALUE!","titulos":220.0,"coste_eur":12109.3,"precio_medio":55.0423,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"SOL","nombre":"#VALUE!","titulos":2141.0,"coste_eur":11496.76,"precio_medio":5.3698,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"SAH","nombre":"#VALUE!","titulos":135.0,"coste_eur":7521.98,"precio_medio":55.7184,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"SPT","nombre":"#VALUE!","titulos":229.0,"coste_eur":7470.22,"precio_medio":32.6211,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"SFM","nombre":"#VALUE!","titulos":125.0,"coste_eur":7915.94,"precio_medio":63.3275,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"SQRL","nombre":"#VALUE!","titulos":4204.0,"coste_eur":13220.31,"precio_medio":3.1447,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"STLAM","nombre":"#VALUE!","titulos":786.0,"coste_eur":10012.92,"precio_medio":12.7391,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"SYENS","nombre":"#VALUE!","titulos":127.0,"coste_eur":11012.2,"precio_medio":86.7102,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"SY1","nombre":"#VALUE!","titulos":100.0,"coste_eur":10158.0,"precio_medio":101.58,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"TE","nombre":"#VALUE!","titulos":340.0,"coste_eur":12561.0,"precio_medio":36.9441,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"TDOC","nombre":"#VALUE!","titulos":300.0,"coste_eur":7174.63,"precio_medio":23.9154,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"TEF","nombre":"#VALUE!","titulos":4628.0,"coste_eur":20019.22,"precio_medio":4.3257,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"TEP","nombre":"#VALUE!","titulos":52.0,"coste_eur":6348.6,"precio_medio":122.0885,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"COO","nombre":"#VALUE!","titulos":96.0,"coste_eur":9061.35,"precio_medio":94.3891,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"HNST","nombre":"#VALUE!","titulos":1657.0,"coste_eur":5712.72,"precio_medio":3.4476,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"GT","nombre":"#VALUE!","titulos":1222.0,"coste_eur":9159.16,"precio_medio":7.4952,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"TGTX","nombre":"#VALUE!","titulos":277.09,"coste_eur":7815.6,"precio_medio":28.2056,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"DJT","nombre":"#VALUE!","titulos":118.0,"coste_eur":3764.41,"precio_medio":31.9018,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"TMUS","nombre":"#VALUE!","titulos":50.0,"coste_eur":8497.49,"precio_medio":169.9499,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"TUB","nombre":"#VALUE!","titulos":1200.0,"coste_eur":6892.0,"precio_medio":5.7433,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"TRG","nombre":"#VALUE!","titulos":20000.0,"coste_eur":12121.38,"precio_medio":0.6061,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"TUI1","nombre":"#VALUE!","titulos":1500.0,"coste_eur":11583.0,"precio_medio":7.722,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"UBER","nombre":"#VALUE!","titulos":115.0,"coste_eur":7602.75,"precio_medio":66.1108,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"RARE","nombre":"#VALUE!","titulos":125.0,"coste_eur":6383.95,"precio_medio":51.0716,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"UPM","nombre":"#VALUE!","titulos":311.0,"coste_eur":10949.76,"precio_medio":35.2082,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"VREX","nombre":"#VALUE!","titulos":702.0,"coste_eur":9533.7,"precio_medio":13.5808,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"VRLA","nombre":"#VALUE!","titulos":295.0,"coste_eur":9625.7,"precio_medio":32.6295,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"VRT","nombre":"#VALUE!","titulos":32.0,"coste_eur":3895.02,"precio_medio":121.7195,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"VERI","nombre":"#VALUE!","titulos":200.0,"coste_eur":694.34,"precio_medio":3.4717,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"DG","nombre":"#VALUE!","titulos":98.0,"coste_eur":9990.0,"precio_medio":101.9388,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"VIS","nombre":"#VALUE!","titulos":278.0,"coste_eur":14960.16,"precio_medio":53.8135,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"VNA","nombre":"#VALUE!","titulos":353.0,"coste_eur":10040.2,"precio_medio":28.4425,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"VOYG","nombre":"#VALUE!","titulos":100.0,"coste_eur":2787.95,"precio_medio":27.8795,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"WCH","nombre":"#VALUE!","titulos":118.0,"coste_eur":9294.52,"precio_medio":78.7671,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"XERS","nombre":"#VALUE!","titulos":1910.0,"coste_eur":12822.5,"precio_medio":6.7134,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"WEAV","nombre":"#VALUE!","titulos":2000.0,"coste_eur":13073.87,"precio_medio":6.5369,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"WDAY","nombre":"#VALUE!","titulos":32.0,"coste_eur":7151.78,"precio_medio":223.493,"moneda":"USD","banco":"-","objetivo":null},{"tckr":"WLN","nombre":"#VALUE!","titulos":1000.0,"coste_eur":12181.0,"precio_medio":12.181,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"ZAL","nombre":"#VALUE!","titulos":507.0,"coste_eur":17217.76,"precio_medio":33.9601,"moneda":"EUR","banco":"-","objetivo":null},{"tckr":"Z","nombre":"#VALUE!","titulos":100.0,"coste_eur":3937.82,"precio_medio":39.3782,"moneda":"USD","banco":"-","objetivo":null}];
+
+const SFX={"A3M":".MC","ACX":".MC","ADX":".MC","AED":".MC","ABI":".BR","ACA":".PA","ADS":".DE","AKZA":".AS","ALHG":".MC","ALM":".MC","ALO":".PA","AMP":".MC","AMV0":".MC","ANA":".MC","ARCAD":".BR","ARIS":".MC","BAYN":".DE","BEI":".DE","BMW":".DE","BNR":".DE","BOSS":".DE","CA":".PA","CABK":".MC","CIE":".MC","CLNX":".MC","COL":".MC","CON":".DE","DB1":".DE","DG":".PA","DOM":".PA","DTG":".DE","EDP":".LS","EGLA":".PA","ENC":".MC","ENG":".MC","ENXB":".DE","ERF":".PA","EVK":".DE","FAE":".MC","FDR":".MC","FNTN":".DE","FRA":".PA","GEST":".MC","HBX":".MC","HFG":".DE","IAG":".MC","IBE":".MC","INW":".MI","INPST":".MC","ITX":".MC","JEN":".MC","LDA":".MC","LEG":".MC","LHA":".DE","LI":".PA","LIGHT":".PA","MFEB":".MC","MONC":".MI","MTS":".MC","NEXI":".MI","NTGY":".MC","OCI":".AS","OHLA":".MC","ORY":".MC","PAH3":".DE","PHM":".MC","PUIG":".MC","REP":".MC","ROVI":".MC","S93":".DE","SAN":".MC","SAP":".DE","SCYR":".MC","SHL":".DE","SIX2":".DE","SOL":".MC","SPM":".MI","SQRL":".MC","STLAM":".MI","SW":".MC","SY1":".DE","SYENS":".MC","TE":".PA","TEF":".MC","TEP":".MC","TRG":".MC","TUB":".MC","TUI1":".DE","UIC1":".MC","UPM":".HE","VIS":".MC","VNA":".DE","VRLA":".MC","WCH":".DE","WLN":".PA","YACHT":".MC","ZAL":".DE"};
+
+let prices={}, cFilter='all', dFilter='all', busy=false;
+let eurUsd=null;
+function yT(i){return i.moneda==='EUR'?(i.tckr+(SFX[i.tckr]||'')):i.tckr;}
+function dbg(msg){const el=document.getElementById('dbg');if(el)el.textContent=msg;}
+function setProg(p,done=false){const el=document.getElementById('prog');el.style.width=p+'%';el.className='progress-fill'+(done?' done':'');}
+function setStatus(s,t){document.getElementById('sdot').className='dot '+s;document.getElementById('stxt').textContent=t;}
+
+async function fetchBatch(tickers){
+  const symbols=tickers.join(',');
+  try{
+    const r=await fetch(`/?symbols=${encodeURIComponent(symbols)}`,{signal:AbortSignal.timeout(15000)});
+    const data=await r.json();
+    const out={};
+    for(const q of (data?.quoteResponse?.result||[])) out[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent||0};
+    return out;
+  }catch(e){dbg('Error: '+e.message);return {};}
+}
+
+async function startLoad(){
+  if(busy)return;
+  busy=true; prices={};
+  setStatus('loading','Cargando precios…');
+  setProg(5);
+  dbg('Conectando con servidor…');
+
+  const allY=C.map(yT);
+  // Pedir cambio EUR/USD
+  try{
+    const fxRes=await fetchBatch(['EURUSD=X']);
+    if(fxRes && fxRes['EURUSD=X']){
+      eurUsd=fxRes['EURUSD=X'].price;
+      const fxEl=document.getElementById('eurusd-display');
+      if(fxEl) fxEl.textContent='Cambio EUR/USD: '+eurUsd.toFixed(4);
+    }
+  }catch(e){console.error('Error EURUSD',e);}
+  const BATCH=15;
+  let combined={};
+
+  for(let i=0;i<allY.length;i+=BATCH){
+    const batch=allY.slice(i,i+BATCH);
+    dbg(`Cargando ${i+1}-${Math.min(i+BATCH,allY.length)} de ${allY.length}…`);
+    const res=await fetchBatch(batch);
+    Object.assign(combined,res);
+    setProg(5+Math.round((i+BATCH)/allY.length*90));
+    setStatus('loading',`${Object.keys(combined).length}/${C.length}`);
+  }
+
+  for(const item of C){const yt=yT(item);if(combined[yt])prices[item.tckr]=combined[yt];}
+
+  const n=Object.keys(prices).length;
+  setProg(100,true);
+  setTimeout(()=>setProg(0),1500);
+
+  if(n===0){
+    setStatus('error','Error al cargar precios');
+    dbg('ERROR: No se pudieron cargar precios. Pulsa ↻ para reintentar.');
+  }else{
+    const now=new Date();
+    setStatus('ok',`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} · ${n}/${C.length}`);
+    dbg(`✓ ${n} precios cargados`);
+  }
+  busy=false;
+  updateResumen();renderCartera();renderDiana();
+}
+
+function fE(n){return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+function fN(n,d=2){return n.toLocaleString('es-ES',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function sg(n){return n>=0?'+':'';}
+function aC(el,t){let v=0;const s=Math.max(1,Math.ceil(t/18));const fn=()=>{v=Math.min(v+s,t);el.textContent=v;if(v<t)requestAnimationFrame(fn);};requestAnimationFrame(fn);}
+
+function updateResumen(){
+  let b=0;
+  for(const i of C){const p=prices[i.tckr];if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;b+=i.titulos*pe-i.coste_eur;}}
+  const n=b*(1-0.20925);
+  const pb=document.getElementById('pv-b'),pn=document.getElementById('pv-n');
+  pb.textContent=fE(b);pb.style.color=b>=0?'var(--green)':'var(--red)';
+  pn.textContent=fE(n);pn.style.color=n>=0?'var(--green)':'var(--red)';
+  const wo=C.filter(i=>i.objetivo&&prices[i.tckr]);
+  aC(document.getElementById('cnt-neg'),wo.filter(i=>prices[i.tckr].price>=i.objetivo).length);
+  aC(document.getElementById('cnt-warn'),wo.filter(i=>{const d=(i.objetivo-prices[i.tckr].price)/i.objetivo;return d>=0&&d<=0.07;}).length);
+}
+
+function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');btn.classList.add('active');}
+function goToDiana(f){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.nav-btn')[2].classList.add('active');document.getElementById('diana').classList.add('active');document.querySelectorAll('[id^="df-"]').forEach(b=>b.classList.remove('active'));document.getElementById('df-'+f).classList.add('active');dFilter=f;renderDiana();}
+function fC(f,btn){cFilter=f;document.querySelectorAll('[id^="cf-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCartera();}
+function fD(f,btn){dFilter=f;document.querySelectorAll('[id^="df-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderDiana();}
+
+function renderCartera(){
+  const s=document.getElementById('csearch').value.trim().toUpperCase();
+  const data=C.filter(i=>{
+    if(s&&!i.tckr.includes(s))return false;
+    if(cFilter==='EUR')return i.moneda==='EUR';
+    if(cFilter==='USD')return i.moneda==='USD';
+    if(cFilter==='ING')return i.banco.toUpperCase().includes('ING');
+    if(cFilter==='R4')return i.banco.toUpperCase().includes('R4');
+    if(cFilter==='IBKR')return i.banco.toUpperCase().includes('IBKR');
+    return true;
+  });
+  document.getElementById('c-count').textContent=data.length+' valores';
+  document.getElementById('c-list').innerHTML=data.map(item=>{
+    const p=prices[item.tckr];
+    const ps=p?fN(p.price):'—';
+    const pcs=p?(sg(p.pct)+fN(p.pct)+'%'):'';
+    const pcc=p?(p.pct>=0?'var(--green)':'var(--red)'):'var(--muted)';
+    let pms='',pmc='';
+    if(p){const pe=item.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;const pm=item.titulos*pe-item.coste_eur;pms=(pm>=0?'+':'')+fE(pm);pmc=pm>=0?'pos':'loss';}
+    return`<div class="list-row"><div class="row-left"><span class="tckr">${item.tckr} <span style="font-size:10px;color:var(--muted)">${item.moneda==='EUR'?'€':'$'}</span></span><span class="banco-pill">${item.banco}</span></div><div class="row-right"><span class="price-val normal">${ps} <span style="font-size:10px;color:${pcc}">${pcs}</span></span>${p?`<span class="pill ${pmc}">${pms}</span>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}<span class="price-sub">Obj.${item.objetivo?fN(item.objetivo):'—'} · Med.${fN(item.precio_medio)}</span></div></div>`;
+  }).join('');
+}
+
+function renderDiana(){
+  let data=C.filter(i=>i.objetivo).filter(item=>{
+    const p=prices[item.tckr]?.price;
+    if(dFilter==='neg')return p!=null&&p>=item.objetivo;
+    if(dFilter==='warn'){if(!p)return false;const d=(item.objetivo-p)/item.objetivo;return d>=0&&d<=0.07;}
+    if(dFilter==='ING')return item.banco.toUpperCase().includes('ING');
+    if(dFilter==='R4')return item.banco.toUpperCase().includes('R4');
+    if(dFilter==='IBKR')return item.banco.toUpperCase().includes('IBKR');
+    return true;
+  });
+  data.sort((a,b)=>{const pa=prices[a.tckr]?.price,pb=prices[b.tckr]?.price;const da=pa?(pa-a.objetivo)/a.objetivo:-999,db=pb?(pb-b.objetivo)/b.objetivo:-999;return db-da;});
+  document.getElementById('d-count').textContent=data.length+' valores';
+  document.getElementById('d-list').innerHTML=data.map(item=>{
+    const p=prices[item.tckr];const price=p?.price;
+    const atO=price!=null&&price>=item.objetivo;
+    const dist=price!=null?(item.objetivo-price)/item.objetivo:null;
+    const nearO=dist!=null&&dist>=0&&dist<=0.07;
+    const ps=price!=null?fN(price):'—';
+    const pcs=p?(sg(p.pct)+fN(p.pct)+'%'):'';
+    const pcc=p?(p.pct>=0?'var(--green)':'var(--red)'):'var(--muted)';
+    let ds='',dc='';
+    if(price!=null){const d=(price-item.objetivo)/item.objetivo*100;ds=(d>=0?'+':'')+fN(d)+'% obj';dc=d>=0?'pos':'neg';}
+    return`<div class="list-row"><div class="row-left"><span class="tckr">${item.tckr}</span><span class="banco-pill">${item.banco}</span></div><div class="row-right"><span class="price-val ${atO?'at-obj':nearO?'near-obj':'normal'}">${ps} <span style="font-size:10px;color:${pcc}">${pcs}</span></span>${price!=null?`<span class="pill ${dc}">${ds}</span>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}<span class="price-sub">Obj. ${fN(item.objetivo)}</span></div></div>`;
+  }).join('');
+}
+
+startLoad();
+</script>
+</body>
+</html>

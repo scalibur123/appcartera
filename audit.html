@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Auditoria precios - AppCartera</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; margin: 20px; background: #f7f7f7; color: #222; }
+  h1 { margin: 0 0 10px; }
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; margin: 10px 0 20px; }
+  .stat { background: white; padding: 10px 14px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,.08); min-width: 90px; }
+  .stat .label { font-size: 11px; color: #666; text-transform: uppercase; }
+  .stat .value { font-size: 22px; font-weight: 600; }
+  .ok    .value { color: #1a7f37; }
+  .sosp  .value { color: #bf8700; }
+  .crit  .value { color: #cf222e; }
+  .err   .value { color: #cf222e; }
+  table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  th, td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; }
+  th { background: #f0f0f0; position: sticky; top: 0; cursor: pointer; user-select: none; }
+  th:hover { background: #e5e5e5; }
+  tr.estado-ok        { background: #f0fdf4; }
+  tr.estado-sospechoso{ background: #fefce8; }
+  tr.estado-critico   { background: #fef2f2; }
+  tr.estado-error_yahoo,tr.estado-sin_precio { background: #f5f5f5; color: #666; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pos { color: #1a7f37; }
+  .neg { color: #cf222e; }
+  .badge { padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+  .b-ok { background: #d1fae5; color: #065f46; }
+  .b-sospechoso { background: #fef3c7; color: #92400e; }
+  .b-critico { background: #fee2e2; color: #991b1b; }
+  .b-error_yahoo, .b-sin_precio { background: #e5e7eb; color: #374151; }
+  .controls { margin: 10px 0; }
+  .controls input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; }
+  .impacto-total { background: white; padding: 14px; border-radius: 6px; margin-bottom: 16px; font-size: 16px; }
+  .loading { padding: 40px; text-align: center; color: #666; }
+</style>
+</head>
+<body>
+<h1>📊 Auditoria de precios</h1>
+<p style="color:#666">Comparativa entre el precio del Excel (col E) y el precio que devuelve Yahoo. Tickers desviados = candidatos a anadir a <code>tickers_override.json</code>.</p>
+
+<div id="stats" class="stats"><div class="loading">Cargando datos de Yahoo... (esto tarda 20-30 segundos)</div></div>
+
+<div id="impacto" class="impacto-total" style="display:none"></div>
+
+<div class="controls" id="controls" style="display:none">
+  <input type="text" id="filtro" placeholder="Filtrar ticker..." />
+  <select id="filtro-estado">
+    <option value="">Todos los estados</option>
+    <option value="critico">Solo criticos</option>
+    <option value="sospechoso">Solo sospechosos</option>
+    <option value="ok">Solo OK</option>
+    <option value="error_yahoo">Solo errores</option>
+    <option value="sin_precio">Sin precio</option>
+  </select>
+</div>
+
+<table id="tabla" style="display:none">
+  <thead>
+    <tr>
+      <th data-key="ticker">Ticker</th>
+      <th data-key="yahoo">Simbolo Yahoo</th>
+      <th data-key="moneda">Mon</th>
+      <th data-key="titulos" class="num">Titulos</th>
+      <th data-key="precio_excel" class="num">P. Excel</th>
+      <th data-key="precio_yahoo" class="num">P. Yahoo</th>
+      <th data-key="desviacion_pct" class="num">Desv %</th>
+      <th data-key="impacto_eur" class="num">Impacto €</th>
+      <th data-key="estado">Estado</th>
+      <th data-key="exchange_yahoo">Bolsa Yahoo</th>
+      <th data-key="fuente">Resolucion</th>
+    </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
+
+<script>
+let DATA = [];
+let SORT_KEY = 'desviacion_pct';
+let SORT_DESC = true;
+
+function fmt(n, d=2) { return n == null ? '—' : n.toLocaleString('es-ES', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+
+function renderStats(stats) {
+  const s = document.getElementById('stats');
+  s.innerHTML = `
+    <div class="stat ok"><div class="label">OK (&lt;5%)</div><div class="value">${stats.ok}</div></div>
+    <div class="stat sosp"><div class="label">Sospechoso 5-15%</div><div class="value">${stats.sospechoso}</div></div>
+    <div class="stat crit"><div class="label">Critico &gt;15%</div><div class="value">${stats.critico}</div></div>
+    <div class="stat err"><div class="label">Sin precio / error</div><div class="value">${stats.sin_precio + stats.error_yahoo}</div></div>
+    <div class="stat"><div class="label">Total</div><div class="value">${stats.total}</div></div>
+    <div class="stat"><div class="label">EUR/USD ahora</div><div class="value">${fmt(stats.eurusd_actual, 4)}</div></div>
+  `;
+  const imp = document.getElementById('impacto');
+  imp.style.display = '';
+  const sign = stats.impacto_total_eur >= 0 ? 'pos' : 'neg';
+  imp.innerHTML = `<strong>Sesgo total estimado en plusvalia:</strong> <span class="${sign}">${fmt(stats.impacto_total_eur)} €</span> <span style="color:#666;font-size:13px">(diferencia entre lo que la app calcula vs lo que el Excel calcularia con sus propios precios)</span>`;
+}
+
+function render() {
+  const filtro = document.getElementById('filtro').value.toLowerCase();
+  const filtroEstado = document.getElementById('filtro-estado').value;
+  let rows = DATA.slice();
+  if (filtro) rows = rows.filter(r => r.ticker.toLowerCase().includes(filtro) || (r.yahoo && r.yahoo.toLowerCase().includes(filtro)));
+  if (filtroEstado) rows = rows.filter(r => r.estado === filtroEstado);
+
+  rows.sort((a, b) => {
+    let av = a[SORT_KEY], bv = b[SORT_KEY];
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === 'string') return SORT_DESC ? bv.localeCompare(av) : av.localeCompare(bv);
+    return SORT_DESC ? bv - av : av - bv;
+  });
+
+  const tb = document.getElementById('tbody');
+  tb.innerHTML = rows.map(r => `
+    <tr class="estado-${r.estado}">
+      <td><strong>${r.ticker}</strong></td>
+      <td>${r.yahoo}</td>
+      <td>${r.moneda || ''}</td>
+      <td class="num">${r.titulos.toLocaleString('es-ES')}</td>
+      <td class="num">${fmt(r.precio_excel, 4)}</td>
+      <td class="num">${fmt(r.precio_yahoo, 4)}</td>
+      <td class="num"><strong>${fmt(r.desviacion_pct, 1)}${r.desviacion_pct != null ? '%' : ''}</strong></td>
+      <td class="num ${r.impacto_eur >= 0 ? 'pos' : 'neg'}">${fmt(r.impacto_eur)}</td>
+      <td><span class="badge b-${r.estado}">${r.estado}</span></td>
+      <td>${r.exchange_yahoo || (r.error || '')}</td>
+      <td style="color:#666;font-size:11px">${r.fuente || ''}</td>
+    </tr>
+  `).join('');
+}
+
+document.querySelectorAll('th').forEach(th => {
+  th.addEventListener('click', () => {
+    const k = th.dataset.key;
+    if (SORT_KEY === k) SORT_DESC = !SORT_DESC;
+    else { SORT_KEY = k; SORT_DESC = true; }
+    render();
+  });
+});
+document.getElementById('filtro').addEventListener('input', render);
+document.getElementById('filtro-estado').addEventListener('change', render);
+
+fetch('/audit')
+  .then(r => r.json())
+  .then(j => {
+    if (j.error) {
+      document.getElementById('stats').innerHTML = '<div style="color:red">Error: ' + j.error + '</div>';
+      return;
+    }
+    DATA = j.audit;
+    renderStats(j.stats);
+    document.getElementById('controls').style.display = '';
+    document.getElementById('tabla').style.display = '';
+    render();
+  })
+  .catch(e => {
+    document.getElementById('stats').innerHTML = '<div style="color:red">Error de red: ' + e.message + '</div>';
+  });
+</script>
+</body>
+</html>
