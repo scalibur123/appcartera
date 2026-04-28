@@ -14,9 +14,9 @@ function saveCache(cache) {
   try { fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2)); } catch (e) { }
 }
 
-function fetchYahoo(symbol, retries = 3) {
+function fetchYahoo(symbol, retries = 2) {
   return new Promise((resolve) => {
-    const attempt = () => {
+    const attempt = (left) => {
       const options = {
         hostname: 'query1.finance.yahoo.com',
         path: `/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`,
@@ -33,51 +33,53 @@ function fetchYahoo(symbol, retries = 3) {
             if (meta && meta.regularMarketPrice) {
               resolve({ price: meta.regularMarketPrice, pct: 0 });
             } else {
-              if (retries > 0) { setTimeout(attempt, 1000); } else { resolve(null); }
+              if (left > 0) { setTimeout(() => attempt(left - 1), 500); } else { resolve(null); }
             }
           } catch (e) {
-            if (retries > 0) { setTimeout(attempt, 1000); } else { resolve(null); }
+            if (left > 0) { setTimeout(() => attempt(left - 1), 500); } else { resolve(null); }
           }
         });
       });
       req.on('error', () => {
-        if (retries > 0) { setTimeout(attempt, 1000); } else { resolve(null); }
+        if (left > 0) { setTimeout(() => attempt(left - 1), 500); } else { resolve(null); }
       });
-      req.setTimeout(5000, () => { req.destroy(); if (retries > 0) { setTimeout(attempt, 1000); } else { resolve(null); } });
+      req.setTimeout(4000, () => { req.destroy(); if (left > 0) { setTimeout(() => attempt(left - 1), 500); } else { resolve(null); } });
       req.end();
     };
-    attempt();
+    attempt(retries);
   });
 }
 
 const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-
   const url = new URL(req.url, `http://${req.headers.host}`);
   const symbolsParam = url.searchParams.get('symbols');
 
-  // CASO 1: Petición a la API (lleva ?symbols=...)
   if (symbolsParam) {
     res.setHeader('Content-Type', 'application/json');
     const symbols = symbolsParam.split(',').filter(s => s);
     const cache = loadCache();
+
+    // Peticiones en PARALELO para evitar timeout
+    const fetched = await Promise.all(symbols.map(sym => fetchYahoo(sym)));
+
     const results = [];
-    for (const sym of symbols) {
-      const price = await fetchYahoo(sym);
+    for (let i = 0; i < symbols.length; i++) {
+      const sym = symbols[i];
+      const price = fetched[i];
       if (price && price.price > 0) {
         cache[sym] = { price: price.price, timestamp: Date.now() };
-        saveCache(cache);
         results.push({ symbol: sym, regularMarketPrice: price.price, regularMarketChangePercent: 0 });
       } else if (cache[sym]) {
         results.push({ symbol: sym, regularMarketPrice: cache[sym].price, regularMarketChangePercent: 0 });
       }
     }
+    saveCache(cache);
     res.writeHead(200);
     res.end(JSON.stringify({ quoteResponse: { result: results } }));
     return;
   }
 
-  // CASO 2: Petición a la web (raíz, sin parámetros) -> servir index.html
   if (url.pathname === '/' || url.pathname === '/index.html') {
     fs.readFile(path.join(__dirname, 'index.html'), 'utf8', (err, data) => {
       if (err) {
@@ -91,7 +93,6 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // CASO 3: Otros archivos (.js, .css, .json) si los hubiera
   const filePath = path.join(__dirname, url.pathname);
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     const ext = path.extname(filePath).toLowerCase();
@@ -117,7 +118,6 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // CASO 4: No encontrado
   res.writeHead(404, { 'Content-Type': 'text/plain' });
   res.end('Not found');
 });
