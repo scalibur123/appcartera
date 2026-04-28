@@ -91,7 +91,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   <button class="nav-btn" onclick="showTab('mensual',this)">Mensual</button>
 </div>
 
-<div id="resumen" class="section active">
+<div id="eurusd-display" style="text-align:center;padding:6px 0;font-size:11px;color:var(--muted)">Cambio EUR/USD: --</div><div id="resumen" class="section active">
   <div class="dbg" id="dbg">Iniciando…</div>
   <div class="card">
     <div class="card-label">Plusvalías 2026 · en vivo</div>
@@ -150,6 +150,7 @@ const C=[{"tckr":"ABEO","nombre":"#VALUE!","titulos":800.0,"coste_eur":4922.3,"p
 const SFX={"A3M":".MC","ACX":".MC","ADX":".MC","AED":".MC","ABI":".BR","ACA":".PA","ADS":".DE","AKZA":".AS","ALHG":".MC","ALM":".MC","ALO":".PA","AMP":".MC","AMV0":".MC","ANA":".MC","ARCAD":".BR","ARIS":".MC","BAYN":".DE","BEI":".DE","BMW":".DE","BNR":".DE","BOSS":".DE","CA":".PA","CABK":".MC","CIE":".MC","CLNX":".MC","COL":".MC","CON":".DE","DB1":".DE","DG":".PA","DOM":".PA","DTG":".DE","EDP":".LS","EGLA":".PA","ENC":".MC","ENG":".MC","ENXB":".DE","ERF":".PA","EVK":".DE","FAE":".MC","FDR":".MC","FNTN":".DE","FRA":".PA","GEST":".MC","HBX":".MC","HFG":".DE","IAG":".MC","IBE":".MC","INW":".MI","INPST":".MC","ITX":".MC","JEN":".MC","LDA":".MC","LEG":".MC","LHA":".DE","LI":".PA","LIGHT":".PA","MFEB":".MC","MONC":".MI","MTS":".MC","NEXI":".MI","NTGY":".MC","OCI":".AS","OHLA":".MC","ORY":".MC","PAH3":".DE","PHM":".MC","PUIG":".MC","REP":".MC","ROVI":".MC","S93":".DE","SAN":".MC","SAP":".DE","SCYR":".MC","SHL":".DE","SIX2":".DE","SOL":".MC","SPM":".MI","SQRL":".MC","STLAM":".MI","SW":".MC","SY1":".DE","SYENS":".MC","TE":".PA","TEF":".MC","TEP":".MC","TRG":".MC","TUB":".MC","TUI1":".DE","UIC1":".MC","UPM":".HE","VIS":".MC","VNA":".DE","VRLA":".MC","WCH":".DE","WLN":".PA","YACHT":".MC","ZAL":".DE"};
 
 let prices={}, cFilter='all', dFilter='all', busy=false;
+let eurUsd=null;
 function yT(i){return i.moneda==='EUR'?(i.tckr+(SFX[i.tckr]||'')):i.tckr;}
 function dbg(msg){const el=document.getElementById('dbg');if(el)el.textContent=msg;}
 function setProg(p,done=false){const el=document.getElementById('prog');el.style.width=p+'%';el.className='progress-fill'+(done?' done':'');}
@@ -174,6 +175,15 @@ async function startLoad(){
   dbg('Conectando con servidor…');
 
   const allY=C.map(yT);
+  // Pedir cambio EUR/USD
+  try{
+    const fxRes=await fetchBatch(['EURUSD=X']);
+    if(fxRes && fxRes['EURUSD=X']){
+      eurUsd=fxRes['EURUSD=X'].price;
+      const fxEl=document.getElementById('eurusd-display');
+      if(fxEl) fxEl.textContent='Cambio EUR/USD: '+eurUsd.toFixed(4);
+    }
+  }catch(e){console.error('Error EURUSD',e);}
   const BATCH=15;
   let combined={};
 
@@ -211,7 +221,7 @@ function aC(el,t){let v=0;const s=Math.max(1,Math.ceil(t/18));const fn=()=>{v=Ma
 
 function updateResumen(){
   let b=0;
-  for(const i of C){const p=prices[i.tckr];if(p)b+=i.titulos*p.price-i.coste_eur;}
+  for(const i of C){const p=prices[i.tckr];if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;b+=i.titulos*pe-i.coste_eur;}}
   const n=b*(1-0.20925);
   const pb=document.getElementById('pv-b'),pn=document.getElementById('pv-n');
   pb.textContent=fE(b);pb.style.color=b>=0?'var(--green)':'var(--red)';
@@ -244,7 +254,7 @@ function renderCartera(){
     const pcs=p?(sg(p.pct)+fN(p.pct)+'%'):'';
     const pcc=p?(p.pct>=0?'var(--green)':'var(--red)'):'var(--muted)';
     let pms='',pmc='';
-    if(p){const pm=item.titulos*p.price-item.coste_eur;pms=(pm>=0?'+':'')+fE(pm);pmc=pm>=0?'pos':'loss';}
+    if(p){const pe=item.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;const pm=item.titulos*pe-item.coste_eur;pms=(pm>=0?'+':'')+fE(pm);pmc=pm>=0?'pos':'loss';}
     return`<div class="list-row"><div class="row-left"><span class="tckr">${item.tckr} <span style="font-size:10px;color:var(--muted)">${item.moneda==='EUR'?'€':'$'}</span></span><span class="banco-pill">${item.banco}</span></div><div class="row-right"><span class="price-val normal">${ps} <span style="font-size:10px;color:${pcc}">${pcs}</span></span>${p?`<span class="pill ${pmc}">${pms}</span>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}<span class="price-sub">Obj.${item.objetivo?fN(item.objetivo):'—'} · Med.${fN(item.precio_medio)}</span></div></div>`;
   }).join('');
 }
