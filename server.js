@@ -52,23 +52,74 @@ function fetchYahoo(symbol, retries = 3) {
 
 const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Content-Type', 'application/json');
+
   const url = new URL(req.url, `http://${req.headers.host}`);
-  const symbols = (url.searchParams.get('symbols') || '').split(',').filter(s => s);
-  const cache = loadCache();
-  const results = [];
-  for (const sym of symbols) {
-    const price = await fetchYahoo(sym);
-    if (price && price.price > 0) {
-      cache[sym] = { price: price.price, timestamp: Date.now() };
-      saveCache(cache);
-      results.push({ symbol: sym, regularMarketPrice: price.price, regularMarketChangePercent: 0 });
-    } else if (cache[sym]) {
-      results.push({ symbol: sym, regularMarketPrice: cache[sym].price, regularMarketChangePercent: 0 });
+  const symbolsParam = url.searchParams.get('symbols');
+
+  // CASO 1: Petición a la API (lleva ?symbols=...)
+  if (symbolsParam) {
+    res.setHeader('Content-Type', 'application/json');
+    const symbols = symbolsParam.split(',').filter(s => s);
+    const cache = loadCache();
+    const results = [];
+    for (const sym of symbols) {
+      const price = await fetchYahoo(sym);
+      if (price && price.price > 0) {
+        cache[sym] = { price: price.price, timestamp: Date.now() };
+        saveCache(cache);
+        results.push({ symbol: sym, regularMarketPrice: price.price, regularMarketChangePercent: 0 });
+      } else if (cache[sym]) {
+        results.push({ symbol: sym, regularMarketPrice: cache[sym].price, regularMarketChangePercent: 0 });
+      }
     }
+    res.writeHead(200);
+    res.end(JSON.stringify({ quoteResponse: { result: results } }));
+    return;
   }
-  res.writeHead(200);
-  res.end(JSON.stringify({ quoteResponse: { result: results } }));
+
+  // CASO 2: Petición a la web (raíz, sin parámetros) -> servir index.html
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    fs.readFile(path.join(__dirname, 'index.html'), 'utf8', (err, data) => {
+      if (err) {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Error cargando index.html');
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(data);
+    });
+    return;
+  }
+
+  // CASO 3: Otros archivos (.js, .css, .json) si los hubiera
+  const filePath = path.join(__dirname, url.pathname);
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeTypes = {
+      '.js': 'application/javascript',
+      '.css': 'text/css',
+      '.json': 'application/json',
+      '.html': 'text/html',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.svg': 'image/svg+xml'
+    };
+    const contentType = mimeTypes[ext] || 'text/plain';
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404);
+        res.end('Not found');
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(data);
+    });
+    return;
+  }
+
+  // CASO 4: No encontrado
+  res.writeHead(404, { 'Content-Type': 'text/plain' });
+  res.end('Not found');
 });
 
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
