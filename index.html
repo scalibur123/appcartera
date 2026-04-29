@@ -174,7 +174,7 @@ async function startLoad(){
   setProg(5);
   dbg('Conectando con servidor…');
 
-  const allY=C.map(yT);
+  const allY=C.map(i=>i.symbol);
   // Pedir cambio EUR/USD
   try{
     const fxRes=await fetchBatch(['EURUSD=X']);
@@ -184,7 +184,7 @@ async function startLoad(){
       if(fxEl) fxEl.textContent='Cambio EUR/USD: '+eurUsd.toFixed(4);
     }
   }catch(e){console.error('Error EURUSD',e);}
-  const BATCH=15;
+  const BATCH=50;
   let combined={};
 
   for(let i=0;i<allY.length;i+=BATCH){
