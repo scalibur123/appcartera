@@ -196,7 +196,7 @@ async function startLoad(){
     setStatus('loading',`${Object.keys(combined).length}/${C.length}`);
   }
 
-  for(const item of C){const yt=yT(item);if(combined[yt])prices[item.symbol]=combined[yt];}
+  for(const item of C){if(combined[item.symbol])prices[item.symbol]=combined[item.symbol];}
 
   const n=Object.keys(prices).length;
   setProg(100,true);
