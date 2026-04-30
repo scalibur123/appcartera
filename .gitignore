@@ -1,7 +1,14 @@
-node_modules/
-.env
-.DS_Store
-*.log
-*.swp
-*.swo
-~*
+*.bak
+*.bak_*
+*.backup_*
+*.OLD*
+fase*.sh
+fix_*.sh
+setup*.sh
+backup_completo.sh
+update_from_excel.py
+update_from_excel_v2*.py
+update_from_excel_v4a.py
+PLUSVALIAS BOLSA*.xlsm
+files.zip
+audit.html
