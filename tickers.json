@@ -1,1374 +1,1766 @@
 {
   "ABEO": {
     "yahoo": "ABEO",
-    "objetivo": 8.26,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 800.0,
     "coste_eur": 4922.2951,
-    "titulos": 800,
-    "moneda": "USD"
+    "precio_excel": 5.34,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "ABCL": {
     "yahoo": "ABCL",
-    "objetivo": 6.0748,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 2941.0,
     "coste_eur": 10227.8881,
-    "titulos": 2941,
-    "moneda": "USD"
+    "precio_excel": 4.16,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "ACHC": {
     "yahoo": "ACHC",
-    "objetivo": 31.98,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 203.0,
     "coste_eur": 4246.175,
-    "titulos": 203,
-    "moneda": "USD"
+    "precio_excel": 28.15,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "ANA": {
     "yahoo": "ANA.MC",
-    "objetivo": 150.716,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 131.0,
     "coste_eur": 14347.66,
-    "titulos": 131,
-    "moneda": "EUR"
+    "precio_excel": 242.2,
+    "fuente_resolucion": "override"
   },
   "ACX": {
     "yahoo": "ACX.MC",
-    "objetivo": 6.26,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 3358.0,
     "coste_eur": 39951.31,
-    "titulos": 3358,
-    "moneda": "EUR"
+    "precio_excel": 13.19,
+    "fuente_resolucion": "override"
   },
   "ADS": {
     "yahoo": "ADS.DE",
-    "objetivo": 196.4,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 59.0,
     "coste_eur": 9145,
-    "titulos": 59,
-    "moneda": "EUR"
+    "precio_excel": 138.5,
+    "fuente_resolucion": "override"
   },
   "ADT": {
     "yahoo": "ADT",
-    "objetivo": 9.1313,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 1300.0,
     "coste_eur": 9200.9411,
-    "titulos": 1300,
-    "moneda": "USD"
+    "precio_excel": 7.22,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "AMD": {
     "yahoo": "AMD",
-    "objetivo": 206.98,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 38.0,
     "coste_eur": 5822.5528,
-    "titulos": 38,
-    "moneda": "USD"
+    "precio_excel": 334.49,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "AED": {
     "yahoo": "AED.BR",
-    "objetivo": 90.0,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 178.0,
     "coste_eur": 11976.6,
-    "titulos": 178,
-    "moneda": "EUR"
+    "precio_excel": 73.1,
+    "fuente_resolucion": "override"
   },
   "A": {
     "yahoo": "A",
-    "objetivo": 139.88,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 74.0,
     "coste_eur": 7598.4044,
-    "titulos": 74,
-    "moneda": "USD"
+    "precio_excel": 115.62,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "AKZA": {
     "yahoo": "AKZA.AS",
-    "objetivo": 66.44,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 190.0,
     "coste_eur": 11351,
-    "titulos": 190,
-    "moneda": "EUR"
+    "precio_excel": 51.14,
+    "fuente_resolucion": "override"
   },
   "ALM": {
     "yahoo": "ALM.MC",
-    "objetivo": 11.9797,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 2562.0,
     "coste_eur": 29938.51,
-    "titulos": 2562,
-    "moneda": "EUR"
+    "precio_excel": 12.58,
+    "fuente_resolucion": "override"
   },
   "AOSL": {
     "yahoo": "AOSL",
-    "objetivo": 52.75,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 200.0,
     "coste_eur": 8064.446,
-    "titulos": 200,
-    "moneda": "USD"
+    "precio_excel": 42.34,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "ALO": {
     "yahoo": "ALO.PA",
-    "objetivo": 24.64,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 366.0,
     "coste_eur": 10018.42,
-    "titulos": 366,
-    "moneda": "EUR"
+    "precio_excel": 16.32,
+    "fuente_resolucion": "override"
   },
   "AMRC": {
     "yahoo": "AMRC",
-    "objetivo": 40.01,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 170.0,
     "coste_eur": 4718.1195,
-    "titulos": 170,
-    "moneda": "USD"
+    "precio_excel": 27.91,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "AMP": {
     "yahoo": "AMP.MC",
-    "objetivo": 0.1806,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 220264.0,
     "coste_eur": 52849.8245,
-    "titulos": 220264,
-    "moneda": "EUR"
+    "precio_excel": 0.1814,
+    "fuente_resolucion": "override"
   },
   "ABI": {
     "yahoo": "ABI.BR",
-    "objetivo": 75.01,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 220.0,
     "coste_eur": 12035.8,
-    "titulos": 220,
-    "moneda": "EUR"
+    "precio_excel": 62.62,
+    "fuente_resolucion": "override"
   },
   "ABUS": {
     "yahoo": "ABUS",
-    "objetivo": 4.67,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 1500.0,
     "coste_eur": 5393.871,
-    "titulos": 1500,
-    "moneda": "USD"
+    "precio_excel": 4.28,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "ARCAD": {
     "yahoo": "ARCAD.AS",
-    "objetivo": 44.52,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 325.0,
     "coste_eur": 12001,
-    "titulos": 325,
-    "moneda": "EUR"
+    "precio_excel": 31.76,
+    "fuente_resolucion": "override"
   },
   "MTS": {
     "yahoo": "MTS.MC",
-    "objetivo": 38.8938,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 737.0,
     "coste_eur": 15123.72,
-    "titulos": 737,
-    "moneda": "EUR"
+    "precio_excel": 50.28,
+    "fuente_resolucion": "override"
   },
   "ARIS": {
     "yahoo": "ARIS.MI",
-    "objetivo": 23.59,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 2693.0,
     "coste_eur": 12012.315,
-    "titulos": 2693,
-    "moneda": "EUR"
+    "precio_excel": 3.914,
+    "fuente_resolucion": "override"
   },
   "ASAN": {
     "yahoo": "ASAN",
-    "objetivo": 22.51,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 987.0,
     "coste_eur": 12530.5721,
-    "titulos": 987,
-    "moneda": "USD"
+    "precio_excel": 6.24,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "A3M": {
     "yahoo": "A3M.MC",
-    "objetivo": 4.97,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 2385.0,
     "coste_eur": 12033.55,
-    "titulos": 2385,
-    "moneda": "EUR"
+    "precio_excel": 5.2,
+    "fuente_resolucion": "override"
   },
   "ADX": {
     "yahoo": "ADX.MC",
-    "objetivo": 1.942,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 6796.0,
     "coste_eur": 10495.032,
-    "titulos": 6796,
-    "moneda": "EUR"
+    "precio_excel": 1.492,
+    "fuente_resolucion": "override"
   },
   "BKR": {
     "yahoo": "BKR",
-    "objetivo": 52.98,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 115.0,
     "coste_eur": 5296.4055,
-    "titulos": 115,
-    "moneda": "USD"
+    "precio_excel": 68.38,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "BLCO": {
     "yahoo": "BLCO",
-    "objetivo": 22.84,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 248.0,
     "coste_eur": 4741.8103,
-    "titulos": 248,
-    "moneda": "USD"
+    "precio_excel": 15.88,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "BAX": {
     "yahoo": "BAX",
-    "objetivo": 48.3838,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 180.0,
     "coste_eur": 7221.3603,
-    "titulos": 180,
-    "moneda": "USD"
+    "precio_excel": 18.49,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "BAYN": {
     "yahoo": "BAYN.DE",
-    "objetivo": 36.53,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 400.0,
     "coste_eur": 12220.44,
-    "titulos": 400,
-    "moneda": "EUR"
+    "precio_excel": 38.47,
+    "fuente_resolucion": "override"
   },
   "BMW": {
     "yahoo": "BMW.DE",
-    "objetivo": 101.46,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 120.0,
     "coste_eur": 10049.4,
-    "titulos": 120,
-    "moneda": "EUR"
+    "precio_excel": 79.8,
+    "fuente_resolucion": "override"
   },
   "BEI": {
     "yahoo": "BEI.DE",
-    "objetivo": 118.31,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 130.0,
     "coste_eur": 12354.6,
-    "titulos": 130,
-    "moneda": "EUR"
+    "precio_excel": 72.2,
+    "fuente_resolucion": "override"
   },
   "BSY": {
     "yahoo": "BSY",
-    "objetivo": 67.05,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 133.0,
     "coste_eur": 6962.9604,
-    "titulos": 133,
-    "moneda": "USD"
+    "precio_excel": 32.83,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "BCRX": {
     "yahoo": "BCRX",
-    "objetivo": 10.19,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 487.0,
     "coste_eur": 3612.4091,
-    "titulos": 487,
-    "moneda": "USD"
+    "precio_excel": 8.9,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "BTDR": {
     "yahoo": "BTDR",
-    "objetivo": 13.36,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 772.0,
     "coste_eur": 6612.7469,
-    "titulos": 772,
-    "moneda": "USD"
+    "precio_excel": 11.51,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "BHVN": {
     "yahoo": "BHVN",
-    "objetivo": 56.15,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 150.0,
     "coste_eur": 7907.2006,
-    "titulos": 150,
-    "moneda": "USD"
+    "precio_excel": 9.59,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "BNR": {
     "yahoo": "BNR.DE",
-    "objetivo": 73.96,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 195.0,
     "coste_eur": 11217.75,
-    "titulos": 195,
-    "moneda": "EUR"
+    "precio_excel": 60.28,
+    "fuente_resolucion": "override"
   },
   "AI": {
     "yahoo": "AI",
-    "objetivo": 43.35,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 235.0,
     "coste_eur": 7671.9362,
-    "titulos": 235,
-    "moneda": "USD"
+    "precio_excel": 8.795,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "CABK": {
     "yahoo": "CABK.MC",
-    "objetivo": 4.4132,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 6050.0,
     "coste_eur": 29604.4,
-    "titulos": 6050,
-    "moneda": "EUR"
+    "precio_excel": 10.36,
+    "fuente_resolucion": "override"
   },
   "CZR": {
     "yahoo": "CZR",
-    "objetivo": 33.73,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 400.0,
     "coste_eur": 8683.6792,
-    "titulos": 400,
-    "moneda": "USD"
+    "precio_excel": 28.03,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "CALM": {
     "yahoo": "CALM",
-    "objetivo": 103.04,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 120.0,
     "coste_eur": 8943.325,
-    "titulos": 120,
-    "moneda": "USD"
+    "precio_excel": 77.78,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "CA": {
     "yahoo": "CA.PA",
-    "objetivo": 15.75,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 500.0,
     "coste_eur": 6937.64,
-    "titulos": 500,
-    "moneda": "EUR"
+    "precio_excel": 16.465,
+    "fuente_resolucion": "override"
   },
   "CLNX": {
     "yahoo": "CLNX.MC",
-    "objetivo": 37.8637,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 352.0,
     "coste_eur": 10997.37,
-    "titulos": 352,
-    "moneda": "EUR"
+    "precio_excel": 28.33,
+    "fuente_resolucion": "override"
   },
   "CERT": {
     "yahoo": "CERT",
-    "objetivo": 13.18,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 900.0,
     "coste_eur": 9298.4954,
-    "titulos": 900,
-    "moneda": "USD"
+    "precio_excel": 6.24,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "CRNC": {
     "yahoo": "CRNC",
-    "objetivo": 14.34,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 1087.0,
     "coste_eur": 10016.5209,
-    "titulos": 1087,
-    "moneda": "USD"
+    "precio_excel": 8.93,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "CHPT": {
     "yahoo": "CHPT",
-    "objetivo": 42.0,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 100.0,
     "coste_eur": 3807.1178,
-    "titulos": 100,
-    "moneda": "USD"
+    "precio_excel": 6.79,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "CVX": {
     "yahoo": "CVX",
-    "objetivo": 169.6095,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 81.0,
     "coste_eur": 11358.481,
-    "titulos": 81,
-    "moneda": "USD"
+    "precio_excel": 184.79,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "CIE": {
     "yahoo": "CIE.MC",
-    "objetivo": 30.23,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 399.0,
     "coste_eur": 11002.53,
-    "titulos": 399,
-    "moneda": "EUR"
+    "precio_excel": 28.25,
+    "fuente_resolucion": "override"
   },
   "YOU": {
     "yahoo": "YOU",
-    "objetivo": 41.1581,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 350.0,
     "coste_eur": 10354.5922,
-    "titulos": 350,
-    "moneda": "USD"
+    "precio_excel": 54.74,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "COIN": {
     "yahoo": "COIN",
-    "objetivo": 262.48,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 23.0,
     "coste_eur": 4130.6921,
-    "titulos": 23,
-    "moneda": "USD"
+    "precio_excel": 196.71,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "CNDT": {
     "yahoo": "CNDT",
-    "objetivo": 4.9,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 3927.0,
     "coste_eur": 11685.211,
-    "titulos": 3927,
-    "moneda": "USD"
+    "precio_excel": 1.7,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "CON": {
     "yahoo": "CON.DE",
-    "objetivo": 67.38,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 240.0,
     "coste_eur": 12237.7,
-    "titulos": 240,
-    "moneda": "EUR"
+    "precio_excel": 64.6,
+    "fuente_resolucion": "override"
   },
   "AMV0": {
     "yahoo": "AMV0.DE",
-    "objetivo": 48.0,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 120.0,
     "coste_eur": 3572.1,
-    "titulos": 120,
-    "moneda": "EUR"
+    "precio_excel": 37.7,
+    "fuente_resolucion": "override"
   },
   "ACA": {
     "yahoo": "ACA.PA",
-    "objetivo": 19.5,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 827.0,
     "coste_eur": 14942.35,
-    "titulos": 827,
-    "moneda": "EUR"
+    "precio_excel": 17.135,
+    "fuente_resolucion": "override"
   },
   "CRBP": {
     "yahoo": "CRBP",
-    "objetivo": 16.317,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 456.0,
     "coste_eur": 4078.1503,
-    "titulos": 456,
-    "moneda": "USD"
+    "precio_excel": 10.08,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "DTG": {
     "yahoo": "DTG.DE",
-    "objetivo": 40.98,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 320.0,
     "coste_eur": 11295,
-    "titulos": 320,
-    "moneda": "EUR"
+    "precio_excel": 43.16,
+    "fuente_resolucion": "override"
   },
   "DHR": {
     "yahoo": "DHR",
-    "objetivo": 333.6192,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 52.0,
     "coste_eur": 11915.672,
-    "titulos": 52,
-    "moneda": "USD"
+    "precio_excel": 180.59,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "DDOG": {
     "yahoo": "DDOG",
-    "objetivo": 161.79,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 78.0,
     "coste_eur": 10774.5924,
-    "titulos": 78,
-    "moneda": "USD"
+    "precio_excel": 132.66,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "LHA": {
     "yahoo": "LHA.DE",
-    "objetivo": 9.58,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 1200.0,
     "coste_eur": 9783,
-    "titulos": 1200,
-    "moneda": "EUR"
+    "precio_excel": 7.338,
+    "fuente_resolucion": "override"
   },
   "DB1": {
     "yahoo": "DB1.DE",
-    "objetivo": 310.0,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 45.0,
     "coste_eur": 10590,
-    "titulos": 45,
-    "moneda": "EUR"
+    "precio_excel": 266.9,
+    "fuente_resolucion": "override"
   },
   "DOCU": {
     "yahoo": "DOCU",
-    "objetivo": 77.64,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 156.0,
     "coste_eur": 10986.0978,
-    "titulos": 156,
-    "moneda": "USD"
+    "precio_excel": 45.66,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "EDP": {
     "yahoo": "EDP.LS",
-    "objetivo": 3.97,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 5000.0,
     "coste_eur": 16609,
-    "titulos": 5000,
-    "moneda": "EUR"
+    "precio_excel": 4.529,
+    "fuente_resolucion": "override"
   },
   "EDIT": {
     "yahoo": "EDIT",
-    "objetivo": 2.88,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 4500.0,
     "coste_eur": 8997.21,
-    "titulos": 4500,
-    "moneda": "USD"
+    "precio_excel": 2.89,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "ENG": {
     "yahoo": "ENG.MC",
-    "objetivo": 17.49,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 1612.0,
     "coste_eur": 23474.25,
-    "titulos": 1612,
-    "moneda": "EUR"
+    "precio_excel": 16.89,
+    "fuente_resolucion": "override"
   },
   "ENC": {
     "yahoo": "ENC.MC",
-    "objetivo": 3.482,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 9045.0,
     "coste_eur": 31623.23,
-    "titulos": 9045,
-    "moneda": "EUR"
+    "precio_excel": 2.344,
+    "fuente_resolucion": "override"
   },
   "EGLA": {
     "yahoo": "EGLA.MI",
-    "objetivo": 5.498,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 2000.0,
     "coste_eur": 8555,
-    "titulos": 2000,
-    "moneda": "EUR"
+    "precio_excel": 1.192,
+    "fuente_resolucion": "override"
   },
   "ENXB": {
     "yahoo": "ENX.PA",
-    "objetivo": 166.0,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 100.0,
     "coste_eur": 12835.0,
-    "titulos": 100,
-    "moneda": "EUR"
+    "precio_excel": 145,
+    "fuente_resolucion": "override"
   },
   "ERF": {
     "yahoo": "ERF.PA",
-    "objetivo": null,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 233.0,
     "coste_eur": 14973.6,
-    "titulos": 233,
-    "moneda": "EUR"
+    "precio_excel": 61.54,
+    "fuente_resolucion": "override"
   },
   "EVK": {
     "yahoo": "EVK.DE",
-    "objetivo": 18.15,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 624.0,
     "coste_eur": 11986.44,
-    "titulos": 624,
-    "moneda": "EUR"
+    "precio_excel": 17.63,
+    "fuente_resolucion": "override"
   },
   "FAE": {
     "yahoo": "FAE.MC",
-    "objetivo": 3.725,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 17461.0,
     "coste_eur": 48684.41,
-    "titulos": 17461,
-    "moneda": "EUR"
+    "precio_excel": 4.785,
+    "fuente_resolucion": "override"
   },
   "YACHT": {
     "yahoo": "YACHT.MI",
-    "objetivo": 3.923,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 2529.0,
     "coste_eur": 8568.02,
-    "titulos": 2529,
-    "moneda": "EUR"
+    "precio_excel": 4.032,
+    "fuente_resolucion": "override"
   },
   "FDR": {
     "yahoo": "FDR.MC",
-    "objetivo": 32.7,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 469.0,
     "coste_eur": 12016.4,
-    "titulos": 469,
-    "moneda": "EUR"
+    "precio_excel": 20.86,
+    "fuente_resolucion": "override"
   },
   "FIVN": {
     "yahoo": "FIVN",
-    "objetivo": null,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 125.0,
     "coste_eur": 7919.1733,
-    "titulos": 125,
-    "moneda": "USD"
+    "precio_excel": 16.56,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "FTV": {
     "yahoo": "FTV",
-    "objetivo": 104.99,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 100.0,
     "coste_eur": 6153.4773,
-    "titulos": 100,
-    "moneda": "USD"
+    "precio_excel": 62.01,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "FRA": {
     "yahoo": "FRA.DE",
-    "objetivo": null,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 190.0,
     "coste_eur": 14992,
-    "titulos": 190,
-    "moneda": "EUR"
+    "precio_excel": 70.95,
+    "fuente_resolucion": "override"
   },
   "FNTN": {
     "yahoo": "FNTN.DE",
-    "objetivo": 34.65,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 450.0,
     "coste_eur": 12867,
-    "titulos": 450,
-    "moneda": "EUR"
+    "precio_excel": 26.86,
+    "fuente_resolucion": "override"
   },
   "FUBO": {
     "yahoo": "FUBO",
-    "objetivo": 2.43,
-    "coste_eur": 3314.0405,
+    "mic": null,
+    "moneda": "USD",
     "titulos": 133.32999999999998,
-    "moneda": "USD"
+    "coste_eur": 3314.0405,
+    "precio_excel": 11.585,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "GLXY": {
     "yahoo": "GLXY",
-    "objetivo": 37.89,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 300.0,
     "coste_eur": 7404.9876,
-    "titulos": 300,
-    "moneda": "USD"
+    "precio_excel": 25.05,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "GEHC": {
     "yahoo": "GEHC",
-    "objetivo": 112.0525,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 89.0,
     "coste_eur": 7331.2607,
-    "titulos": 89,
-    "moneda": "USD"
+    "precio_excel": 70.48,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "GNTX": {
     "yahoo": "GNTX",
-    "objetivo": 33.3,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 440.0,
     "coste_eur": 9121.9009,
-    "titulos": 440,
-    "moneda": "USD"
+    "precio_excel": 23.86,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "GEST": {
     "yahoo": "GEST.MC",
-    "objetivo": null,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 2165.0,
     "coste_eur": 14996.8,
-    "titulos": 2165,
-    "moneda": "EUR"
+    "precio_excel": 3.18,
+    "fuente_resolucion": "override"
   },
   "GIII": {
     "yahoo": "GIII",
-    "objetivo": 28.9,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 280.0,
     "coste_eur": 6306.429,
-    "titulos": 280,
-    "moneda": "USD"
+    "precio_excel": 31.68,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "DOM": {
     "yahoo": "DOM.MC",
-    "objetivo": 3.52,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 4000.0,
     "coste_eur": 13700,
-    "titulos": 4000,
-    "moneda": "EUR"
+    "precio_excel": 3.325,
+    "fuente_resolucion": "override"
   },
   "GFS": {
     "yahoo": "GFS",
-    "objetivo": 60.5,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 260.0,
     "coste_eur": 14304.3597,
-    "titulos": 260,
-    "moneda": "USD"
+    "precio_excel": 60.35,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "HAVAS": {
     "yahoo": "HAVAS.AS",
-    "objetivo": 6.764,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 452.0,
     "coste_eur": 6536.9,
-    "titulos": 452,
-    "moneda": "EUR"
+    "precio_excel": 16.2,
+    "fuente_resolucion": "override"
   },
   "HBX": {
     "yahoo": "HBX.MC",
-    "objetivo": 13.0,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 1098.0,
     "coste_eur": 11989.37,
-    "titulos": 1098,
-    "moneda": "EUR"
+    "precio_excel": 6.575,
+    "fuente_resolucion": "override"
   },
   "HFG": {
     "yahoo": "HFG.DE",
-    "objetivo": 14.07,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 1000.0,
     "coste_eur": 11445,
-    "titulos": 1000,
-    "moneda": "EUR"
+    "precio_excel": 4.501,
+    "fuente_resolucion": "override"
   },
   "HRMY": {
     "yahoo": "HRMY",
-    "objetivo": 53.61,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 400.0,
     "coste_eur": 11831.862,
-    "titulos": 400,
-    "moneda": "USD"
+    "precio_excel": 31.05,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "BOSS": {
     "yahoo": "BOSS.DE",
-    "objetivo": 48.04,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 300.0,
     "coste_eur": 11394,
-    "titulos": 300,
-    "moneda": "EUR"
+    "precio_excel": 36.57,
+    "fuente_resolucion": "override"
   },
   "IBE": {
     "yahoo": "IBE.MC",
-    "objetivo": 14.597,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 3051.0,
     "coste_eur": 14146.13,
-    "titulos": 3051,
-    "moneda": "EUR"
+    "precio_excel": 19.99,
+    "fuente_resolucion": "override"
   },
   "ITX": {
     "yahoo": "ITX.MC",
-    "objetivo": 47.62,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 643.0,
     "coste_eur": 19030.21,
-    "titulos": 643,
-    "moneda": "EUR"
+    "precio_excel": 52.12,
+    "fuente_resolucion": "override"
   },
   "INW": {
     "yahoo": "INW.MI",
-    "objetivo": 10.52,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 1000.0,
     "coste_eur": 9925.0,
-    "titulos": 1000,
-    "moneda": "EUR"
+    "precio_excel": 7.29,
+    "fuente_resolucion": "override"
   },
   "COL": {
     "yahoo": "COL.MC",
-    "objetivo": 6.43,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 1792.0,
     "coste_eur": 10014.21,
-    "titulos": 1792,
-    "moneda": "EUR"
+    "precio_excel": 5.44,
+    "fuente_resolucion": "override"
   },
   "INPST": {
     "yahoo": "INPST.AS",
-    "objetivo": 18.19,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 749.0,
     "coste_eur": 11999,
-    "titulos": 749,
-    "moneda": "EUR"
+    "precio_excel": 15.23,
+    "fuente_resolucion": "override"
   },
   "IAG": {
     "yahoo": "IAG.MC",
-    "objetivo": null,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 5848.0,
     "coste_eur": 29933.626,
-    "titulos": 5848,
-    "moneda": "EUR"
+    "precio_excel": 4.32,
+    "fuente_resolucion": "override"
   },
   "INTU": {
     "yahoo": "INTU",
-    "objetivo": 851.5419,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 13.0,
     "coste_eur": 8361.1095,
-    "titulos": 13,
-    "moneda": "USD"
+    "precio_excel": 389.92,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "ISRG": {
     "yahoo": "ISRG",
-    "objetivo": 666.25,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 20.0,
     "coste_eur": 9343.9667,
-    "titulos": 20,
-    "moneda": "USD"
+    "precio_excel": 470.99,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "IOVA": {
     "yahoo": "IOVA",
-    "objetivo": 12.35,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 491.0,
     "coste_eur": 5677.8538,
-    "titulos": 491,
-    "moneda": "USD"
+    "precio_excel": 3.43,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "IRDM": {
     "yahoo": "IRDM",
-    "objetivo": 39.72,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 512.0,
     "coste_eur": 14847.2805,
-    "titulos": 512,
-    "moneda": "USD"
+    "precio_excel": 37.4,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "IREN": {
     "yahoo": "IREN",
-    "objetivo": 64.94,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 109.0,
     "coste_eur": 4739.4917,
-    "titulos": 109,
-    "moneda": "USD"
+    "precio_excel": 48.36,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "JKHY": {
     "yahoo": "JKHY",
-    "objetivo": 232.6019,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 77.0,
     "coste_eur": 11313.8967,
-    "titulos": 77,
-    "moneda": "USD"
+    "precio_excel": 151.01,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "JEN": {
     "yahoo": "JEN.DE",
-    "objetivo": 30.36,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 418.0,
     "coste_eur": 9846.36,
-    "titulos": 418,
-    "moneda": "EUR"
+    "precio_excel": 33.5,
+    "fuente_resolucion": "override"
   },
   "KVUE": {
     "yahoo": "KVUE",
-    "objetivo": 27.46,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 300.0,
     "coste_eur": 5835.6265,
-    "titulos": 300,
-    "moneda": "USD"
+    "precio_excel": 17.53,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "KLAR": {
     "yahoo": "KLAR",
-    "objetivo": 38.69,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 493.0,
     "coste_eur": 8641.4548,
-    "titulos": 493,
-    "moneda": "USD"
+    "precio_excel": 13.97,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "LI": {
     "yahoo": "LI.PA",
-    "objetivo": 35.79,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 400.0,
     "coste_eur": 13127,
-    "titulos": 400,
-    "moneda": "EUR"
+    "precio_excel": 34.82,
+    "fuente_resolucion": "override"
   },
   "ROVI": {
     "yahoo": "ROVI.MC",
-    "objetivo": 54.48,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 124.0,
     "coste_eur": 5971.94,
-    "titulos": 124,
-    "moneda": "EUR"
+    "precio_excel": 80.7,
+    "fuente_resolucion": "override"
   },
   "SWIM": {
     "yahoo": "SWIM",
-    "objetivo": 8.75,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 1130.0,
     "coste_eur": 6235.905,
-    "titulos": 1130,
-    "moneda": "USD"
+    "precio_excel": 5.98,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "LEG": {
     "yahoo": "LEG.DE",
-    "objetivo": 101.03,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 133.0,
     "coste_eur": 10970.54,
-    "titulos": 133,
-    "moneda": "EUR"
+    "precio_excel": 60.2,
+    "fuente_resolucion": "override"
   },
   "LWLG": {
     "yahoo": "LWLG",
-    "objetivo": 9.85,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 800.0,
     "coste_eur": 5296.2151,
-    "titulos": 800,
-    "moneda": "USD"
+    "precio_excel": 12.45,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "LBTYA": {
     "yahoo": "LBTYA",
-    "objetivo": 13.94,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 515.0,
     "coste_eur": 4691.1299,
-    "titulos": 515,
-    "moneda": "USD"
+    "precio_excel": 11.61,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "LDA": {
     "yahoo": "LDA.MC",
-    "objetivo": 1.4,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 9416.0,
     "coste_eur": 11016.106,
-    "titulos": 9416,
-    "moneda": "EUR"
+    "precio_excel": 1.194,
+    "fuente_resolucion": "override"
   },
   "ALHG": {
     "yahoo": "ALHG.PA",
-    "objetivo": 1.9473,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 10000.0,
     "coste_eur": 15520.77,
-    "titulos": 10000,
-    "moneda": "EUR"
+    "precio_excel": 1.725,
+    "fuente_resolucion": "override"
   },
   "MARA": {
     "yahoo": "MARA",
-    "objetivo": 20.99,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 366.0,
     "coste_eur": 5349.0561,
-    "titulos": 366,
-    "moneda": "USD"
+    "precio_excel": 11.18,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "MAS": {
     "yahoo": "MAS",
-    "objetivo": 96.095,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 120.0,
     "coste_eur": 9285.4139,
-    "titulos": 120,
-    "moneda": "USD"
+    "precio_excel": 74.24,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "MKC": {
     "yahoo": "MKC",
-    "objetivo": 91.7683,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 125.0,
     "coste_eur": 9492.4637,
-    "titulos": 125,
-    "moneda": "USD"
+    "precio_excel": 50.4,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "MDT": {
     "yahoo": "MDT",
-    "objetivo": 99.1978,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 100.0,
     "coste_eur": 8207.6768,
-    "titulos": 100,
-    "moneda": "USD"
+    "precio_excel": 82.92,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "MFEB": {
     "yahoo": "MFEB.MI",
-    "objetivo": null,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 3153.0,
     "coste_eur": 14657.532,
-    "titulos": 3153,
-    "moneda": "EUR"
+    "precio_excel": 3.736,
+    "fuente_resolucion": "override"
   },
   "MSFT": {
     "yahoo": "MSFT",
-    "objetivo": 546.4461,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 23.0,
     "coste_eur": 9677.4736,
-    "titulos": 23,
-    "moneda": "USD"
+    "precio_excel": 424.82,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "MSTR": {
     "yahoo": "MSTR",
-    "objetivo": 220.29,
-    "coste_eur": 7104.548,
+    "mic": null,
+    "moneda": "USD",
     "titulos": 49.83,
-    "moneda": "USD"
+    "coste_eur": 7104.548,
+    "precio_excel": 169.2,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "MRNA": {
     "yahoo": "MRNA",
-    "objetivo": 108.0,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 69.0,
     "coste_eur": 6863.1669,
-    "titulos": 69,
-    "moneda": "USD"
+    "precio_excel": 48.7,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "MONC": {
     "yahoo": "MONC.MI",
-    "objetivo": 81.09,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 220.0,
     "coste_eur": 13131.68,
-    "titulos": 220,
-    "moneda": "EUR"
+    "precio_excel": 54.98,
+    "fuente_resolucion": "override"
   },
   "MOH": {
     "yahoo": "MOH",
-    "objetivo": 266.78,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 20.0,
     "coste_eur": 3034.6071,
-    "titulos": 20,
-    "moneda": "USD"
+    "precio_excel": 179.295,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "MTX": {
     "yahoo": "MTX",
-    "objetivo": 299.4,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 50.0,
     "coste_eur": 2971.3122,
-    "titulos": 50,
-    "moneda": "USD"
+    "precio_excel": 72.26,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "NTGY": {
     "yahoo": "NTGY.MC",
-    "objetivo": 35.0,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 489.0,
     "coste_eur": 12997.72,
-    "titulos": 489,
-    "moneda": "EUR"
+    "precio_excel": 27.4,
+    "fuente_resolucion": "override"
   },
   "NEOV": {
     "yahoo": "NEOV",
-    "objetivo": 7.99,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 450.0,
     "coste_eur": 2271.871,
-    "titulos": 450,
-    "moneda": "USD"
+    "precio_excel": 2.91,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "NEXI": {
     "yahoo": "NEXI.MI",
-    "objetivo": 6.512,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 2000.0,
     "coste_eur": 11946,
-    "titulos": 2000,
-    "moneda": "EUR"
+    "precio_excel": 3.872,
+    "fuente_resolucion": "override"
   },
   "NOV": {
     "yahoo": "NOV",
-    "objetivo": 20.0318,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 358.0,
     "coste_eur": 5712.2934,
-    "titulos": 358,
-    "moneda": "USD"
+    "precio_excel": 20.82,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "OHLA": {
     "yahoo": "OHLA.MC",
-    "objetivo": 0.45,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 30063.0,
     "coste_eur": 9999.856,
-    "titulos": 30063,
-    "moneda": "EUR"
+    "precio_excel": 0.467,
+    "fuente_resolucion": "override"
   },
   "OCI": {
     "yahoo": "OCI.AS",
-    "objetivo": 5.9054,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 425.0,
     "coste_eur": 2788.28,
-    "titulos": 425,
-    "moneda": "EUR"
+    "precio_excel": 3.56,
+    "fuente_resolucion": "override"
   },
   "OGN": {
     "yahoo": "OGN",
-    "objetivo": 24.1126,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 520.0,
     "coste_eur": 9571.0808,
-    "titulos": 520,
-    "moneda": "USD"
+    "precio_excel": 13.175,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "OC": {
     "yahoo": "OC",
-    "objetivo": 170.74,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 94.0,
     "coste_eur": 10224.4894,
-    "titulos": 94,
-    "moneda": "USD"
+    "precio_excel": 125.52,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "ORY": {
     "yahoo": "ORY.MC",
-    "objetivo": 3.9,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 7676.0,
     "coste_eur": 27336.856,
-    "titulos": 7676,
-    "moneda": "EUR"
+    "precio_excel": 2.812,
+    "fuente_resolucion": "override"
   },
   "PCRX": {
     "yahoo": "PCRX",
-    "objetivo": 37.97,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 490.0,
     "coste_eur": 11093.9169,
-    "titulos": 490,
-    "moneda": "USD"
+    "precio_excel": 25.55,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "PGY": {
     "yahoo": "PGY",
-    "objetivo": 31.06,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 300.0,
     "coste_eur": 6078.0447,
-    "titulos": 300,
-    "moneda": "USD"
+    "precio_excel": 13.29,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "PGEN": {
     "yahoo": "PGEN",
-    "objetivo": 5.0,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 1100.0,
     "coste_eur": 3257.8057,
-    "titulos": 1100,
-    "moneda": "USD"
+    "precio_excel": 3.96,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "PHM": {
     "yahoo": "PHM.MC",
-    "objetivo": 127.34,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 581.0,
     "coste_eur": 28821.452,
-    "titulos": 581,
-    "moneda": "EUR"
+    "precio_excel": 96.85,
+    "fuente_resolucion": "override"
   },
   "POOL": {
     "yahoo": "POOL",
-    "objetivo": 399.2752,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 25.0,
     "coste_eur": 9611.8799,
-    "titulos": 25,
-    "moneda": "USD"
+    "precio_excel": 225.28,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "PAH3": {
     "yahoo": "PAH3.DE",
-    "objetivo": 48.48,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 403.0,
     "coste_eur": 15252.43,
-    "titulos": 403,
-    "moneda": "EUR"
+    "precio_excel": 31.33,
+    "fuente_resolucion": "override"
   },
   "PRZO": {
     "yahoo": "PRZO",
-    "objetivo": 2.09,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 3378.0,
     "coste_eur": 4365.8067,
-    "titulos": 3378,
-    "moneda": "USD"
+    "precio_excel": 0.73,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "PUIG": {
     "yahoo": "PUIG.MC",
-    "objetivo": 20.71,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 910.0,
     "coste_eur": 16114.03,
-    "titulos": 910,
-    "moneda": "EUR"
+    "precio_excel": 18.38,
+    "fuente_resolucion": "override"
   },
   "RAL": {
     "yahoo": "RAL",
-    "objetivo": null,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 33.0,
     "coste_eur": 1343.6306,
-    "titulos": 33,
-    "moneda": "USD"
+    "precio_excel": 44.37,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "REP": {
     "yahoo": "REP.MC",
-    "objetivo": 5.183,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 2947.0,
     "coste_eur": 29511.684,
-    "titulos": 2947,
-    "moneda": "EUR"
+    "precio_excel": 21.22,
+    "fuente_resolucion": "override"
   },
   "RGTI": {
     "yahoo": "RGTI",
-    "objetivo": 20.92,
-    "coste_eur": 4238.5014,
+    "mic": null,
+    "moneda": "USD",
     "titulos": 296.56,
-    "moneda": "USD"
+    "coste_eur": 4238.5014,
+    "precio_excel": 16.915,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "RGEN": {
     "yahoo": "RGEN",
-    "objetivo": 154.89,
-    "coste_eur": 4238.8121,
+    "mic": null,
+    "moneda": "USD",
     "titulos": 38.13,
-    "moneda": "USD"
+    "coste_eur": 4238.8121,
+    "precio_excel": 118.29,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "RIOT": {
     "yahoo": "RIOT",
-    "objetivo": 21.59,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 400.0,
     "coste_eur": 5254.7352,
-    "titulos": 400,
-    "moneda": "USD"
+    "precio_excel": 18.265,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "SCYR": {
     "yahoo": "SCYR.MC",
-    "objetivo": null,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 8253.0,
     "coste_eur": 15019.72,
-    "titulos": 8253,
-    "moneda": "EUR"
+    "precio_excel": 4.646,
+    "fuente_resolucion": "override"
   },
   "SPM": {
     "yahoo": "SPM.MI",
-    "objetivo": 2.43,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 4795.0,
     "coste_eur": 11087.065,
-    "titulos": 4795,
-    "moneda": "EUR"
+    "precio_excel": 4.522,
+    "fuente_resolucion": "override"
   },
   "SAN": {
     "yahoo": "SAN.PA",
-    "objetivo": 94.3,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 119.0,
     "coste_eur": 9999.1,
-    "titulos": 119,
-    "moneda": "EUR"
+    "precio_excel": 78.9,
+    "fuente_resolucion": "override"
   },
   "SAP": {
     "yahoo": "SAP.DE",
-    "objetivo": 312.4,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 45.0,
     "coste_eur": 12162.75,
-    "titulos": 45,
-    "moneda": "EUR"
+    "precio_excel": 148.96,
+    "fuente_resolucion": "override"
   },
   "SDGR": {
     "yahoo": "SDGR",
-    "objetivo": 30.1,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 387.0,
     "coste_eur": 8654.0913,
-    "titulos": 387,
-    "moneda": "USD"
+    "precio_excel": 11.74,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "ST": {
     "yahoo": "ST",
-    "objetivo": 34.03,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 300.0,
     "coste_eur": 8088.9738,
-    "titulos": 300,
-    "moneda": "USD"
+    "precio_excel": 42.25,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "S": {
     "yahoo": "S",
-    "objetivo": 37.59,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 325.0,
     "coste_eur": 8955.1566,
-    "titulos": 325,
-    "moneda": "USD"
+    "precio_excel": 14.63,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "SHL": {
     "yahoo": "SHL.DE",
-    "objetivo": 62.13,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 180.0,
     "coste_eur": 9112.2,
-    "titulos": 180,
-    "moneda": "EUR"
+    "precio_excel": 35.5,
+    "fuente_resolucion": "override"
   },
   "LIGHT": {
     "yahoo": "LIGHT.AS",
-    "objetivo": 27.53,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 530.0,
     "coste_eur": 11982.4,
-    "titulos": 530,
-    "moneda": "EUR"
+    "precio_excel": 20.08,
+    "fuente_resolucion": "override"
   },
   "SIX2": {
     "yahoo": "SIX2.DE",
-    "objetivo": 97.75,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 200.0,
     "coste_eur": 14815,
-    "titulos": 200,
-    "moneda": "EUR"
+    "precio_excel": 70.3,
+    "fuente_resolucion": "override"
   },
   "S92": {
     "yahoo": "S92.DE",
-    "objetivo": 58.0,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 155.0,
     "coste_eur": 9609.5,
-    "titulos": 155,
-    "moneda": "EUR"
+    "precio_excel": 50.25,
+    "fuente_resolucion": "override"
   },
   "SNDL": {
     "yahoo": "SNDL",
-    "objetivo": 2.34,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 4278.0,
     "coste_eur": 7759.186,
-    "titulos": 4278,
-    "moneda": "USD"
+    "precio_excel": 1.51,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "SNOW": {
     "yahoo": "SNOW",
-    "objetivo": 170.0,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 45.0,
     "coste_eur": 7026.2036,
-    "titulos": 45,
-    "moneda": "USD"
+    "precio_excel": 144.24,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "SW": {
     "yahoo": "SW.PA",
-    "objetivo": 64.45,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 220.0,
     "coste_eur": 12109.3,
-    "titulos": 220,
-    "moneda": "EUR"
+    "precio_excel": 42.32,
+    "fuente_resolucion": "override"
   },
   "SOL": {
     "yahoo": "SOL.MC",
-    "objetivo": null,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 2141.0,
     "coste_eur": 11496.76,
-    "titulos": 2141,
-    "moneda": "EUR"
+    "precio_excel": 0.96,
+    "fuente_resolucion": "override"
   },
   "SAH": {
     "yahoo": "SAH",
-    "objetivo": 103.5981,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 135.0,
     "coste_eur": 7521.9816,
-    "titulos": 135,
-    "moneda": "USD"
+    "precio_excel": 71.58,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "SPT": {
     "yahoo": "SPT",
-    "objetivo": 40.29,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 229.0,
     "coste_eur": 7470.2213,
-    "titulos": 229,
-    "moneda": "USD"
+    "precio_excel": 6.01,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "SFM": {
     "yahoo": "SFM",
-    "objetivo": 94.94,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 125.0,
     "coste_eur": 7915.9377,
-    "titulos": 125,
-    "moneda": "USD"
+    "precio_excel": 71.62,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "SQRL": {
     "yahoo": "SQRL.MC",
-    "objetivo": null,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 4204.0,
     "coste_eur": 13220.3112,
-    "titulos": 4204,
-    "moneda": "EUR"
+    "precio_excel": 2.63,
+    "fuente_resolucion": "override"
   },
   "STLAM": {
     "yahoo": "STLAM.MI",
-    "objetivo": 13.97,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 786.0,
     "coste_eur": 10012.92,
-    "titulos": 786,
-    "moneda": "EUR"
+    "precio_excel": 6.836,
+    "fuente_resolucion": "override"
   },
   "SYENS": {
     "yahoo": "SYENS.BR",
-    "objetivo": 100.94,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 127.0,
     "coste_eur": 11012.2,
-    "titulos": 127,
-    "moneda": "EUR"
+    "precio_excel": 55.95,
+    "fuente_resolucion": "override"
   },
   "SY1": {
     "yahoo": "SY1.DE",
-    "objetivo": 126.5,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 100.0,
     "coste_eur": 10158,
-    "titulos": 100,
-    "moneda": "EUR"
+    "precio_excel": 73.92,
+    "fuente_resolucion": "override"
   },
   "TE": {
     "yahoo": "TE.PA",
-    "objetivo": 52.27,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 340.0,
     "coste_eur": 12561,
-    "titulos": 340,
-    "moneda": "EUR"
+    "precio_excel": 40.1,
+    "fuente_resolucion": "override"
   },
   "TDOC": {
     "yahoo": "TDOC",
-    "objetivo": null,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 300.0,
     "coste_eur": 7174.629,
-    "titulos": 300,
-    "moneda": "USD"
+    "precio_excel": 5.86,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "TEF": {
     "yahoo": "TEF.MC",
-    "objetivo": null,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 4628.0,
     "coste_eur": 20019.2248,
-    "titulos": 4628,
-    "moneda": "EUR"
+    "precio_excel": 3.798,
+    "fuente_resolucion": "override"
   },
   "TEP": {
     "yahoo": "TEP.PA",
-    "objetivo": 81.85,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 89.0,
     "coste_eur": 11526.95,
-    "titulos": 89,
-    "moneda": "EUR"
+    "precio_excel": 55.42,
+    "fuente_resolucion": "override"
   },
   "COO": {
     "yahoo": "COO",
-    "objetivo": 121.24,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 96.0,
     "coste_eur": 9061.3512,
-    "titulos": 96,
-    "moneda": "USD"
+    "precio_excel": 64.34,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "HNST": {
     "yahoo": "HNST",
-    "objetivo": 6.79,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 2519.0,
     "coste_eur": 9485.6201,
-    "titulos": 2519,
-    "moneda": "USD"
+    "precio_excel": 3.48,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "GT": {
     "yahoo": "GT",
-    "objetivo": 12.53,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 1222.0,
     "coste_eur": 9159.1572,
-    "titulos": 1222,
-    "moneda": "USD"
+    "precio_excel": 7.14,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "TGTX": {
     "yahoo": "TGTX",
-    "objetivo": 43.79,
-    "coste_eur": 7815.5973,
+    "mic": null,
+    "moneda": "USD",
     "titulos": 277.0935,
-    "moneda": "USD"
+    "coste_eur": 7815.5973,
+    "precio_excel": 35.38,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "DJT": {
     "yahoo": "DJT",
-    "objetivo": 50.49,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 118.0,
     "coste_eur": 3764.4068,
-    "titulos": 118,
-    "moneda": "USD"
+    "precio_excel": 9.95,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "TMUS": {
     "yahoo": "TMUS",
-    "objetivo": 230.5902,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 50.0,
     "coste_eur": 8497.494,
-    "titulos": 50,
-    "moneda": "USD"
+    "precio_excel": 182.75,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "TUB": {
     "yahoo": "TUB.MC",
-    "objetivo": 4.836,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 7987.0,
     "coste_eur": 26001.9,
-    "titulos": 7987,
-    "moneda": "EUR"
+    "precio_excel": 2.93,
+    "fuente_resolucion": "override"
   },
   "TRG": {
     "yahoo": "TRG.MC",
-    "objetivo": 0.799,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 20000.0,
     "coste_eur": 12121.38,
-    "titulos": 20000,
-    "moneda": "EUR"
+    "precio_excel": 0.14,
+    "fuente_resolucion": "override"
   },
   "TUI1": {
     "yahoo": "TUI1.DE",
-    "objetivo": 9.68,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 1500.0,
     "coste_eur": 11583,
-    "titulos": 1500,
-    "moneda": "EUR"
+    "precio_excel": 6.462,
+    "fuente_resolucion": "override"
   },
   "UBER": {
     "yahoo": "UBER",
-    "objetivo": 94.94,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 115.0,
     "coste_eur": 7602.7455,
-    "titulos": 115,
-    "moneda": "USD"
+    "precio_excel": 76.275,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "RARE": {
     "yahoo": "RARE",
-    "objetivo": 71.68,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 125.0,
     "coste_eur": 6383.9506,
-    "titulos": 125,
-    "moneda": "USD"
+    "precio_excel": 23.99,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "UPM": {
     "yahoo": "UPM.HE",
-    "objetivo": 40.3,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 311.0,
     "coste_eur": 10949.76,
-    "titulos": 311,
-    "moneda": "EUR"
+    "precio_excel": 24.86,
+    "fuente_resolucion": "override"
   },
   "VREX": {
     "yahoo": "VREX",
-    "objetivo": 16.75,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 702.0,
     "coste_eur": 9533.699,
-    "titulos": 702,
-    "moneda": "USD"
+    "precio_excel": 12.71,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "VRLA": {
     "yahoo": "VRLA.PA",
-    "objetivo": 34.53,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 295.0,
     "coste_eur": 9625.7,
-    "titulos": 295,
-    "moneda": "EUR"
+    "precio_excel": 20.28,
+    "fuente_resolucion": "override"
   },
   "VRT": {
     "yahoo": "VRT",
-    "objetivo": 159.8731,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 32.0,
     "coste_eur": 3895.0247,
-    "titulos": 32,
-    "moneda": "USD"
+    "precio_excel": 322.43,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "VERI": {
     "yahoo": "VERI",
-    "objetivo": 4.014,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 200.0,
     "coste_eur": 694.34,
-    "titulos": 200,
-    "moneda": "USD"
+    "precio_excel": 2.18,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "DG": {
     "yahoo": "DG.PA",
-    "objetivo": 103.41,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 98.0,
     "coste_eur": 9990,
-    "titulos": 98,
-    "moneda": "EUR"
+    "precio_excel": 127.75,
+    "fuente_resolucion": "override"
   },
   "VIS": {
     "yahoo": "VIS.MC",
-    "objetivo": 53.53,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 362.0,
     "coste_eur": 19947.09,
-    "titulos": 362,
-    "moneda": "EUR"
+    "precio_excel": 59.1,
+    "fuente_resolucion": "override"
   },
   "VNA": {
     "yahoo": "VNA.DE",
-    "objetivo": 37.92,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 353.0,
     "coste_eur": 10040.2,
-    "titulos": 353,
-    "moneda": "EUR"
+    "precio_excel": 23.1,
+    "fuente_resolucion": "override"
   },
   "VOYG": {
     "yahoo": "VOYG",
-    "objetivo": 42.89,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 100.0,
     "coste_eur": 2787.946,
-    "titulos": 100,
-    "moneda": "USD"
+    "precio_excel": 27.21,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "WCH": {
     "yahoo": "WCH.DE",
-    "objetivo": 95.7,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 118.0,
     "coste_eur": 9294.52,
-    "titulos": 118,
-    "moneda": "EUR"
+    "precio_excel": 97.75,
+    "fuente_resolucion": "override"
   },
   "XERS": {
     "yahoo": "XERS",
-    "objetivo": 4.25,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 1910.0,
     "coste_eur": 12822.5024,
-    "titulos": 1910,
-    "moneda": "USD"
+    "precio_excel": 6.12,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "WEAV": {
     "yahoo": "WEAV",
-    "objetivo": 9.49,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 2000.0,
     "coste_eur": 13073.8725,
-    "titulos": 2000,
-    "moneda": "USD"
+    "precio_excel": 4.87,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "WDAY": {
     "yahoo": "WDAY",
-    "objetivo": 296.76,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 32.0,
     "coste_eur": 7151.7776,
-    "titulos": 32,
-    "moneda": "USD"
+    "precio_excel": 117.83,
+    "fuente_resolucion": "fallback_usd_directo"
   },
   "WLN": {
     "yahoo": "WLN.PA",
-    "objetivo": 12.14,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 7000.0,
     "coste_eur": 13393,
-    "titulos": 7000,
-    "moneda": "EUR"
+    "precio_excel": 0.27,
+    "fuente_resolucion": "override"
   },
   "ZAL": {
     "yahoo": "ZAL.DE",
-    "objetivo": 38.88,
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 507.0,
     "coste_eur": 17217.76,
-    "titulos": 507,
-    "moneda": "EUR"
+    "precio_excel": 21.78,
+    "fuente_resolucion": "override"
   },
   "Z": {
     "yahoo": "Z",
-    "objetivo": 55.14,
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 100.0,
     "coste_eur": 3937.8184,
-    "titulos": 100,
-    "moneda": "USD"
+    "precio_excel": 45.59,
+    "fuente_resolucion": "fallback_usd_directo"
   }
 }

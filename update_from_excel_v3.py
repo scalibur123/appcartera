@@ -81,6 +81,23 @@ MIC_TO_YAHOO_SFX = {
 REGEX_MIC = re.compile(r"\(([A-Z][A-Z0-9]{2,4}):([A-Z0-9]+)\)")
 
 
+BANCO_NORMALIZE = {
+    'r4': 'R4', 'R4': 'R4',
+    'ing': 'ING', 'Ing': 'ING', 'ING': 'ING',
+    'ibkr': 'IBKR', 'IBKR': 'IBKR', 'Ibkr': 'IBKR',
+    'revolut': 'REVOLUT', 'Revolut': 'REVOLUT',
+    'medio': 'MEDIOLANUM', 'MEDIO': 'MEDIOLANUM', 'Medio': 'MEDIOLANUM',
+    'myinv': 'MYINV', 'Myinv': 'MYINV', 'MyInv': 'MYINV',
+    'r4/ing': 'R4/ING', 'R4/ING': 'R4/ING', 'ing/r4': 'R4/ING',
+    'medio/ing': 'MEDIO/ING', 'MEDIO/ING': 'MEDIO/ING', 'ing/medio': 'MEDIO/ING',
+}
+
+def normalizar_banco(b):
+    if not b: return '-'
+    b = str(b).strip()
+    return BANCO_NORMALIZE.get(b, b.upper())
+
+
 def cargar_overrides():
     if OVERRIDE_JSON.exists():
         with open(OVERRIDE_JSON, "r", encoding="utf-8") as f:
@@ -106,6 +123,22 @@ def cargar_mic_externos():
                 mapa[tckr] = mic
     return mapa
 
+
+def leer_diana(wb, tickers_vivos):
+    if 'DIANA' not in wb.sheetnames:
+        return {}
+    ws = wb['DIANA']
+    objetivos = {}
+    for row in range(12, 221):
+        ticker = ws[f'B{row}'].value
+        objetivo = ws[f'AC{row}'].value
+        if not ticker or not isinstance(ticker, str): continue
+        ticker = ticker.strip()
+        if ticker not in tickers_vivos: continue
+        if ticker in objetivos: continue
+        if not isinstance(objetivo, (int, float)): continue
+        objetivos[ticker] = round(float(objetivo), 4)
+    return objetivos
 
 def leer_excel_con_mic():
     """
@@ -165,7 +198,7 @@ def leer_excel_con_mic():
                 "moneda": moneda,
                 "precio_excel": precio_excel,
                 "mic": mic,
-                "banco": "-",
+                "banco": normalizar_banco(ws[f"H{row}"].value),
                 "objetivo": None,
             }
             orden.append(ticker)
@@ -180,6 +213,20 @@ def leer_excel_con_mic():
             posiciones[ticker]["nombre"] = nombre_completo or ticker
             if ticker in sin_mic:
                 sin_mic.remove(ticker)
+
+    # Leer objetivos de pestana DIANA
+    tickers_vivos = set(posiciones.keys())
+    objetivos = leer_diana(wb, tickers_vivos)
+    for t, obj in objetivos.items():
+        if t in posiciones:
+            posiciones[t]['objetivo'] = obj
+    print(f'OK {len(objetivos)} objetivos leidos de pestana DIANA')
+
+    # DEBUG
+    fubo = posiciones.get('FUBO')
+    abeo = posiciones.get('ABEO')
+    if fubo: print(f'DEBUG FUBO en posiciones: objetivo={fubo.get("objetivo")}, banco={fubo.get("banco")}')
+    if abeo: print(f'DEBUG ABEO en posiciones: objetivo={abeo.get("objetivo")}, banco={abeo.get("banco")}')
 
     return [posiciones[t] for t in orden], sin_mic
 
@@ -235,8 +282,8 @@ def construir_const_C_compacta(posiciones, ticker_map):
             "coste_eur": coste,
             "precio_medio": precio_medio,
             "moneda": p["moneda"],
-            "banco": "-",
-            "objetivo": None,
+            "banco": p.get("banco", "-"),
+            "objetivo": p.get("objetivo"),
             "symbol": sym,
         }
         items.append(json.dumps(item_json, ensure_ascii=False, separators=(",", ":")))
