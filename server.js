@@ -29,7 +29,8 @@ function fetchYahoo(symbol) {
             price: m.regularMarketPrice,
             currency: m.currency,
             exchange: m.fullExchangeName || m.exchangeName,
-            changePct: m.regularMarketChangePercent || 0
+            changePct: m.regularMarketChangePercent || 0,
+            longName: m.longName || m.shortName || null
           });
         } catch (e) {
           resolve({ symbol, error: 'parse_error' });
@@ -103,7 +104,8 @@ async function handleSymbols(req, res, symbolsParam) {
       result: results.filter(r => !r.error).map(r => ({
         symbol: r.symbol,
         regularMarketPrice: r.price,
-        regularMarketChangePercent: r.changePct
+        regularMarketChangePercent: r.changePct,
+        longName: r.longName
       }))
     }
   };

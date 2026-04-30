@@ -162,7 +162,7 @@ async function fetchBatch(tickers){
     const r=await fetch(`/?symbols=${encodeURIComponent(symbols)}`,{signal:AbortSignal.timeout(15000)});
     const data=await r.json();
     const out={};
-    for(const q of (data?.quoteResponse?.result||[])) out[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent||0};
+    for(const q of (data?.quoteResponse?.result||[])) {out[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent||0}; if(q.longName) names[q.symbol]=q.longName;}
     return out;
   }catch(e){dbg('Error: '+e.message);return {};}
 }
@@ -197,11 +197,6 @@ async function startLoad(){
   }
 
   for(const item of C){if(combined[item.symbol])prices[item.symbol]=combined[item.symbol];}
-  // Cargar nombres de Yahoo en background (no bloquea UI)
-  fetch('/names?symbols=' + C.map(i => i.symbol).join(','))
-    .then(r => r.json())
-    .then(n => { names = n; updateResumen(); renderCartera(); renderDiana(); })
-    .catch(e => console.error('Error nombres:', e));
 
   
 
