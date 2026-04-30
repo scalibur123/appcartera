@@ -114,6 +114,13 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
     <button class="filter-btn" id="cf-ING" onclick="fC('ING',this)">ING</button>
     <button class="filter-btn" id="cf-R4" onclick="fC('R4',this)">R4</button>
     <button class="filter-btn" id="cf-IBKR" onclick="fC('IBKR',this)">IBKR</button>
+    <button class="filter-btn" id="cf-MEDIOLANUM" onclick="fC('MEDIOLANUM',this)">MEDIOLANUM</button>
+    <button class="filter-btn" id="cf-REVOLUT" onclick="fC('REVOLUT',this)">REVOLUT</button>
+    <button class="filter-btn" id="cf-MYINV" onclick="fC('MYINV',this)">MYINV</button>
+    <button class="filter-btn" id="cf-R4/ING" onclick="fC('R4/ING',this)">R4/ING</button>
+    <button class="filter-btn" id="cf-MEDIO/ING" onclick="fC('MEDIO/ING',this)">MEDIO/ING</button>
+    <button class="filter-btn" id="cf-sort-pct" onclick="setSortC('pct',this)">↑ % día</button>
+    <button class="filter-btn" id="cf-sort-val" onclick="setSortC('val',this)">↑ Valor</button>
   </div>
   <div class="list-count" id="c-count"></div>
   <div class="list-card" id="c-list"><div class="empty">Cargando…</div></div>
@@ -132,6 +139,8 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
     <button class="filter-btn" id="df-MYINV" onclick="fD('MYINV',this)">MYINV</button>
     <button class="filter-btn" id="df-R4/ING" onclick="fD('R4/ING',this)">R4/ING</button>
     <button class="filter-btn" id="df-MEDIO/ING" onclick="fD('MEDIO/ING',this)">MEDIO/ING</button>
+    <button class="filter-btn" id="df-sort-pct" onclick="setSortD('pct',this)">↑ % día</button>
+    <button class="filter-btn" id="df-sort-val" onclick="setSortD('val',this)">↑ Valor</button>
   </div>
   <div class="list-count" id="d-count"></div>
   <div class="list-card" id="d-list"><div class="empty">Cargando…</div></div>
@@ -154,7 +163,7 @@ const C=[{"tckr":"ABEO","nombre":"ABEO","titulos":800.0,"coste_eur":4922.2951,"p
 
 const SFX={"A3M":".MC","ACX":".MC","ADX":".MC","AED":".MC","ABI":".BR","ACA":".PA","ADS":".DE","AKZA":".AS","ALHG":".MC","ALM":".MC","ALO":".PA","AMP":".MC","AMV0":".MC","ANA":".MC","ARCAD":".BR","ARIS":".MC","BAYN":".DE","BEI":".DE","BMW":".DE","BNR":".DE","BOSS":".DE","CA":".PA","CABK":".MC","CIE":".MC","CLNX":".MC","COL":".MC","CON":".DE","DB1":".DE","DG":".PA","DOM":".PA","DTG":".DE","EDP":".LS","EGLA":".PA","ENC":".MC","ENG":".MC","ENXB":".DE","ERF":".PA","EVK":".DE","FAE":".MC","FDR":".MC","FNTN":".DE","FRA":".PA","GEST":".MC","HBX":".MC","HFG":".DE","IAG":".MC","IBE":".MC","INW":".MI","INPST":".MC","ITX":".MC","JEN":".MC","LDA":".MC","LEG":".MC","LHA":".DE","LI":".PA","LIGHT":".PA","MFEB":".MC","MONC":".MI","MTS":".MC","NEXI":".MI","NTGY":".MC","OCI":".AS","OHLA":".MC","ORY":".MC","PAH3":".DE","PHM":".MC","PUIG":".MC","REP":".MC","ROVI":".MC","S93":".DE","SAN":".MC","SAP":".DE","SCYR":".MC","SHL":".DE","SIX2":".DE","SOL":".MC","SPM":".MI","SQRL":".MC","STLAM":".MI","SW":".MC","SY1":".DE","SYENS":".MC","TE":".PA","TEF":".MC","TEP":".MC","TRG":".MC","TUB":".MC","TUI1":".DE","UIC1":".MC","UPM":".HE","VIS":".MC","VNA":".DE","VRLA":".MC","WCH":".DE","WLN":".PA","YACHT":".MC","ZAL":".DE"};
 
-let prices={}, names={}, cFilter='all', dFilter='all', busy=false;
+let prices={}, names={}, cFilter='all', dFilter='all', busy=false, cSort=null, dSort=null;
 let eurUsd=null;
 function yT(i){return i.moneda==='EUR'?(i.tckr+(SFX[i.tckr]||'')):i.tckr;}
 function dbg(msg){const el=document.getElementById('dbg');if(el)el.textContent=msg;}
@@ -246,13 +255,18 @@ function fD(f,btn){dFilter=f;document.querySelectorAll('[id^="df-"]').forEach(b=
 
 function renderCartera(){
   const s=document.getElementById('csearch').value.trim().toUpperCase();
-  const data=C.filter(i=>{
+  const data=sortItems(C,cSort).filter(i=>{
     if(s&&!i.tckr.includes(s))return false;
     if(cFilter==='EUR')return i.moneda==='EUR';
     if(cFilter==='USD')return i.moneda==='USD';
     if(cFilter==='ING')return i.banco.toUpperCase().includes('ING');
     if(cFilter==='R4')return i.banco.toUpperCase().includes('R4');
     if(cFilter==='IBKR')return i.banco.toUpperCase().includes('IBKR');
+    if(cFilter==='MEDIOLANUM')return i.banco.toUpperCase().includes('MEDIO');
+    if(cFilter==='REVOLUT')return i.banco.toUpperCase().includes('REVOLUT');
+    if(cFilter==='MYINV')return i.banco.toUpperCase().includes('MYINV');
+    if(cFilter==='R4/ING')return i.banco==='R4/ING';
+    if(cFilter==='MEDIO/ING')return i.banco==='MEDIO/ING';
     return true;
   });
   document.getElementById('c-count').textContent=data.length+' valores';
@@ -268,7 +282,7 @@ function renderCartera(){
 }
 
 function renderDiana(){
-  let data=C.filter(i=>i.objetivo).filter(item=>{
+  let data=sortItems(C,dSort).filter(i=>i.objetivo).filter(item=>{
     const p=prices[item.symbol]?.price;
     if(dFilter==='neg')return p!=null&&p>=item.objetivo;
     if(dFilter==='warn'){if(!p)return false;const d=(item.objetivo-p)/item.objetivo;return d>=0&&d<=0.07;}
@@ -299,6 +313,10 @@ function renderDiana(){
 }
 
 startLoad();
+
+function setSortC(s,btn){if(cSort===s){cSort=null;btn.classList.remove('active');}else{cSort=s;document.querySelectorAll('[id^="cf-sort-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}renderCartera();}
+function setSortD(s,btn){if(dSort===s){dSort=null;btn.classList.remove('active');}else{dSort=s;document.querySelectorAll('[id^="df-sort-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}renderDiana();}
+function sortItems(items,sortBy){if(!sortBy)return items;return [...items].sort((a,b)=>{if(sortBy==='pct'){const pa=prices[a.symbol]?.pct||-999;const pb=prices[b.symbol]?.pct||-999;return pb-pa;}if(sortBy==='val'){const va=(prices[a.symbol]?.price||0)*a.titulos;const vb=(prices[b.symbol]?.price||0)*b.titulos;return vb-va;}return 0;});}
 </script>
 </body>
 </html>
