@@ -29,7 +29,7 @@ function fetchYahoo(symbol) {
             price: m.regularMarketPrice,
             currency: m.currency,
             exchange: m.fullExchangeName || m.exchangeName,
-            changePct: m.regularMarketChangePercent || 0,
+            changePct: (m.regularMarketChangePercent != null) ? m.regularMarketChangePercent : ((m.regularMarketPrice && m.chartPreviousClose) ? ((m.regularMarketPrice - m.chartPreviousClose) / m.chartPreviousClose) * 100 : 0),
             longName: m.longName || m.shortName || null
           });
         } catch (e) {
