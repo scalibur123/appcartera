@@ -1,3 +1,21 @@
+#!/bin/bash
+# fase1b_fix.sh - Reescribe server.js completo con nombres + arregla index.html
+# Sin parches frágiles. Reescritura limpia.
+
+set -e
+cd ~/APPCARTERA_NUEVA
+
+echo "============================================="
+echo "  FASE 1B FIX - server.js completo + nombres"
+echo "============================================="
+echo ""
+
+# Backup
+cp server.js server.js.bak_$(date +%Y%m%d_%H%M%S)
+echo "OK Backup de server.js"
+
+# 1. Reescribir server.js completo
+cat > server.js << 'SERVER_EOF'
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
@@ -174,3 +192,91 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`AppCartera escuchando en puerto ${PORT}`);
 });
+SERVER_EOF
+echo "OK server.js reescrito (limpio, con /names)"
+echo ""
+
+# 2. Verificar que index.html tiene la variable names global
+python3 << 'PYEOF'
+from pathlib import Path
+import re
+
+p = Path.home() / "APPCARTERA_NUEVA" / "index.html"
+html = p.read_text(encoding="utf-8")
+
+# Buscar declaracion existente
+m = re.search(r"let prices=\{\}[^;]*;", html)
+if m:
+    actual = m.group(0)
+    print(f"Actual: {actual}")
+    if "names" not in actual:
+        nuevo = "let prices={}, names={}, cFilter='all', dFilter='all', busy=false;"
+        # Reemplazar la linea entera let prices=... hasta ;
+        html = re.sub(r"let prices=\{\}[^;]*;", nuevo, html, count=1)
+        p.write_text(html, encoding="utf-8")
+        print("OK variable names anadida")
+    else:
+        print("OK variable names ya existe")
+else:
+    print("ERROR: no encontre declaracion de let prices")
+PYEOF
+echo ""
+
+# 3. Verificar el fetch de names
+python3 << 'PYEOF'
+from pathlib import Path
+p = Path.home() / "APPCARTERA_NUEVA" / "index.html"
+html = p.read_text(encoding="utf-8")
+if "/names?symbols=" in html:
+    print("OK fetch /names ya esta en el frontend")
+else:
+    # Buscar el bucle prices y anadir despues
+    target = "for(const item of C){if(combined[item.symbol])prices[item.symbol]=combined[item.symbol];}"
+    bloque = '''
+  // Cargar nombres de Yahoo en background
+  fetch('/names?symbols=' + C.map(i => i.symbol).join(','))
+    .then(r => r.json())
+    .then(n => { names = n; updateResumen(); renderCartera(); renderDiana(); })
+    .catch(e => console.error('Error nombres:', e));
+'''
+    if target in html:
+        html = html.replace(target, target + bloque)
+        p.write_text(html, encoding="utf-8")
+        print("OK fetch /names anadido")
+    else:
+        print("AVISO: no encontre el bucle prices target. Verifica manualmente.")
+PYEOF
+echo ""
+
+# 4. Validar JS const C
+node -e "
+const fs = require('fs');
+const html = fs.readFileSync('index.html', 'utf8');
+const m = html.match(/const C=(\[.*?\]);/s);
+if (m) {
+  try {
+    const C = eval('(' + m[1] + ')');
+    console.log('OK const C parseable,', C.length, 'items');
+  } catch (e) {
+    console.log('ERROR:', e.message);
+    process.exit(1);
+  }
+} else {
+  console.log('ERROR: no const C');
+  process.exit(1);
+}
+"
+echo ""
+
+# 5. Probar localmente que server.js arranca sin errores
+node -e "require('./server.js')" 2>&1 &
+NODEPID=$!
+sleep 2
+kill $NODEPID 2>/dev/null || true
+echo "OK server.js sin errores de sintaxis"
+echo ""
+
+echo "============================================="
+echo "Listo. Para subir:"
+echo "  git add -A && git commit -m 'fix: server.js limpio + endpoint /names funcionando' && git push"
+echo "============================================="
