@@ -1,182 +1,786 @@
 {
   "SHL.DE": {
     "price": 33.95,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "LIGHT.AS": {
     "price": 20.94,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "SIX2.DE": {
     "price": 66.55,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "S92.DE": {
     "price": 52.95,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "SNDL": {
     "price": 1.315,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "SNOW": {
     "price": 141.22,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "SW.PA": {
     "price": 42.76,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "SOL.MC": {
     "price": 0.935,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "SAH": {
     "price": 73.31,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "SPT": {
     "price": 5.92,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "SFM": {
     "price": 71.13,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "SQRL.MC": {
     "price": 2.62,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "STLAM.MI": {
     "price": 6.631,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "SYENS.BR": {
     "price": 55.5,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "SY1.DE": {
     "price": 75.68,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "TE.PA": {
     "price": 40.32,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "TDOC": {
     "price": 5.95,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "TEF.MC": {
     "price": 3.803,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "TEP.PA": {
     "price": 55.14,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "COO": {
     "price": 61.34,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "HNST": {
     "price": 3.31,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "GT": {
     "price": 7.05,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "TGTX": {
     "price": 33.58,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "DJT": {
     "price": 9.17,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "TMUS": {
     "price": 198.17,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "TUB.MC": {
     "price": 2.91,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "TRG.MC": {
     "price": 0.1504,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "TUI1.DE": {
     "price": 6.162,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "UBER": {
     "price": 74.47,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "RARE": {
     "price": 24.18,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "UPM.HE": {
     "price": 24.85,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "VREX": {
     "price": 11.03,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "VRLA.PA": {
     "price": 20.18,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "VRT": {
     "price": 306.18,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "VERI": {
     "price": 2.04,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "DG.PA": {
     "price": 126.15,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "VIS.MC": {
     "price": 60,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "VOYG": {
     "price": 25.61,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "WCH.DE": {
     "price": 90.7,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "XERS": {
     "price": 6.02,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "WEAV": {
     "price": 4.84,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "WDAY": {
     "price": 122.43,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "WLN.PA": {
     "price": 0.2684,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "ZAL.DE": {
     "price": 21.16,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
   },
   "Z": {
     "price": 43.41,
-    "timestamp": 1777499525080
+    "timestamp": 1777499902782
+  },
+  "ABEO": {
+    "price": 5.34,
+    "timestamp": 1777499901754
+  },
+  "ABCL": {
+    "price": 3.82,
+    "timestamp": 1777499901754
+  },
+  "ACHC": {
+    "price": 28.26,
+    "timestamp": 1777499901754
+  },
+  "ANA.MC": {
+    "price": 239.8,
+    "timestamp": 1777499901754
+  },
+  "ACX.MC": {
+    "price": 13.36,
+    "timestamp": 1777499901754
+  },
+  "ADS.DE": {
+    "price": 149.3,
+    "timestamp": 1777499901754
+  },
+  "ADT": {
+    "price": 7.17,
+    "timestamp": 1777499901754
+  },
+  "AMD": {
+    "price": 337.11,
+    "timestamp": 1777499901754
+  },
+  "AED.BR": {
+    "price": 71.15,
+    "timestamp": 1777499901754
+  },
+  "A": {
+    "price": 111.3,
+    "timestamp": 1777499901754
+  },
+  "AKZA.AS": {
+    "price": 49.59,
+    "timestamp": 1777499901754
+  },
+  "ALM.MC": {
+    "price": 12.42,
+    "timestamp": 1777499901754
+  },
+  "AOSL": {
+    "price": 40.06,
+    "timestamp": 1777499901754
+  },
+  "ALO.PA": {
+    "price": 16.38,
+    "timestamp": 1777499901754
+  },
+  "AMRC": {
+    "price": 27.29,
+    "timestamp": 1777499901754
+  },
+  "AMP.MC": {
+    "price": 0.187,
+    "timestamp": 1777499901754
+  },
+  "ABI.BR": {
+    "price": 62.6,
+    "timestamp": 1777499901754
+  },
+  "ABUS": {
+    "price": 4.13,
+    "timestamp": 1777499901754
+  },
+  "ARCAD.AS": {
+    "price": 30.86,
+    "timestamp": 1777499901754
+  },
+  "MTS.MC": {
+    "price": 48.88,
+    "timestamp": 1777499901754
+  },
+  "ARIS.MI": {
+    "price": 3.932,
+    "timestamp": 1777499901754
+  },
+  "ASAN": {
+    "price": 6.4,
+    "timestamp": 1777499901754
+  },
+  "A3M.MC": {
+    "price": 5.18,
+    "timestamp": 1777499901755
+  },
+  "ADX.MC": {
+    "price": 1.44,
+    "timestamp": 1777499901755
+  },
+  "BKR": {
+    "price": 68.81,
+    "timestamp": 1777499901755
+  },
+  "BLCO": {
+    "price": 15.34,
+    "timestamp": 1777499901755
+  },
+  "BAX": {
+    "price": 16.9,
+    "timestamp": 1777499901755
+  },
+  "BAYN.DE": {
+    "price": 36.45,
+    "timestamp": 1777499901755
+  },
+  "BMW.DE": {
+    "price": 77.56,
+    "timestamp": 1777499901755
+  },
+  "BEI.DE": {
+    "price": 70.16,
+    "timestamp": 1777499901755
+  },
+  "BSY": {
+    "price": 32.84,
+    "timestamp": 1777499901755
+  },
+  "BCRX": {
+    "price": 8.99,
+    "timestamp": 1777499901755
+  },
+  "BTDR": {
+    "price": 10.83,
+    "timestamp": 1777499901755
+  },
+  "BHVN": {
+    "price": 9.2,
+    "timestamp": 1777499901755
+  },
+  "BNR.DE": {
+    "price": 59.72,
+    "timestamp": 1777499901755
+  },
+  "AI": {
+    "price": 8.86,
+    "timestamp": 1777499901755
+  },
+  "CABK.MC": {
+    "price": 10.66,
+    "timestamp": 1777499901755
+  },
+  "CZR": {
+    "price": 27.38,
+    "timestamp": 1777499901755
+  },
+  "CALM": {
+    "price": 75.07,
+    "timestamp": 1777499901755
+  },
+  "CA.PA": {
+    "price": 16.66,
+    "timestamp": 1777499901755
+  },
+  "CLNX.MC": {
+    "price": 28.6,
+    "timestamp": 1777499901755
+  },
+  "CERT": {
+    "price": 5.9,
+    "timestamp": 1777499901755
+  },
+  "CRNC": {
+    "price": 8.54,
+    "timestamp": 1777499901755
+  },
+  "CHPT": {
+    "price": 6.52,
+    "timestamp": 1777499901755
+  },
+  "CVX": {
+    "price": 192.22,
+    "timestamp": 1777499901755
+  },
+  "CIE.MC": {
+    "price": 28.65,
+    "timestamp": 1777499901755
+  },
+  "YOU": {
+    "price": 53.33,
+    "timestamp": 1777499901755
+  },
+  "COIN": {
+    "price": 181.73,
+    "timestamp": 1777499901755
+  },
+  "CNDT": {
+    "price": 1.71,
+    "timestamp": 1777499901755
+  },
+  "CON.DE": {
+    "price": 63.5,
+    "timestamp": 1777499901755
+  },
+  "AMV0.DE": {
+    "price": 36.2,
+    "timestamp": 1777499902025
+  },
+  "ACA.PA": {
+    "price": 17.225,
+    "timestamp": 1777499902025
+  },
+  "CRBP": {
+    "price": 9.82,
+    "timestamp": 1777499902025
+  },
+  "DTG.DE": {
+    "price": 42.05,
+    "timestamp": 1777499902025
+  },
+  "DHR": {
+    "price": 178.8,
+    "timestamp": 1777499902025
+  },
+  "DDOG": {
+    "price": 133.98,
+    "timestamp": 1777499902025
+  },
+  "LHA.DE": {
+    "price": 7.112,
+    "timestamp": 1777500028948
+  },
+  "DB1.DE": {
+    "price": 265.1,
+    "timestamp": 1777499902025
+  },
+  "DOCU": {
+    "price": 46.92,
+    "timestamp": 1777499902025
+  },
+  "EDP.LS": {
+    "price": 4.543,
+    "timestamp": 1777499902025
+  },
+  "EDIT": {
+    "price": 2.82,
+    "timestamp": 1777499902025
+  },
+  "ENG.MC": {
+    "price": 16.94,
+    "timestamp": 1777499902025
+  },
+  "ENC.MC": {
+    "price": 2.444,
+    "timestamp": 1777499902025
+  },
+  "EGLA.MI": {
+    "price": 1.165,
+    "timestamp": 1777499902025
+  },
+  "ENX.PA": {
+    "price": 143.4,
+    "timestamp": 1777499902025
+  },
+  "ERF.PA": {
+    "price": 57.54,
+    "timestamp": 1777499902025
+  },
+  "EVK.DE": {
+    "price": 17.5,
+    "timestamp": 1777499902025
+  },
+  "FAE.MC": {
+    "price": 4.735,
+    "timestamp": 1777499902025
+  },
+  "YACHT.MI": {
+    "price": 4.208,
+    "timestamp": 1777499902025
+  },
+  "FDR.MC": {
+    "price": 20,
+    "timestamp": 1777499902025
+  },
+  "FIVN": {
+    "price": 17.05,
+    "timestamp": 1777500028948
+  },
+  "FTV": {
+    "price": 61.75,
+    "timestamp": 1777499902025
+  },
+  "FRA.DE": {
+    "price": 68.05,
+    "timestamp": 1777499902025
+  },
+  "FNTN.DE": {
+    "price": 26.72,
+    "timestamp": 1777499902025
+  },
+  "FUBO": {
+    "price": 11.85,
+    "timestamp": 1777499902025
+  },
+  "GLXY": {
+    "price": 25.42,
+    "timestamp": 1777499902025
+  },
+  "GEHC": {
+    "price": 59.485,
+    "timestamp": 1777499902025
+  },
+  "GNTX": {
+    "price": 22.9,
+    "timestamp": 1777499902025
+  },
+  "GEST.MC": {
+    "price": 3.175,
+    "timestamp": 1777499902025
+  },
+  "GIII": {
+    "price": 30.9,
+    "timestamp": 1777499902025
+  },
+  "DOM.MC": {
+    "price": 3.3,
+    "timestamp": 1777499902025
+  },
+  "GFS": {
+    "price": 62.74,
+    "timestamp": 1777499902025
+  },
+  "HAVAS.AS": {
+    "price": 16.1,
+    "timestamp": 1777499902025
+  },
+  "HBX.MC": {
+    "price": 6.895,
+    "timestamp": 1777499902025
+  },
+  "HFG.DE": {
+    "price": 4.445,
+    "timestamp": 1777499902025
+  },
+  "HRMY": {
+    "price": 31.05,
+    "timestamp": 1777499902025
+  },
+  "BOSS.DE": {
+    "price": 36,
+    "timestamp": 1777499902025
+  },
+  "IBE.MC": {
+    "price": 19.915,
+    "timestamp": 1777499902025
+  },
+  "ITX.MC": {
+    "price": 50.64,
+    "timestamp": 1777499902025
+  },
+  "INW.MI": {
+    "price": 7.165,
+    "timestamp": 1777499902025
+  },
+  "COL.MC": {
+    "price": 5.4,
+    "timestamp": 1777499902025
+  },
+  "INPST.AS": {
+    "price": 15.21,
+    "timestamp": 1777499902025
+  },
+  "IAG.MC": {
+    "price": 4.206,
+    "timestamp": 1777499902025
+  },
+  "INTU": {
+    "price": 395.08,
+    "timestamp": 1777499902025
+  },
+  "ISRG": {
+    "price": 453.83,
+    "timestamp": 1777499902025
+  },
+  "IOVA": {
+    "price": 3.31,
+    "timestamp": 1777499902025
+  },
+  "IRDM": {
+    "price": 36.39,
+    "timestamp": 1777499902025
+  },
+  "IREN": {
+    "price": 42.86,
+    "timestamp": 1777499902025
+  },
+  "JKHY": {
+    "price": 153.75,
+    "timestamp": 1777499902025
+  },
+  "JEN.DE": {
+    "price": 32.24,
+    "timestamp": 1777499902025
+  },
+  "KVUE": {
+    "price": 17.23,
+    "timestamp": 1777499902477
+  },
+  "KLAR": {
+    "price": 13.46,
+    "timestamp": 1777499902477
+  },
+  "LI.PA": {
+    "price": 34.36,
+    "timestamp": 1777499902477
+  },
+  "ROVI.MC": {
+    "price": 78.65,
+    "timestamp": 1777499902477
+  },
+  "SWIM": {
+    "price": 5.84,
+    "timestamp": 1777499902477
+  },
+  "LEG.DE": {
+    "price": 59.15,
+    "timestamp": 1777499902477
+  },
+  "LWLG": {
+    "price": 11.76,
+    "timestamp": 1777499902477
+  },
+  "LBTYA": {
+    "price": 11.4,
+    "timestamp": 1777499902477
+  },
+  "LDA.MC": {
+    "price": 1.188,
+    "timestamp": 1777499902477
+  },
+  "ALHG.PA": {
+    "price": 1.657,
+    "timestamp": 1777499902477
+  },
+  "MARA": {
+    "price": 10.72,
+    "timestamp": 1777499902477
+  },
+  "MAS": {
+    "price": 71.26,
+    "timestamp": 1777499902477
+  },
+  "MKC": {
+    "price": 50.54,
+    "timestamp": 1777499902477
+  },
+  "MDT": {
+    "price": 79.37,
+    "timestamp": 1777499902477
+  },
+  "MFEB.MI": {
+    "price": 3.736,
+    "timestamp": 1777499902477
+  },
+  "MSFT": {
+    "price": 424.46,
+    "timestamp": 1777499902477
+  },
+  "MSTR": {
+    "price": 158.19,
+    "timestamp": 1777499902477
+  },
+  "MRNA": {
+    "price": 45.72,
+    "timestamp": 1777499902477
+  },
+  "MONC.MI": {
+    "price": 52.3,
+    "timestamp": 1777499902477
+  },
+  "MOH": {
+    "price": 196.49,
+    "timestamp": 1777499902477
+  },
+  "MTX": {
+    "price": 70.41,
+    "timestamp": 1777499902477
+  },
+  "NTGY.MC": {
+    "price": 26.88,
+    "timestamp": 1777499902477
+  },
+  "NEOV": {
+    "price": 2.57,
+    "timestamp": 1777499902477
+  },
+  "NEXI.MI": {
+    "price": 3.968,
+    "timestamp": 1777499902477
+  },
+  "NOV": {
+    "price": 20.76,
+    "timestamp": 1777499902477
+  },
+  "OHLA.MC": {
+    "price": 0.452,
+    "timestamp": 1777499902477
+  },
+  "OCI.AS": {
+    "price": 3.666,
+    "timestamp": 1777499902477
+  },
+  "OGN": {
+    "price": 13.34,
+    "timestamp": 1777499902477
+  },
+  "OC": {
+    "price": 121.18,
+    "timestamp": 1777499902477
+  },
+  "ORY.MC": {
+    "price": 2.748,
+    "timestamp": 1777499902477
+  },
+  "PCRX": {
+    "price": 25.14,
+    "timestamp": 1777499902477
+  },
+  "PGY": {
+    "price": 12.915,
+    "timestamp": 1777499902477
+  },
+  "PGEN": {
+    "price": 4.12,
+    "timestamp": 1777499902477
+  },
+  "PHM.MC": {
+    "price": 97.2,
+    "timestamp": 1777499902477
+  },
+  "POOL": {
+    "price": 209.61,
+    "timestamp": 1777499902477
+  },
+  "PAH3.DE": {
+    "price": 30.77,
+    "timestamp": 1777499902477
+  },
+  "PRZO": {
+    "price": 0.6635,
+    "timestamp": 1777499902477
+  },
+  "PUIG.MC": {
+    "price": 17.82,
+    "timestamp": 1777499902477
+  },
+  "RAL": {
+    "price": 43.62,
+    "timestamp": 1777499902477
+  },
+  "REP.MC": {
+    "price": 21.98,
+    "timestamp": 1777499902477
+  },
+  "RGTI": {
+    "price": 16.08,
+    "timestamp": 1777499902477
+  },
+  "RGEN": {
+    "price": 113.11,
+    "timestamp": 1777499902477
+  },
+  "RIOT": {
+    "price": 15.98,
+    "timestamp": 1777499902477
+  },
+  "SCYR.MC": {
+    "price": 4.572,
+    "timestamp": 1777499902477
+  },
+  "SPM.MI": {
+    "price": 4.533,
+    "timestamp": 1777499902477
+  },
+  "SAN.PA": {
+    "price": 78.32,
+    "timestamp": 1777499902477
+  },
+  "SAP.DE": {
+    "price": 145.88,
+    "timestamp": 1777499902477
+  },
+  "SDGR": {
+    "price": 11.76,
+    "timestamp": 1777499902477
+  },
+  "ST": {
+    "price": 39.57,
+    "timestamp": 1777499902477
+  },
+  "S": {
+    "price": 14.7,
+    "timestamp": 1777499902477
+  },
+  "VNA.DE": {
+    "price": 22.71,
+    "timestamp": 1777499902782
   }
 }

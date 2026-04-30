@@ -149,7 +149,7 @@ const C=[{"tckr":"ABEO","nombre":"#VALUE!","titulos":800.0,"coste_eur":4922.2951
 
 const SFX={"A3M":".MC","ACX":".MC","ADX":".MC","AED":".MC","ABI":".BR","ACA":".PA","ADS":".DE","AKZA":".AS","ALHG":".MC","ALM":".MC","ALO":".PA","AMP":".MC","AMV0":".MC","ANA":".MC","ARCAD":".BR","ARIS":".MC","BAYN":".DE","BEI":".DE","BMW":".DE","BNR":".DE","BOSS":".DE","CA":".PA","CABK":".MC","CIE":".MC","CLNX":".MC","COL":".MC","CON":".DE","DB1":".DE","DG":".PA","DOM":".PA","DTG":".DE","EDP":".LS","EGLA":".PA","ENC":".MC","ENG":".MC","ENXB":".DE","ERF":".PA","EVK":".DE","FAE":".MC","FDR":".MC","FNTN":".DE","FRA":".PA","GEST":".MC","HBX":".MC","HFG":".DE","IAG":".MC","IBE":".MC","INW":".MI","INPST":".MC","ITX":".MC","JEN":".MC","LDA":".MC","LEG":".MC","LHA":".DE","LI":".PA","LIGHT":".PA","MFEB":".MC","MONC":".MI","MTS":".MC","NEXI":".MI","NTGY":".MC","OCI":".AS","OHLA":".MC","ORY":".MC","PAH3":".DE","PHM":".MC","PUIG":".MC","REP":".MC","ROVI":".MC","S93":".DE","SAN":".MC","SAP":".DE","SCYR":".MC","SHL":".DE","SIX2":".DE","SOL":".MC","SPM":".MI","SQRL":".MC","STLAM":".MI","SW":".MC","SY1":".DE","SYENS":".MC","TE":".PA","TEF":".MC","TEP":".MC","TRG":".MC","TUB":".MC","TUI1":".DE","UIC1":".MC","UPM":".HE","VIS":".MC","VNA":".DE","VRLA":".MC","WCH":".DE","WLN":".PA","YACHT":".MC","ZAL":".DE"};
 
-let prices={}, names={}, cFilter='all', dFilter='all', busy=false;
+let prices={}, cFilter='all', dFilter='all', busy=false;
 let eurUsd=null;
 function yT(i){return i.moneda==='EUR'?(i.tckr+(SFX[i.tckr]||'')):i.tckr;}
 function dbg(msg){const el=document.getElementById('dbg');if(el)el.textContent=msg;}
@@ -197,13 +197,6 @@ async function startLoad(){
   }
 
   for(const item of C){if(combined[item.symbol])prices[item.symbol]=combined[item.symbol];}
-  // Cargar nombres de Yahoo en background (no bloquea UI)
-  fetch('/names?symbols=' + C.map(i => i.symbol).join(','))
-    .then(r => r.json())
-    .then(n => { names = n; updateResumen(); renderCartera(); renderDiana(); })
-    .catch(e => console.error('Error nombres:', e));
-
-  
 
   const n=Object.keys(prices).length;
   setProg(100,true);
@@ -226,7 +219,6 @@ function fN(n,d=2){return n.toLocaleString('es-ES',{minimumFractionDigits:d,maxi
 function sg(n){return n>=0?'+':'';}
 function aC(el,t){let v=0;const s=Math.max(1,Math.ceil(t/18));const fn=()=>{v=Math.min(v+s,t);el.textContent=v;if(v<t)requestAnimationFrame(fn);};requestAnimationFrame(fn);}
 
-function getDisplayName(item){const n=names[item.symbol];if(n && n.length>0) return n;if(item.nombre && item.nombre!=='#VALUE!') return item.nombre;return item.tckr;}
 function updateResumen(){
   let b=0;
   for(const i of C){const p=prices[i.symbol];if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;b+=i.titulos*pe-i.coste_eur;}}
