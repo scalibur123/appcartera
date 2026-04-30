@@ -127,6 +127,11 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
     <button class="filter-btn" id="df-ING" onclick="fD('ING',this)">ING</button>
     <button class="filter-btn" id="df-R4" onclick="fD('R4',this)">R4</button>
     <button class="filter-btn" id="df-IBKR" onclick="fD('IBKR',this)">IBKR</button>
+    <button class="filter-btn" id="df-MEDIOLANUM" onclick="fD('MEDIOLANUM',this)">MEDIOLANUM</button>
+    <button class="filter-btn" id="df-REVOLUT" onclick="fD('REVOLUT',this)">REVOLUT</button>
+    <button class="filter-btn" id="df-MYINV" onclick="fD('MYINV',this)">MYINV</button>
+    <button class="filter-btn" id="df-R4/ING" onclick="fD('R4/ING',this)">R4/ING</button>
+    <button class="filter-btn" id="df-MEDIO/ING" onclick="fD('MEDIO/ING',this)">MEDIO/ING</button>
   </div>
   <div class="list-count" id="d-count"></div>
   <div class="list-card" id="d-list"><div class="empty">Cargando…</div></div>
@@ -270,6 +275,11 @@ function renderDiana(){
     if(dFilter==='ING')return item.banco.toUpperCase().includes('ING');
     if(dFilter==='R4')return item.banco.toUpperCase().includes('R4');
     if(dFilter==='IBKR')return item.banco.toUpperCase().includes('IBKR');
+    if(dFilter==='MEDIOLANUM')return item.banco.toUpperCase().includes('MEDIO');
+    if(dFilter==='REVOLUT')return item.banco.toUpperCase().includes('REVOLUT');
+    if(dFilter==='MYINV')return item.banco.toUpperCase().includes('MYINV');
+    if(dFilter==='R4/ING')return item.banco==='R4/ING';
+    if(dFilter==='MEDIO/ING')return item.banco==='MEDIO/ING';
     return true;
   });
   data.sort((a,b)=>{const pa=prices[a.tckr]?.price,pb=prices[b.tckr]?.price;const da=pa?(pa-a.objetivo)/a.objetivo:-999,db=pb?(pb-b.objetivo)/b.objetivo:-999;return db-da;});
