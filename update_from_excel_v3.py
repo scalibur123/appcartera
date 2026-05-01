@@ -27,7 +27,7 @@ from datetime import datetime
 
 HOME = Path.home()
 PROYECTO = HOME / "APPCARTERA_NUEVA"
-EXCEL = Path("/Users/mabascal/APPCARTERA_NUEVA/PLUSVALIAS BOLSA 26_APP.xlsm")
+EXCEL = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/INVERSION/PLUSVALIAS BOLSA 26.xlsm"
 HOJA = "2026"
 FILA_INI = 5
 FILA_FIN = 258
