@@ -300,6 +300,8 @@ def actualizar_index_html(const_C_linea):
         print("❌ No se encontro 'const C=[...]' en index.html")
         sys.exit(1)
     nuevo_html = pattern.sub(const_C_linea, html, count=1)
+    fecha_hoy = datetime.now().strftime("%-d %b %Y").replace("Jan","ene").replace("Feb","feb").replace("Mar","mar").replace("Apr","abr").replace("May","may").replace("Jun","jun").replace("Jul","jul").replace("Aug","ago").replace("Sep","sep").replace("Oct","oct").replace("Nov","nov").replace("Dec","dic")
+    nuevo_html = re.sub(r"Datos del Excel del [^.]+\.", f"Datos del Excel del {fecha_hoy}.", nuevo_html)
     version = datetime.now().strftime("%Y%m%d%H%M%S")
     nuevo_html = re.sub(r'content="[0-9.]+"(?=[^>]*name="app-version"|(?<=app-version")[^>]*)>', f'content="{version}">', nuevo_html)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
