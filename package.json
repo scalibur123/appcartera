@@ -1,1 +1,1 @@
-{"name":"appcartera","version":"1.0.0","main":"server.js","scripts":{"start":"node server.js"},"dependencies":{"yahoo-finance2":"^2.13.0"}}
+{"name":"appcartera","version":"1.0.0","main":"server.js","scripts":{"start":"node server.js"},"dependencies":{"firebase-admin":"^13.8.0","yahoo-finance2":"^2.13.0"}}

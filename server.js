@@ -161,6 +161,19 @@ const server = http.createServer(async (req, res) => {
 
     console.log(new Date().toISOString(), req.method, pathname);
 
+
+    if (pathname === "/save-token" && req.method === "POST") {
+      let body = "";
+      req.on("data", d => body += d);
+      req.on("end", () => {
+        try {
+          const { token } = JSON.parse(body);
+          require("fs").writeFileSync("./fcm-token.txt", token);
+          res.writeHead(200); res.end("OK");
+        } catch(e) { res.writeHead(500); res.end("Error"); }
+      });
+      return;
+    }
     if (pathname === '/names' && symbols) return handleNames(req, res, symbols);
     if (pathname === '/' && symbols) return handleSymbols(req, res, symbols);
     if (pathname === '/' || pathname === '/index.html') return handleIndex(req, res);
@@ -176,3 +189,6 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`AppCartera escuchando en puerto ${PORT}`);
 });
+
+// Chequeo alertas cada 5 min
+setInterval(() => { try { require("./check-alerts"); } catch(e) { console.error(e); } }, 5*60*1000);

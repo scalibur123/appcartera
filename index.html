@@ -319,5 +319,29 @@ function setSortC(s,btn){if(cSort===s){cSort=null;btn.classList.remove('active')
 function setSortD(s,btn){if(dSort===s){dSort=null;btn.classList.remove('active');}else{dSort=s;document.querySelectorAll('[id^="df-sort-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}renderDiana();}
 function sortItems(items,sortBy){if(!sortBy)return items;return [...items].sort((a,b)=>{if(sortBy==='pct'){const pa=prices[a.symbol]?.pct||-999;const pb=prices[b.symbol]?.pct||-999;return pb-pa;}if(sortBy==='val'){const va=(prices[a.symbol]?.price||0)*a.titulos;const vb=(prices[b.symbol]?.price||0)*b.titulos;return vb-va;}return a.tckr.localeCompare(b.tckr);});}
 </script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging.js";
+const app = initializeApp({
+  apiKey: "AIzaSyBcOZ_G6bmj1wjkc2f97tgTh9BMi3ws9ZA",
+  authDomain: "appcartera123.firebaseapp.com",
+  projectId: "appcartera123",
+  storageBucket: "appcartera123.firebasestorage.app",
+  messagingSenderId: "206685291968",
+  appId: "1:206685291968:web:6f2db50f8a7ed0e107f425"
+});
+const messaging = getMessaging(app);
+window.initNotifications = async function() {
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") return;
+    const sw = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+    const token = await getToken(messaging, {vapidKey: "BABTW9hMV1trL7bxVw0cts_Vf4lKVvarO7dZFNAx0k_X3Ln1iol6he-tX8qCApLSTAqFLVYb8c1Mzm-qi_CCCr4", serviceWorkerRegistration: sw});
+    if (token) await fetch("/save-token", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({token})});
+  } catch(e) { console.error("Error notif:", e); }
+}
+initNotifications();
+</script>
+<button onclick="initNotifications()" style="position:fixed;bottom:20px;right:20px;background:#4CAF50;color:white;border:none;border-radius:50%;width:50px;height:50px;font-size:20px;cursor:pointer;z-index:999">🔔</button>
 </body>
 </html>
