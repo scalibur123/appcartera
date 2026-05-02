@@ -300,6 +300,8 @@ def actualizar_index_html(const_C_linea):
         print("❌ No se encontro 'const C=[...]' en index.html")
         sys.exit(1)
     nuevo_html = pattern.sub(const_C_linea, html, count=1)
+    version = datetime.now().strftime("%Y%m%d%H%M%S")
+    nuevo_html = re.sub(r'content="[0-9.]+"(?=[^>]*name="app-version"|(?<=app-version")[^>]*)>', f'content="{version}">', nuevo_html)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup = INDEX_HTML.parent / f"index.html.backup_{timestamp}"
     backup.write_text(html, encoding="utf-8")
@@ -357,3 +359,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+# version updater - añadido automaticamente

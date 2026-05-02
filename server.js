@@ -123,7 +123,7 @@ async function handleNames(req, res, symbolsParam) {
 function handleIndex(req, res) {
   const file = path.join(__dirname, 'index.html');
   if (fs.existsSync(file)) {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
     res.end(fs.readFileSync(file));
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
