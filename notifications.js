@@ -1,10 +1,10 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('./firebase-credentials.json');
 
 if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
+  const credential = process.env.FIREBASE_CREDENTIALS
+    ? admin.credential.cert(JSON.parse(process.env.FIREBASE_CREDENTIALS))
+    : admin.credential.cert(require('./firebase-credentials.json'));
+  admin.initializeApp({ credential });
 }
 
 async function sendNotification(token, title, body) {
