@@ -174,6 +174,15 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
+
+    if (pathname === '/get-token' && req.method === 'GET') {
+      const fs = require('fs');
+      try {
+        const token = fs.readFileSync('./fcm-token.txt', 'utf8').trim();
+        res.writeHead(200); res.end(token);
+      } catch(e) { res.writeHead(404); res.end('No token'); }
+      return;
+    }
     if (pathname === '/names' && symbols) return handleNames(req, res, symbols);
     if (pathname === '/' && symbols) return handleSymbols(req, res, symbols);
     if (pathname === '/' || pathname === '/index.html') return handleIndex(req, res);
