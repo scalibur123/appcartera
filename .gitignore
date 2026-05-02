@@ -12,3 +12,7 @@ update_from_excel_v4a.py
 PLUSVALIAS BOLSA*.xlsm
 files.zip
 audit.html
+node_modules/
+firebase-credentials.json
+fcm-token.txt
+alert-state.json
