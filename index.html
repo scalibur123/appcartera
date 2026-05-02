@@ -296,7 +296,7 @@ function renderDiana(){
     if(dFilter==='MEDIO/ING')return item.banco==='MEDIO/ING';
     return true;
   });
-  if(!dSort){data.sort((a,b)=>{const pa=prices[a.tckr]?.price,pb=prices[b.tckr]?.price;const da=pa?(pa-a.objetivo)/Math.abs(a.objetivo):-999,db=pb?(pb-b.objetivo)/Math.abs(b.objetivo):-999;return db-da;});}
+  if(!dSort){data.sort((a,b)=>{const pa=prices[a.symbol]?.price,pb=prices[b.symbol]?.price;const da=pa?-(pa-a.objetivo)/Math.abs(a.objetivo):-999,db=pb?-(pb-b.objetivo)/Math.abs(b.objetivo):-999;return da-db;});}
   document.getElementById('d-count').textContent=data.length+' valores';
   document.getElementById('d-list').innerHTML=data.map(item=>{
     const p=prices[item.symbol];const price=p?.price;
