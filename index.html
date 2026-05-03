@@ -178,7 +178,7 @@ async function fetchBatch(tickers){
     const r=await fetch(`/?symbols=${encodeURIComponent(symbols)}`,{signal:AbortSignal.timeout(15000)});
     const data=await r.json();
     const out={};
-    for(const q of (data?.quoteResponse?.result||[])) {out[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent||0}; if(q.longName) names[q.symbol]=q.longName;}
+    for(const q of (data?.quoteResponse?.result||[])) {out[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent||0,high52:q.fiftyTwoWeekHigh||null}; if(q.longName) names[q.symbol]=q.longName;}
     return out;
   }catch(e){dbg('Error: '+e.message);return {};}
 }
@@ -279,7 +279,7 @@ function renderCartera(){
     const pcc=p?(p.pct>=0?'var(--green)':'var(--red)'):'var(--muted)';
     let pms='',pmc='';
     if(p){const pe=item.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;const pm=item.titulos*pe-item.coste_eur;pms=(pm>=0?'+':'')+fE(pm);pmc=pm>=0?'pos':'loss';}
-    return`<div class="list-row"><div class="row-left"><span class="tckr">${item.tckr} <span style="font-size:10px;color:var(--muted)">${item.moneda==='EUR'?'€':'$'}</span>${getDisplayName(item)!==item.tckr?`<br><span style="font-size:11px;color:var(--muted);font-weight:normal">${getDisplayName(item)}</span>`:''}</span><span class="banco-pill">${item.banco}</span></div><div class="row-right"><span class="price-val normal">${ps} <span style="font-size:10px;color:${pcc}">${pcs}</span></span>${p?`<span class="pill ${pmc}">${pms}</span>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}<span class="price-sub">Obj.${item.objetivo?fN(item.objetivo):'—'} · Med.${fN(item.precio_medio)}</span></div></div>`;
+    return`<div class="list-row"><div class="row-left"><span class="tckr">${item.tckr} <span style="font-size:10px;color:var(--muted)">${item.moneda==='EUR'?'€':'$'}</span>${getDisplayName(item)!==item.tckr?`<br><span style="font-size:11px;color:var(--muted);font-weight:normal">${getDisplayName(item)}</span>`:''}</span><span class="banco-pill">${item.banco}</span></div><div class="row-right"><span class="price-val normal">${ps} <span style="font-size:10px;color:${pcc}">${pcs}</span></span>${p?`<span class="pill ${pmc}">${pms}</span>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}<span class="price-sub">Obj.${item.objetivo?fN(item.objetivo):'—'} · Med.${fN(item.precio_medio)}${p&&p.high52?' · Max52:'+fN(p.high52):''}</span></div></div>`;
   }).join('');
 }
 

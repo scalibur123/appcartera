@@ -30,7 +30,8 @@ function fetchYahoo(symbol) {
             currency: m.currency,
             exchange: m.fullExchangeName || m.exchangeName,
             changePct: (m.regularMarketChangePercent != null) ? m.regularMarketChangePercent : ((m.regularMarketPrice && m.chartPreviousClose) ? ((m.regularMarketPrice - m.chartPreviousClose) / m.chartPreviousClose) * 100 : 0),
-            longName: m.longName || m.shortName || null
+            longName: m.longName || m.shortName || null,
+            high52: m.fiftyTwoWeekHigh || null
           });
         } catch (e) {
           resolve({ symbol, error: 'parse_error' });
@@ -105,7 +106,8 @@ async function handleSymbols(req, res, symbolsParam) {
         symbol: r.symbol,
         regularMarketPrice: r.price,
         regularMarketChangePercent: r.changePct,
-        longName: r.longName
+        longName: r.longName,
+        fiftyTwoWeekHigh: r.high52
       }))
     }
   };
