@@ -319,6 +319,20 @@ startLoad();
 function setSortC(s,btn){if(cSort===s){cSort=null;btn.classList.remove('active');}else{cSort=s;document.querySelectorAll('[id^="cf-sort-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}renderCartera();}
 function setSortD(s,btn){if(dSort===s){dSort=null;btn.classList.remove('active');}else{dSort=s;document.querySelectorAll('[id^="df-sort-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}renderDiana();}
 function sortItems(items,sortBy){if(!sortBy)return items;return [...items].sort((a,b)=>{if(sortBy==='pct'){const pa=prices[a.symbol]?.pct||-999;const pb=prices[b.symbol]?.pct||-999;return pb-pa;}if(sortBy==='val'){const va=(prices[a.symbol]?.price||0)*a.titulos;const vb=(prices[b.symbol]?.price||0)*b.titulos;return vb-va;}return a.tckr.localeCompare(b.tckr);});}
+
+window.loadHistorico = async function() {
+  const el = document.getElementById("hist-list");
+  try {
+    const r = await fetch("/historico");
+    const data = await r.json();
+    if (data.length === 0) { el.innerHTML = "<p style='color:var(--muted)'>Sin registros aun.</p>"; return; }
+    el.innerHTML = data.map(d => {
+      const fecha = new Date(d.fecha).toLocaleString("es-ES");
+      const color = d.evento.includes("salio") ? "var(--red)" : "var(--green)";
+      return "<div style='padding:10px;border-bottom:1px solid var(--border)'><span style='color:"+color+";font-weight:600'>" + d.ticker + "</span> <span style='color:var(--muted);font-size:12px'>" + d.banco + "</span><br><span style='font-size:13px'>" + d.evento + " - " + d.precio + "</span><br><span style='color:var(--muted);font-size:11px'>" + fecha + "</span></div>";
+    }).join("");
+  } catch(e) { el.innerHTML = "Error cargando historico"; }
+};
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
