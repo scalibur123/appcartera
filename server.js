@@ -213,3 +213,8 @@ server.listen(PORT, () => {
 
 // Chequeo alertas cada 5 min
 setInterval(() => { try { require("./check-alerts"); } catch(e) { console.error(e); } }, 5*60*1000);
+
+// Mantener servidor activo
+setInterval(() => {
+  https.get('https://appcartera.onrender.com', () => {}).on('error', () => {});
+}, 14 * 60 * 1000);
