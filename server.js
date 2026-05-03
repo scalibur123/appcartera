@@ -183,6 +183,16 @@ const server = http.createServer(async (req, res) => {
       } catch(e) { res.writeHead(404); res.end('No token'); }
       return;
     }
+
+    if (pathname === "/historico" && req.method === "GET") {
+      const { supabase } = require("./supabase-client");
+      supabase.from("historico_alertas").select("*").order("fecha", {ascending: false}).limit(100).then(({data, error}) => {
+        if (error) { res.writeHead(500); res.end(JSON.stringify([])); return; }
+        res.writeHead(200, {"Content-Type": "application/json"});
+        res.end(JSON.stringify(data || []));
+      });
+      return;
+    }
     if (pathname === '/names' && symbols) return handleNames(req, res, symbols);
     if (pathname === '/' && symbols) return handleSymbols(req, res, symbols);
     if (pathname === '/' || pathname === '/index.html') return handleIndex(req, res);

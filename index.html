@@ -90,6 +90,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   <button class="nav-btn" onclick="showTab('cartera',this)">Cartera</button>
   <button class="nav-btn" onclick="showTab('diana',this)">Diana</button>
   <button class="nav-btn" onclick="showTab('mensual',this)">Mensual</button>
+  <button class="nav-btn" onclick="showTab('historico',this);loadHistorico()">Historico</button>
 </div>
 
 <div id="eurusd-display" style="text-align:center;padding:6px 0;font-size:11px;color:var(--muted)">Cambio EUR/USD: --</div><div id="resumen" class="section active">
@@ -343,5 +344,11 @@ window.initNotifications = async function() {
 initNotifications();
 </script>
 <button onclick="initNotifications()" style="position:fixed;bottom:20px;right:20px;background:#4CAF50;color:white;border:none;border-radius:50%;width:50px;height:50px;font-size:20px;cursor:pointer;z-index:999">🔔</button>
+<div id="historico" class="section">
+  <div style="padding:16px">
+    <h2 style="margin-bottom:12px;font-size:16px;color:var(--muted)">Historico de alertas</h2>
+    <div id="hist-list">Cargando...</div>
+  </div>
+</div>
 </body>
 </html>
