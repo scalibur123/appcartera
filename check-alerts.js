@@ -33,7 +33,7 @@ async function fetchPrice(symbol) {
       res.on('end', () => {
         try {
           const r = JSON.parse(data).chart.result[0];
-          resolve(r.meta.regularMarketPrice);
+          resolve({price: r.meta.regularMarketPrice, high52: r.meta.fiftyTwoWeekHigh || null});
         } catch { resolve(null); }
       });
     }).on('error', () => resolve(null));
@@ -53,7 +53,9 @@ async function checkAlerts() {
 
   for (const item of C) {
     if (!item.objetivo) continue;
-    const price = await fetchPrice(item.symbol);
+    const result = await fetchPrice(item.symbol);
+    const price = result ? result.price : null;
+    const high52 = result ? result.high52 : null;
     if (!price) continue;
     
     const enObjetivo = price >= item.objetivo;
@@ -75,6 +77,19 @@ async function checkAlerts() {
       await guardar(item.tckr, item.banco, 'salio_pendiente', price, item.objetivo); await sendNotification(token, `↩️ ${item.tckr} salió de pendientes`, `Precio ${price.toFixed(2)}`);
   }
   
+  
+    // Alerta maximo 52 semanas
+    if (high52 && price) {
+      const distMax = (high52 - price) / high52;
+      const cercaMax = distMax >= 0 && distMax <= 0.03;
+      const keyMax = key + '_max52';
+      next[keyMax] = { cercaMax };
+      if (prev[keyMax] !== undefined && cercaMax && prev[keyMax].cercaMax === false) {
+        await guardar(item.tckr, item.banco, 'cerca_max52', price, high52);
+        await sendNotification(token, '📈 ' + item.tckr + ' cerca del maximo anual', 'Precio ' + price.toFixed(2) + ' cerca del max 52s: ' + high52.toFixed(2));
+      }
+    }
+
   saveState(next);
   console.log('✅ Chequeo completado');
 }
