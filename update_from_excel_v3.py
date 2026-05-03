@@ -290,6 +290,38 @@ def construir_const_C_compacta(posiciones, ticker_map):
     return "const C=[" + ",".join(items) + "];"
 
 
+def asegurar_historico(html):
+    """Añade pestaña Historico y funcion loadHistorico si no están"""
+    if 'loadHistorico' not in html:
+        html = html.replace(
+            "<button class=\"nav-btn\" onclick=\"showTab('mensual',this)\">Mensual</button>",
+            "<button class=\"nav-btn\" onclick=\"showTab('mensual',this)\">Mensual</button>\n  <button class=\"nav-btn\" onclick=\"showTab('historico',this);loadHistorico()\">Historico</button>"
+        )
+        historico_section = '''<div id="historico" class="section">
+  <div style="padding:16px">
+    <h2 style="margin-bottom:12px;font-size:16px;color:var(--muted)">Historico de alertas</h2>
+    <div id="hist-list">Cargando...</div>
+  </div>
+</div>'''
+        load_fn = """
+window.loadHistorico = async function() {
+  const el = document.getElementById('hist-list');
+  try {
+    const r = await fetch('/historico');
+    const data = await r.json();
+    if (data.length === 0) { el.innerHTML = '<p style="color:var(--muted)">Sin registros aun.</p>'; return; }
+    el.innerHTML = data.map(d => {
+      const fecha = new Date(d.fecha).toLocaleString('es-ES');
+      const color = d.evento.includes('salio') ? 'var(--red)' : 'var(--green)';
+      return '<div style="padding:10px;border-bottom:1px solid var(--border)"><span style="color:'+color+';font-weight:600">' + d.ticker + '</span> <span style="color:var(--muted);font-size:12px">' + d.banco + '</span><br><span style="font-size:13px">' + d.evento + ' - ' + d.precio + '</span><br><span style="color:var(--muted);font-size:11px">' + fecha + '</span></div>';
+    }).join('');
+  } catch(e) { el.innerHTML = 'Error cargando historico'; }
+};
+"""
+        html = html.replace('</body>', historico_section + '\n</body>')
+        html = html.replace('</script>\n</body>', load_fn + '</script>\n</body>')
+    return html
+
 def actualizar_index_html(const_C_linea):
     if not INDEX_HTML.exists():
         print(f"❌ index.html no encontrado: {INDEX_HTML}")
@@ -307,6 +339,7 @@ def actualizar_index_html(const_C_linea):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup = INDEX_HTML.parent / f"index.html.backup_{timestamp}"
     backup.write_text(html, encoding="utf-8")
+    nuevo_html = asegurar_historico(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
     print(f"✅ index.html actualizado. Backup: {backup.name}")
 
@@ -362,3 +395,4 @@ def main():
 if __name__ == "__main__":
     main()
 # version updater - añadido automaticamente
+
