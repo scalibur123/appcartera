@@ -1,4 +1,5 @@
 const { sendNotification } = require('./notifications');
+const { supabase } = require('./supabase-client');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
@@ -39,6 +40,9 @@ async function fetchPrice(symbol) {
   });
 }
 
+    async function guardar(ticker, banco, evento, precio, objetivo) {
+      await supabase.from('historico_alertas').insert({ticker, banco, evento, precio: parseFloat(precio.toFixed(2)), objetivo: parseFloat(objetivo)});
+    }
 async function checkAlerts() {
   const token = getToken();
   if (!token) return console.log('No hay token FCM');
@@ -62,13 +66,13 @@ async function checkAlerts() {
     if (!prev[key]) continue;
     
     if (enObjetivo && !prev[key].enObjetivo)
-      await sendNotification(token, `🎯 ${item.tckr} en objetivo`, `Precio ${price.toFixed(2)} ≥ Obj ${item.objetivo}`);
+      await guardar(item.tckr, item.banco, 'en_objetivo', price, item.objetivo); await sendNotification(token, `🎯 ${item.tckr} en objetivo`, `Precio ${price.toFixed(2)} ≥ Obj ${item.objetivo}`);
     if (!enObjetivo && prev[key].enObjetivo)
-      await sendNotification(token, `⬇️ ${item.tckr} salió de objetivo`, `Precio ${price.toFixed(2)} < Obj ${item.objetivo}`);
+      await guardar(item.tckr, item.banco, 'salio_objetivo', price, item.objetivo); await sendNotification(token, `⬇️ ${item.tckr} salió de objetivo`, `Precio ${price.toFixed(2)} < Obj ${item.objetivo}`);
     if (pendiente && !prev[key].pendiente)
-      await sendNotification(token, `⚠️ ${item.tckr} cerca del objetivo`, `A menos del 7% — Precio ${price.toFixed(2)}`);
+      await guardar(item.tckr, item.banco, 'pendiente', price, item.objetivo); await sendNotification(token, `⚠️ ${item.tckr} cerca del objetivo`, `A menos del 7% — Precio ${price.toFixed(2)}`);
     if (!pendiente && prev[key].pendiente && !enObjetivo)
-      await sendNotification(token, `↩️ ${item.tckr} salió de pendientes`, `Precio ${price.toFixed(2)}`);
+      await guardar(item.tckr, item.banco, 'salio_pendiente', price, item.objetivo); await sendNotification(token, `↩️ ${item.tckr} salió de pendientes`, `Precio ${price.toFixed(2)}`);
   }
   
   saveState(next);
