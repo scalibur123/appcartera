@@ -161,7 +161,28 @@ def leer_excel_con_mic():
         bruto_anual = ws_m['R13'].value or 0
         neto_anual = ws_m['S13'].value or 0
         equiv_bruto = ws_m['S15'].value or 0
-        neto_14pagas = ws_m['JKL13'].value if 'JKL13' in dir(ws_m) else None
+        neto_mensual = ws_m['JKL13'].value or 0
+        neto_anual_nomina = neto_mensual * 14
+
+        def calcular_bruto_desde_neto(neto_anual, hijos=2):
+            deducciones_hijos = 1200 + 1400  # 2 hijos
+            ss_trabajador = 0.0635
+            tramos = [(12450,0.19),(7750,0.24),(15000,0.30),(24800,0.37),(240000,0.45),(float('inf'),0.47)]
+            def neto_de_bruto(b):
+                base = b * (1 - ss_trabajador)
+                cuota = 0; resto = base
+                for limite, tipo in tramos:
+                    if resto <= 0: break
+                    t = min(resto, limite); cuota += t * tipo; resto -= t
+                return base - cuota + deducciones_hijos * 0.19
+            lo, hi = neto_anual, neto_anual * 2
+            for _ in range(50):
+                mid = (lo + hi) / 2
+                if neto_de_bruto(mid) < neto_anual: lo = mid
+                else: hi = mid
+            return round((lo + hi) / 2)
+
+        equiv_bruto_calculado = calcular_bruto_desde_neto(neto_anual_nomina)
         
         def fmt_eur(v):
             return f"{v:,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -169,7 +190,8 @@ def leer_excel_con_mic():
         mensual_data = {
             'bruto_anual': fmt_eur(bruto_anual),
             'neto_anual': fmt_eur(neto_anual),
-            'equiv_bruto': fmt_eur(equiv_bruto),
+            'equiv_bruto': fmt_eur(equiv_bruto_calculado),
+            'neto_nomina': fmt_eur(neto_anual_nomina),
         }
     except Exception as e:
         print(f"Warning: no se pudo leer pestaña Mensual: {e}")
