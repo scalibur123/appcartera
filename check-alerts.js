@@ -84,7 +84,8 @@ async function checkAlerts() {
       await guardar(item.tckr, item.banco, 'salio_objetivo', price, item.objetivo);
       await sendNotification(token, `⬇️ ${item.tckr} salió de objetivo`, `Precio ${price.toFixed(2)} < Obj ${item.objetivo}`);
     }
-    if (pendiente && !prev[key].pendiente) {
+    const salioAhora = !enObjetivo && prev[key].enObjetivo;
+    if (pendiente && !prev[key].pendiente && !salioAhora) {
       await guardar(item.tckr, item.banco, 'pendiente', price, item.objetivo);
       await sendNotification(token, `⚠️ ${item.tckr} cerca del objetivo`, `A menos del 7% — Precio ${price.toFixed(2)}`);
     }
