@@ -212,7 +212,7 @@ server.listen(PORT, () => {
 });
 
 // Chequeo alertas cada 5 min
-setInterval(() => { try { require("./check-alerts"); } catch(e) { console.error(e); } }, 5*60*1000);
+setInterval(() => { try { delete require.cache[require.resolve("./check-alerts")]; require("./check-alerts"); } catch(e) { console.error(e); } }, 5*60*1000);
 
 // Mantener servidor activo
 setInterval(() => {
