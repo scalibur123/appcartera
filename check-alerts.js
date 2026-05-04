@@ -75,9 +75,7 @@ async function checkAlerts() {
       await guardar(item.tckr, item.banco, 'pendiente', price, item.objetivo); await sendNotification(token, `⚠️ ${item.tckr} cerca del objetivo`, `A menos del 7% — Precio ${price.toFixed(2)}`);
     if (!pendiente && prev[key].pendiente && !enObjetivo)
       await guardar(item.tckr, item.banco, 'salio_pendiente', price, item.objetivo); await sendNotification(token, `↩️ ${item.tckr} salió de pendientes`, `Precio ${price.toFixed(2)}`);
-  }
-  
-  
+
     // Alerta maximo 52 semanas
     if (high52 && price) {
       const distMax = (high52 - price) / high52;
@@ -89,6 +87,7 @@ async function checkAlerts() {
         await sendNotification(token, '📈 ' + item.tckr + ' cerca del maximo anual', 'Precio ' + price.toFixed(2) + ' cerca del max 52s: ' + high52.toFixed(2));
       }
     }
+  }
 
   saveState(next);
   console.log('✅ Chequeo completado');
