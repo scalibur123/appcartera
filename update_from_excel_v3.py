@@ -460,10 +460,18 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None)
             bloque("ANUAL", ganancias_data["ani_b"], ganancias_data["ani_n"]) +
             '</div>'
         )
+        END_MARKER = '<!--/card-ganancias-->'
+        card_con_marker = card + END_MARKER
         if 'id="card-ganancias"' in nuevo_html:
-            nuevo_html = re2.sub(r'<div class="card" id="card-ganancias">.*?</div>', card, nuevo_html, flags=re2.DOTALL)
+            start = nuevo_html.find('<div class="card" id="card-ganancias">')
+            end = nuevo_html.find(END_MARKER)
+            if end != -1:
+                nuevo_html = nuevo_html[:start] + card_con_marker + nuevo_html[end+len(END_MARKER):]
+            else:
+                nuevo_html = nuevo_html[:start] + card_con_marker + nuevo_html[start:]
+                nuevo_html = nuevo_html.replace(card_con_marker + card_con_marker, card_con_marker)
         else:
-            nuevo_html = nuevo_html.replace('<p class="note">', card + '\n  <p class="note">')
+            nuevo_html = nuevo_html.replace('<p class="note">', card_con_marker + '\n  <p class="note">')
     nuevo_html = asegurar_historico(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
     print(f"✅ index.html actualizado. Backup: {backup.name}")
