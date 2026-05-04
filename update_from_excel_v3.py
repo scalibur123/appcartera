@@ -391,9 +391,9 @@ def actualizar_index_html(const_C_linea, mensual_data=None):
     if mensual_data:
         import re as re2
         nuevo_html = re2.sub(
-            r'<span class="mensual-val green">[^<]*</span>(?=.*Bruto)',
-            f'<span class="mensual-val green">{mensual_data["bruto_anual"]}</span>',
-            nuevo_html, count=1, flags=re2.DOTALL
+            r'(Bruto</span><span class="mensual-val green">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["bruto_anual"]}\g<2>',
+            nuevo_html
         )
         nuevo_html = re2.sub(
             r'(<span class="plusv-label">Neto</span><span class="mensual-val green">)[^<]*(</span>)',
