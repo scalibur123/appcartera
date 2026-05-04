@@ -223,6 +223,38 @@ server.listen(PORT, () => {
 // Chequeo alertas cada 5 min
 setInterval(() => { try { delete require.cache[require.resolve("./check-alerts")]; require("./check-alerts"); } catch(e) { console.error(e); } }, 5*60*1000);
 
+
+// Snapshot diario
+function guardarSnapshotSiToca(){
+  var ahora=new Date();
+  var hora=ahora.getHours();
+  var min=ahora.getMinutes();
+  var dia=ahora.getDay();
+  if(dia===0||dia===6)return;
+  if(hora!==17||min<30||min>35)return;
+  var fecha=ahora.toISOString().slice(0,10);
+  var f=require("fs"),p=require("path");
+  try{
+    var prices=JSON.parse(f.readFileSync(p.join(__dirname,"price-cache.json"),"utf8"));
+    var html=f.readFileSync(p.join(__dirname,"index.html"),"utf8");
+    var m=html.match(/const C=(\[.*?\]);/s);
+    if(!m)return;
+    var C=JSON.parse(m[1]);
+    var eu=prices["EURUSD=X"];
+    var eurUsd=eu?eu.price:1;
+    var total=0;
+    for(var i of C){
+      var pr=prices[i.symbol];
+      if(pr){var pe=i.moneda==="USD"&&eurUsd?pr.price/eurUsd:pr.price;total+=i.titulos*pe;}
+    }
+    var sb=require("./supabase-client").supabase;
+    sb.from("cartera_snapshots").upsert({fecha:fecha,valor_total:Math.round(total*100)/100},{onConflict:"fecha"}).then(function(r){
+      if(r.error)console.error(r.error.message);
+      else console.log("Snapshot:",fecha,total.toFixed(2));
+    });
+  }catch(e){console.error(e.message);}
+}
+setInterval(guardarSnapshotSiToca,60000);
 // Mantener servidor activo
 setInterval(() => {
   https.get('https://appcartera.onrender.com', () => {}).on('error', () => {});
