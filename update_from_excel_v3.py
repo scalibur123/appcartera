@@ -442,15 +442,22 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None)
             signo = "+" if v >= 0 else ""
             num = f"{abs(v):,.2f}".replace(",","X").replace(".",",").replace("X",".")
             return f'<span style="color:{color};font-size:20px;font-weight:500">{signo}{num} \u20ac</span>'
+        def bloque(titulo, bruto, neto):
+            return (
+                f'<div style="padding:10px 0;border-bottom:1px solid var(--border)">' +
+                f'<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">{titulo}</div>' +
+                f'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">' +
+                f'<span style="font-size:12px;color:var(--muted)">bruto</span>{fmtg(bruto)}</div>' +
+                f'<div style="display:flex;justify-content:space-between;align-items:baseline">' +
+                f'<span style="font-size:12px;color:var(--muted)">neto</span>{fmtg(neto)}</div>' +
+                f'</div>'
+            )
         card = (
-            '<div class="card" id="card-ganancias">'
-            '<div class="card-label">Ganancias realizadas 2026 (plusvalias + dividendos)</div>'
-            f'<div class="plusv-row"><span class="plusv-label">Esta semana bruto</span>{fmtg(ganancias_data["sem_b"])}</div>'
-            f'<div class="plusv-row"><span class="plusv-label">Esta semana neto</span>{fmtg(ganancias_data["sem_n"])}</div>'
-            f'<div class="plusv-row"><span class="plusv-label">Este mes bruto</span>{fmtg(ganancias_data["mes_b"])}</div>'
-            f'<div class="plusv-row"><span class="plusv-label">Este mes neto</span>{fmtg(ganancias_data["mes_n"])}</div>'
-            f'<div class="plusv-row"><span class="plusv-label">Anual bruto</span>{fmtg(ganancias_data["ani_b"])}</div>'
-            f'<div class="plusv-row"><span class="plusv-label">Anual neto</span>{fmtg(ganancias_data["ani_n"])}</div>'
+            '<div class="card" id="card-ganancias">' +
+            '<div class="card-label">Ganancias realizadas 2026</div>' +
+            bloque("ESTA SEMANA", ganancias_data["sem_b"], ganancias_data["sem_n"]) +
+            bloque("ESTE MES", ganancias_data["mes_b"], ganancias_data["mes_n"]) +
+            bloque("ANUAL", ganancias_data["ani_b"], ganancias_data["ani_n"]) +
             '</div>'
         )
         if 'id="card-ganancias"' in nuevo_html:
