@@ -401,8 +401,8 @@ def actualizar_index_html(const_C_linea, mensual_data=None):
             nuevo_html
         )
         nuevo_html = re2.sub(
-            r'(<span class="mensual-val green">)[^<]*(€ brutos</span>)',
-            f'\g<1>{mensual_data["equiv_bruto"]}\g<2>',
+            r'(<span class="mensual-val green">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["equiv_bruto"]} brutos\g<2>',
             nuevo_html
         )
     nuevo_html = asegurar_historico(nuevo_html)
