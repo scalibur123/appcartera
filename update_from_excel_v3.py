@@ -161,7 +161,7 @@ def leer_excel_con_mic():
         bruto_anual = ws_m['R13'].value or 0
         neto_anual = ws_m['S13'].value or 0
         equiv_bruto = ws_m['S15'].value or 0
-        neto_mensual = ws_m['JKL13'].value or 0
+        neto_mensual = ws_m['J13'].value or 0
         neto_anual_nomina = neto_mensual * 14
 
         def calcular_bruto_desde_neto(neto_anual, hijos=2):
