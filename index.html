@@ -106,7 +106,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   </div>
   
   <div class="card" id="card-ganancias"><div class="card-label">Ganancias realizadas 2026</div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">ESTA SEMANA</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="sem-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="sem-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div></div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">ESTE MES</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="mes-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="mes-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div></div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">ANUAL</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="anual-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+91.827,43 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="anual-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+72.304,36 €</span></span></div></div></div><!--/card-ganancias-->
-  <p class="note">Datos del Excel del 4 may 2026. Pulsa ↻ para actualizar.</p>
+  <p class="note">Datos del Excel del 5 may 2026. Pulsa ↻ para actualizar.</p>
 </div>
 
 <div id="cartera" class="section">
@@ -295,6 +295,9 @@ function updateResumen(){
     const anualB = document.getElementById('anual-b');
     if (mesB) { mesB.innerHTML = '<span style="color:'+colorR(RENDIMIENTO_MES)+';font-size:20px;font-weight:500">'+fmtR(RENDIMIENTO_MES)+'</span>'; }
     if (anualB) { anualB.innerHTML = '<span style="color:'+colorR(RENDIMIENTO_ANUAL)+';font-size:20px;font-weight:500">'+fmtR(RENDIMIENTO_ANUAL)+'</span>'; }
+    const mesN=document.getElementById('mes-n');const anualN=document.getElementById('anual-n');
+    if (mesN) { mesN.innerHTML = '<span style="color:'+colorR(RENDIMIENTO_MES_N)+';font-size:20px;font-weight:500">'+fmtR(RENDIMIENTO_MES_N)+'</span>'; }
+    if (anualN) { anualN.innerHTML = '<span style="color:'+colorR(RENDIMIENTO_ANUAL_N)+';font-size:20px;font-weight:500">'+fmtR(RENDIMIENTO_ANUAL_N)+'</span>'; }
   }
   fetch('/estado-dia').then(r=>r.json()).then(dia=>{
     const negEl=document.getElementById('cnt-neg-dia');
@@ -449,5 +452,5 @@ initNotifications();
   </div>
 </div>
 <style>#ptr-indicator{position:fixed;top:0;left:0;right:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--card);color:var(--text);font-size:13px;height:0;overflow:hidden;transition:height 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.2)}#ptr-indicator.visible{height:44px}</style><script>(function(){var startY=0,pulling=false,ind=document.createElement('div');ind.id='ptr-indicator';ind.innerHTML='Baja para actualizar';document.body.prepend(ind);document.addEventListener('touchstart',function(e){if(window.scrollY===0)startY=e.touches[0].clientY},{passive:true});document.addEventListener('touchmove',function(e){if(!startY)return;var dy=e.touches[0].clientY-startY;if(dy>10&&window.scrollY===0){pulling=true;ind.classList.add('visible');ind.innerHTML=dy>80?'Suelta para actualizar':'Baja para actualizar';}},{passive:true});document.addEventListener('touchend',function(e){if(pulling){var dy=e.changedTouches[0].clientY-startY;if(dy>80){ind.innerHTML='Actualizando...';setTimeout(function(){startLoad();ind.classList.remove('visible');},300);}else{ind.classList.remove('visible');}}startY=0;pulling=false;});})();</script>
-<script>var RENDIMIENTO_MES=21431;var RENDIMIENTO_ANUAL=128726.34;</script></body>
+<script>var RENDIMIENTO_MES=21431;var RENDIMIENTO_MES_N=16934.185742864363;var RENDIMIENTO_ANUAL=128726.34;var RENDIMIENTO_ANUAL_N=101716.00725860252;</script></body>
 </html>

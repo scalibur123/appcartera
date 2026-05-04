@@ -385,7 +385,9 @@ def leer_rendimiento_cartera():
             if meses.get(row[3], 0) == mes_hoy:
                 total_mes = row[5]
             total_anual += row[5]
-    return {'mes': total_mes, 'anual': total_anual}
+    ws_irpf = wb['IRPF']
+    tipo_irpf = ws_irpf.cell(35, 6).value or 0.20925
+    return {'mes': total_mes, 'mes_n': total_mes*(1-tipo_irpf), 'anual': total_anual, 'anual_n': total_anual*(1-tipo_irpf)}
 
 def leer_ganancias_realizadas():
     import openpyxl
@@ -493,7 +495,7 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
             nuevo_html = nuevo_html.replace('<p class="note">', card_con_marker + '\n  <p class="note">')
     if rendimiento_data:
         # Inyectar como variables JS
-        js_vars = f'<script>var RENDIMIENTO_MES={rendimiento_data["mes"]};var RENDIMIENTO_ANUAL={rendimiento_data["anual"]};</script>'
+        js_vars = f'<script>var RENDIMIENTO_MES={rendimiento_data["mes"]};var RENDIMIENTO_MES_N={rendimiento_data["mes_n"]};var RENDIMIENTO_ANUAL={rendimiento_data["anual"]};var RENDIMIENTO_ANUAL_N={rendimiento_data["anual_n"]};</script>'
         if 'var RENDIMIENTO_MES=' in nuevo_html:
             import re as re4
             nuevo_html = re4.sub(r'<script>var RENDIMIENTO_MES=.*?;</script>', js_vars, nuevo_html)
