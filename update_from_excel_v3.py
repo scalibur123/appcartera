@@ -154,6 +154,27 @@ def leer_excel_con_mic():
     # Cargar dos versiones: una con valores cacheados y otra con formulas
     wb = openpyxl.load_workbook(EXCEL, data_only=True, keep_vba=False)
     ws = wb[HOJA]
+    mensual_data = None
+    # Leer datos pestaña Mensual
+    try:
+        ws_m = wb['Mensual']
+        bruto_anual = ws_m['R13'].value or 0
+        neto_anual = ws_m['S13'].value or 0
+        equiv_bruto = ws_m['S15'].value or 0
+        neto_14pagas = ws_m['JKL13'].value if 'JKL13' in dir(ws_m) else None
+        
+        def fmt_eur(v):
+            return f"{v:,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
+        
+        mensual_data = {
+            'bruto_anual': fmt_eur(bruto_anual),
+            'neto_anual': fmt_eur(neto_anual),
+            'equiv_bruto': fmt_eur(equiv_bruto),
+        }
+    except Exception as e:
+        print(f"Warning: no se pudo leer pestaña Mensual: {e}")
+        mensual_data = None
+
 
     mic_externo = cargar_mic_externos()
     if mic_externo:
@@ -228,7 +249,7 @@ def leer_excel_con_mic():
     if fubo: print(f'DEBUG FUBO en posiciones: objetivo={fubo.get("objetivo")}, banco={fubo.get("banco")}')
     if abeo: print(f'DEBUG ABEO en posiciones: objetivo={abeo.get("objetivo")}, banco={abeo.get("banco")}')
 
-    return [posiciones[t] for t in orden], sin_mic
+    return [posiciones[t] for t in orden], sin_mic, mensual_data
 
 
 def resolver_simbolo_yahoo(p, overrides):
@@ -322,7 +343,7 @@ window.loadHistorico = async function() {
         html = html.replace('</script>\n</body>', load_fn + '</script>\n</body>')
     return html
 
-def actualizar_index_html(const_C_linea):
+def actualizar_index_html(const_C_linea, mensual_data=None):
     if not INDEX_HTML.exists():
         print(f"❌ index.html no encontrado: {INDEX_HTML}")
         sys.exit(1)
@@ -339,6 +360,25 @@ def actualizar_index_html(const_C_linea):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup = INDEX_HTML.parent / f"index.html.backup_{timestamp}"
     backup.write_text(html, encoding="utf-8")
+
+    # Actualizar HTML pestaña Mensual
+    if mensual_data:
+        import re as re2
+        nuevo_html = re2.sub(
+            r'<span class="mensual-val green">[^<]*</span>(?=.*Bruto)',
+            f'<span class="mensual-val green">{mensual_data["bruto_anual"]}</span>',
+            nuevo_html, count=1, flags=re2.DOTALL
+        )
+        nuevo_html = re2.sub(
+            r'(<span class="plusv-label">Neto</span><span class="mensual-val green">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["neto_anual"]}\g<2>',
+            nuevo_html
+        )
+        nuevo_html = re2.sub(
+            r'(<span class="mensual-val green">)[^<]*(€ brutos</span>)',
+            f'\g<1>{mensual_data["equiv_bruto"]} brutos\g<2>',
+            nuevo_html
+        )
     nuevo_html = asegurar_historico(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
     print(f"✅ index.html actualizado. Backup: {backup.name}")
@@ -346,7 +386,7 @@ def actualizar_index_html(const_C_linea):
 
 def main():
     print(f"📂 Leyendo Excel: {EXCEL}")
-    posiciones, sin_mic = leer_excel_con_mic()
+    posiciones, sin_mic, mensual_data = leer_excel_con_mic()
     print(f"✅ {len(posiciones)} tickers unicos cargados")
 
     overrides = cargar_overrides()
@@ -386,7 +426,7 @@ def main():
     print(f"\n✅ Guardado {TICKERS_JSON}")
 
     const_C = construir_const_C_compacta(posiciones, ticker_map)
-    actualizar_index_html(const_C)
+    actualizar_index_html(const_C, mensual_data)
 
     print("\n🎯 LISTO. Siguiente paso:")
     print("   python3 validate.py")
