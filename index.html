@@ -110,7 +110,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
 </div>
 
 <div id="cartera" class="section">
-  <div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" type="search" placeholder="Buscar ticker…" id="csearch" oninput="renderCartera()" autocomplete="off" autocorrect="off" autocapitalize="characters"></div>
+  <div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" type="search" placeholder="Buscar ticker o nombre…" id="csearch" oninput="renderCartera()" autocomplete="off" autocorrect="off" autocapitalize="off"></div>
   <div class="filters">
     <button class="filter-btn active" id="cf-all" onclick="fC('all',this)">Todos</button>
     <button class="filter-btn" id="cf-EU" onclick="fC('EU',this)">🇪🇺 Europa</button>
@@ -133,7 +133,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
 </div>
 
 <div id="diana" class="section">
-  <div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" type="search" placeholder="Buscar ticker…" id="dsearch" oninput="renderDiana()" autocomplete="off" autocorrect="off" autocapitalize="characters"></div>
+  <div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" type="search" placeholder="Buscar ticker o nombre…" id="dsearch" oninput="renderDiana()" autocomplete="off" autocorrect="off" autocapitalize="off"></div>
   <div class="filters">
     <button class="filter-btn active" id="df-all" onclick="fD('all',this)">Todos</button>
     <button class="filter-btn" id="df-EU" onclick="fD('EU',this)">🇪🇺 Europa</button>
@@ -305,7 +305,7 @@ function fD(f,btn){dFilter=f;document.querySelectorAll('[id^="df-"]').forEach(b=
 function renderCartera(){
   const s=document.getElementById('csearch').value.trim().toUpperCase();
   const data=sortItems(C,cSort).filter(i=>{
-    if(s&&!i.tckr.includes(s))return false;
+    const nombre=getDisplayName(i).toUpperCase();if(s&&!i.tckr.includes(s)&&!nombre.includes(s))return false;
     if(cFilter==='EU')return i.moneda==='EUR';
     if(cFilter==='US')return i.moneda==='USD';
     if(cFilter==='EUR')return i.moneda==='EUR';
@@ -334,7 +334,7 @@ function renderCartera(){
 
 function renderDiana(){
   const ds=document.getElementById("dsearch")?.value.trim().toUpperCase()||"";
-  let data=sortItems(C,dSort).filter(i=>i.objetivo).filter(item=>{ if(ds&&!item.tckr.includes(ds))return false;
+  let data=sortItems(C,dSort).filter(i=>i.objetivo).filter(item=>{ const dnombre=getDisplayName(item).toUpperCase();if(ds&&!item.tckr.includes(ds)&&!dnombre.includes(ds))return false;
     const p=prices[item.symbol]?.price;
     if(dFilter==='neg')return p!=null&&p>=item.objetivo;
     if(dFilter==='warn'){if(!p)return false;const d=(item.objetivo-p)/item.objetivo;return d>=0&&d<=0.07;}
