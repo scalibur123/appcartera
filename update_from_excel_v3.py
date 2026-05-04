@@ -370,6 +370,23 @@ window.loadHistorico = async function() {
     return html
 
 
+def leer_rendimiento_cartera():
+    import openpyxl
+    from datetime import datetime
+    wb = openpyxl.load_workbook(open(str(EXCEL), 'rb'), read_only=True, data_only=True)
+    ws = wb['Semanal']
+    meses = {'Enero':1,'Febrero':2,'Marzo':3,'Abril':4,'Mayo':5,'Junio':6,
+             'Julio':7,'Agosto':8,'Septiembre':9,'Octubre':10,'Noviembre':11,'Diciembre':12}
+    mes_hoy = datetime.now().month
+    total_mes = 0
+    total_anual = 0
+    for row in ws.iter_rows(min_row=4, max_row=60, values_only=True):
+        if row[3] is not None and isinstance(row[5], (int,float)) and row[5] != 0:
+            if meses.get(row[3], 0) == mes_hoy:
+                total_mes = row[5]
+            total_anual += row[5]
+    return {'mes': total_mes, 'anual': total_anual}
+
 def leer_ganancias_realizadas():
     import openpyxl
     from datetime import datetime, timedelta
@@ -399,7 +416,7 @@ def leer_ganancias_realizadas():
 
     return r
 
-def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None):
+def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None):
     if not INDEX_HTML.exists():
         print(f"❌ index.html no encontrado: {INDEX_HTML}")
         sys.exit(1)
@@ -474,6 +491,31 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None)
                 nuevo_html = nuevo_html.replace(card_con_marker + card_con_marker, card_con_marker)
         else:
             nuevo_html = nuevo_html.replace('<p class="note">', card_con_marker + '\n  <p class="note">')
+    if rendimiento_data:
+        # Inyectar como variables JS
+        js_vars = f'<script>var RENDIMIENTO_MES={rendimiento_data["mes"]};var RENDIMIENTO_ANUAL={rendimiento_data["anual"]};</script>'
+        if 'var RENDIMIENTO_MES=' in nuevo_html:
+            import re as re4
+            nuevo_html = re4.sub(r'<script>var RENDIMIENTO_MES=.*?;</script>', js_vars, nuevo_html)
+        else:
+            nuevo_html = nuevo_html.replace('</body>', js_vars + '</body>')
+    if False and rendimiento_data:
+        def fmtr(v):
+            color = "var(--green)" if v >= 0 else "var(--red)"
+            signo = "+" if v >= 0 else ""
+            num = f"{abs(v):,.2f}".replace(",","X").replace(".",",").replace("X",".")
+            return f'<span style="color:{color};font-size:20px;font-weight:500">{signo}{num} \u20ac</span>'
+        import re as re3
+        nuevo_html = re3.sub(
+            r'ESTE MES</div>.*?bruto</span><span[^>]*>[^<]*</span>',
+            lambda m: m.group(0)[:m.group(0).rfind('<span')] + fmtr(rendimiento_data["mes"]),
+            nuevo_html, flags=re3.DOTALL, count=1
+        )
+        nuevo_html = re3.sub(
+            r'ANUAL</div>.*?bruto</span><span[^>]*>[^<]*</span>',
+            lambda m: m.group(0)[:m.group(0).rfind('<span')] + fmtr(rendimiento_data["anual"]),
+            nuevo_html, flags=re3.DOTALL, count=1
+        )
     nuevo_html = asegurar_historico(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
     print(f"✅ index.html actualizado. Backup: {backup.name}")
@@ -483,6 +525,7 @@ def main():
     print(f"📂 Leyendo Excel: {EXCEL}")
     posiciones, sin_mic, mensual_data = leer_excel_con_mic()
     ganancias_data = leer_ganancias_realizadas()
+    rendimiento_data = leer_rendimiento_cartera()
     print(f"✅ {len(posiciones)} tickers unicos cargados")
 
     overrides = cargar_overrides()
@@ -522,7 +565,7 @@ def main():
     print(f"\n✅ Guardado {TICKERS_JSON}")
 
     const_C = construir_const_C_compacta(posiciones, ticker_map)
-    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data)
+    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data)
 
     print("\n🎯 LISTO. Siguiente paso:")
     print("   python3 validate.py")
