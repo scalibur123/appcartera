@@ -164,23 +164,27 @@ def leer_excel_con_mic():
         neto_mensual = ws_m['J13'].value or 0
         neto_anual_nomina = neto_mensual * 14
 
-        def calcular_bruto_desde_neto(neto_anual, hijos=2):
-            deducciones_hijos = 1200 + 1400  # 2 hijos
-            ss_trabajador = 0.0635
-            tramos = [(12450,0.19),(7750,0.24),(15000,0.30),(24800,0.37),(240000,0.45),(float('inf'),0.47)]
+        def calcular_bruto_desde_neto(neto_anual):
+            ss = 0.034
+            tramos_e = [(12450,0.095),(7750,0.12),(15000,0.15),(24800,0.185),(120000,0.225),(9e9,0.235)]
+            tramos_a = [(12450,0.105),(7750,0.12),(15000,0.14),(24800,0.175),(120000,0.2125),(9e9,0.2375)]
+            min_ded = 5550 + 1200 + 700
             def neto_de_bruto(b):
-                base = b * (1 - ss_trabajador)
-                cuota = 0; resto = base
-                for limite, tipo in tramos:
-                    if resto <= 0: break
-                    t = min(resto, limite); cuota += t * tipo; resto -= t
-                return base - cuota + deducciones_hijos * 0.19
-            lo, hi = neto_anual, neto_anual * 2
-            for _ in range(50):
-                mid = (lo + hi) / 2
-                if neto_de_bruto(mid) < neto_anual: lo = mid
-                else: hi = mid
-            return round((lo + hi) / 2)
+                base = b*(1-ss) - min_ded
+                ce = ca = 0; re_ = ra = base
+                for lim,t in tramos_e:
+                    if re_<=0: break
+                    x=min(re_,lim); ce+=x*t; re_-=x
+                for lim,t in tramos_a:
+                    if ra<=0: break
+                    x=min(ra,lim); ca+=x*t; ra-=x
+                return b*(1-ss)-ce-ca
+            lo,hi = neto_anual*0.8,neto_anual*2
+            for _ in range(60):
+                mid=(lo+hi)/2
+                if neto_de_bruto(mid)<neto_anual: lo=mid
+                else: hi=mid
+            return round((lo+hi)/2)
 
         equiv_bruto_calculado = calcular_bruto_desde_neto(neto_anual_nomina)
         
