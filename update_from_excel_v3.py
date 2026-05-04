@@ -369,7 +369,37 @@ window.loadHistorico = async function() {
         html = html.replace('</script>\n</body>', load_fn + '</script>\n</body>')
     return html
 
-def actualizar_index_html(const_C_linea, mensual_data=None):
+
+def leer_ganancias_realizadas():
+    import openpyxl
+    from datetime import datetime, timedelta
+    wb = openpyxl.load_workbook(open(str(EXCEL), "rb"), read_only=True, data_only=True)
+    hoy = datetime.now()
+    inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0,minute=0,second=0,microsecond=0)
+    inicio_mes = hoy.replace(day=1,hour=0,minute=0,second=0,microsecond=0)
+    r = {"sem_b":0,"sem_n":0,"mes_b":0,"mes_n":0,"ani_b":0,"ani_n":0}
+
+    ws = wb["2026"]
+    for row in ws.iter_rows(min_row=262, max_row=400, values_only=True):
+        fecha, bruta, neta = row[16], row[24], row[25]
+        if not fecha or not isinstance(fecha, datetime) or not bruta or not neta: continue
+        if fecha.year != hoy.year: continue
+        r["ani_b"] += bruta; r["ani_n"] += neta
+        if fecha >= inicio_mes: r["mes_b"] += bruta; r["mes_n"] += neta
+        if fecha >= inicio_semana: r["sem_b"] += bruta; r["sem_n"] += neta
+
+    ws2 = wb["dividendos 26"]
+    for row in ws2.iter_rows(min_row=5, max_row=500, values_only=True):
+        fecha, bruta, neta = row[0], row[7], row[8]
+        if not fecha or not isinstance(fecha, datetime) or not bruta or not neta: continue
+        if fecha.year != hoy.year: continue
+        r["ani_b"] += bruta; r["ani_n"] += neta
+        if fecha >= inicio_mes: r["mes_b"] += bruta; r["mes_n"] += neta
+        if fecha >= inicio_semana: r["sem_b"] += bruta; r["sem_n"] += neta
+
+    return r
+
+def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None):
     if not INDEX_HTML.exists():
         print(f"❌ index.html no encontrado: {INDEX_HTML}")
         sys.exit(1)
@@ -405,6 +435,28 @@ def actualizar_index_html(const_C_linea, mensual_data=None):
             f'\g<1>{mensual_data["equiv_bruto"]} brutos\g<2>',
             nuevo_html
         )
+
+    if ganancias_data:
+        def fmtg(v):
+            color = "var(--green)" if v >= 0 else "var(--red)"
+            signo = "+" if v >= 0 else ""
+            num = f"{abs(v):,.2f}".replace(",","X").replace(".",",").replace("X",".")
+            return f'<span style="color:{color};font-size:20px;font-weight:500">{signo}{num} \u20ac</span>'
+        card = (
+            '<div class="card" id="card-ganancias">'
+            '<div class="card-label">Ganancias realizadas 2026 (plusvalias + dividendos)</div>'
+            f'<div class="plusv-row"><span class="plusv-label">Esta semana bruto</span>{fmtg(ganancias_data["sem_b"])}</div>'
+            f'<div class="plusv-row"><span class="plusv-label">Esta semana neto</span>{fmtg(ganancias_data["sem_n"])}</div>'
+            f'<div class="plusv-row"><span class="plusv-label">Este mes bruto</span>{fmtg(ganancias_data["mes_b"])}</div>'
+            f'<div class="plusv-row"><span class="plusv-label">Este mes neto</span>{fmtg(ganancias_data["mes_n"])}</div>'
+            f'<div class="plusv-row"><span class="plusv-label">Anual bruto</span>{fmtg(ganancias_data["ani_b"])}</div>'
+            f'<div class="plusv-row"><span class="plusv-label">Anual neto</span>{fmtg(ganancias_data["ani_n"])}</div>'
+            '</div>'
+        )
+        if 'id="card-ganancias"' in nuevo_html:
+            nuevo_html = re2.sub(r'<div class="card" id="card-ganancias">.*?</div>', card, nuevo_html, flags=re2.DOTALL)
+        else:
+            nuevo_html = nuevo_html.replace('<p class="note">', card + '\n  <p class="note">')
     nuevo_html = asegurar_historico(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
     print(f"✅ index.html actualizado. Backup: {backup.name}")
@@ -413,6 +465,7 @@ def actualizar_index_html(const_C_linea, mensual_data=None):
 def main():
     print(f"📂 Leyendo Excel: {EXCEL}")
     posiciones, sin_mic, mensual_data = leer_excel_con_mic()
+    ganancias_data = leer_ganancias_realizadas()
     print(f"✅ {len(posiciones)} tickers unicos cargados")
 
     overrides = cargar_overrides()
@@ -452,7 +505,7 @@ def main():
     print(f"\n✅ Guardado {TICKERS_JSON}")
 
     const_C = construir_const_C_compacta(posiciones, ticker_map)
-    actualizar_index_html(const_C, mensual_data)
+    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data)
 
     print("\n🎯 LISTO. Siguiente paso:")
     print("   python3 validate.py")
