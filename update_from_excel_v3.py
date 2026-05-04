@@ -442,20 +442,22 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None)
             signo = "+" if v >= 0 else ""
             num = f"{abs(v):,.2f}".replace(",","X").replace(".",",").replace("X",".")
             return f'<span style="color:{color};font-size:20px;font-weight:500">{signo}{num} \u20ac</span>'
-        def bloque(titulo, bruto, neto):
+        def bloque(titulo, bruto, neto, id_b=None, id_n=None):
+            ib = f' id="{id_b}"' if id_b else ''
+            ib_n = f' id="{id_n}"' if id_n else ''
             return (
                 f'<div style="padding:10px 0;border-bottom:1px solid var(--border)">' +
                 f'<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">{titulo}</div>' +
                 f'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">' +
-                f'<span style="font-size:12px;color:var(--muted)">bruto</span>{fmtg(bruto)}</div>' +
+                f'<span style="font-size:12px;color:var(--muted)">bruto</span><span{ib} style="font-size:20px;font-weight:500">—</span></div>' +
                 f'<div style="display:flex;justify-content:space-between;align-items:baseline">' +
-                f'<span style="font-size:12px;color:var(--muted)">neto</span>{fmtg(neto)}</div>' +
+                f'<span style="font-size:12px;color:var(--muted)">neto</span><span{ib_n} style="font-size:20px;font-weight:500">{fmtg(neto)}</span></div>' +
                 f'</div>'
             )
         card = (
             '<div class="card" id="card-ganancias">' +
             '<div class="card-label">Ganancias realizadas 2026</div>' +
-            bloque("ESTA SEMANA", ganancias_data["sem_b"], ganancias_data["sem_n"]) +
+            bloque("ESTA SEMANA", ganancias_data["sem_b"], ganancias_data["sem_n"], id_b="sem-b", id_n="sem-n") +
             bloque("ESTE MES", ganancias_data["mes_b"], ganancias_data["mes_n"]) +
             bloque("ANUAL", ganancias_data["ani_b"], ganancias_data["ani_n"]) +
             '</div>'
