@@ -111,6 +111,8 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   <div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" type="search" placeholder="Buscar ticker…" id="csearch" oninput="renderCartera()" autocomplete="off" autocorrect="off" autocapitalize="characters"></div>
   <div class="filters">
     <button class="filter-btn active" id="cf-all" onclick="fC('all',this)">Todos</button>
+    <button class="filter-btn" id="cf-EU" onclick="fC('EU',this)">🇪🇺 Europa</button>
+    <button class="filter-btn" id="cf-US" onclick="fC('US',this)">🇺🇸 USA</button>
     <button class="filter-btn" id="cf-EUR" onclick="fC('EUR',this)">€</button>
     <button class="filter-btn" id="cf-USD" onclick="fC('USD',this)">$</button>
     <button class="filter-btn" id="cf-ING" onclick="fC('ING',this)">ING</button>
@@ -129,8 +131,11 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
 </div>
 
 <div id="diana" class="section">
+  <div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" type="search" placeholder="Buscar ticker…" id="dsearch" oninput="renderDiana()" autocomplete="off" autocorrect="off" autocapitalize="characters"></div>
   <div class="filters">
     <button class="filter-btn active" id="df-all" onclick="fD('all',this)">Todos</button>
+    <button class="filter-btn" id="df-EU" onclick="fD('EU',this)">🇪🇺 Europa</button>
+    <button class="filter-btn" id="df-US" onclick="fD('US',this)">🇺🇸 USA</button>
     <button class="filter-btn" id="df-neg" onclick="fD('neg',this)">En objetivo ✓</button>
     <button class="filter-btn" id="df-warn" onclick="fD('warn',this)">Pendientes</button>
     <button class="filter-btn" id="df-ING" onclick="fD('ING',this)">ING</button>
@@ -259,6 +264,8 @@ function renderCartera(){
   const s=document.getElementById('csearch').value.trim().toUpperCase();
   const data=sortItems(C,cSort).filter(i=>{
     if(s&&!i.tckr.includes(s))return false;
+    if(cFilter==='EU')return i.moneda==='EUR';
+    if(cFilter==='US')return i.moneda==='USD';
     if(cFilter==='EUR')return i.moneda==='EUR';
     if(cFilter==='USD')return i.moneda==='USD';
     if(cFilter==='ING')return i.banco.toUpperCase().includes('ING');
@@ -284,10 +291,13 @@ function renderCartera(){
 }
 
 function renderDiana(){
-  let data=sortItems(C,dSort).filter(i=>i.objetivo).filter(item=>{
+  const ds=document.getElementById("dsearch")?.value.trim().toUpperCase()||"";
+  let data=sortItems(C,dSort).filter(i=>i.objetivo).filter(item=>{ if(ds&&!item.tckr.includes(ds))return false;
     const p=prices[item.symbol]?.price;
     if(dFilter==='neg')return p!=null&&p>=item.objetivo;
     if(dFilter==='warn'){if(!p)return false;const d=(item.objetivo-p)/item.objetivo;return d>=0&&d<=0.07;}
+    if(dFilter==='EU')return item.moneda==='EUR';
+    if(dFilter==='US')return item.moneda==='USD';
     if(dFilter==='ING')return item.banco.toUpperCase().includes('ING');
     if(dFilter==='R4')return item.banco.toUpperCase().includes('R4');
     if(dFilter==='IBKR')return item.banco.toUpperCase().includes('IBKR');
