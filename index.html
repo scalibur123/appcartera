@@ -101,8 +101,8 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
     <div class="plusv-row"><span class="plusv-label">Netas</span><span class="plusv-val" id="pv-n" style="color:var(--muted)">—</span></div>
   </div>
   <div class="stat-grid">
-    <div class="stat green-s" onclick="goToDiana('neg')"><div class="stat-label">En objetivo ✓</div><div class="stat-num green" id="cnt-neg">—</div><div class="stat-hint">Ver →</div></div>
-    <div class="stat amber-s" onclick="goToDiana('warn')"><div class="stat-label">Pendientes &lt;7%</div><div class="stat-num amber" id="cnt-warn">—</div><div class="stat-hint">Ver →</div></div>
+    <div class="stat green-s" onclick="goToDiana('neg')"><div class="stat-label">En objetivo ✓</div><div class="stat-num green" id="cnt-neg">—</div><div id="cnt-neg-dia" style="min-height:14px;margin-top:2px"></div><div class="stat-hint">Ver →</div></div>
+    <div class="stat amber-s" onclick="goToDiana('warn')"><div class="stat-label">Pendientes &lt;7%</div><div class="stat-num amber" id="cnt-warn">—</div><div id="cnt-warn-dia" style="min-height:14px;margin-top:2px"></div><div class="stat-hint">Ver →</div></div>
   </div>
   
   <div class="card" id="card-ganancias"><div class="card-label">Ganancias realizadas 2026</div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">ESTA SEMANA</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="sem-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="sem-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div></div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">ESTE MES</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div></div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">ANUAL</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+91.827,43 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+72.304,36 €</span></span></div></div></div><!--/card-ganancias-->
@@ -277,8 +277,24 @@ function updateResumen(){
   pb.textContent=fE(b);pb.style.color=b>=0?'var(--green)':'var(--red)';
   pn.textContent=fE(n);pn.style.color=n>=0?'var(--green)':'var(--red)';
   const wo=C.filter(i=>i.objetivo&&prices[i.symbol]);
-  aC(document.getElementById('cnt-neg'),wo.filter(i=>prices[i.symbol].price>=i.objetivo).length);
-  aC(document.getElementById('cnt-warn'),wo.filter(i=>{const d=(i.objetivo-prices[i.symbol].price)/i.objetivo;return d>=0&&d<=0.07;}).length);
+  const negCount=wo.filter(i=>prices[i.symbol].price>=i.objetivo).length;
+  const warnCount=wo.filter(i=>{const d=(i.objetivo-prices[i.symbol].price)/i.objetivo;return d>=0&&d<=0.07;}).length;
+  aC(document.getElementById('cnt-neg'),negCount);
+  aC(document.getElementById('cnt-warn'),warnCount);
+  fetch('/estado-dia').then(r=>r.json()).then(dia=>{
+    const negEl=document.getElementById('cnt-neg-dia');
+    const warnEl=document.getElementById('cnt-warn-dia');
+    if(negEl){
+      const ent=dia.obj_ent||0,sal=dia.obj_sal||0;
+      negEl.innerHTML=(ent>0?'<span style="color:var(--green);font-size:11px">+'+ent+'</span>':'')+
+        (sal>0?'<span style="color:var(--red);font-size:11px"> -'+sal+'</span>':'');
+    }
+    if(warnEl){
+      const ent=dia.pen_ent||0,sal=dia.pen_sal||0;
+      warnEl.innerHTML=(ent>0?'<span style="color:var(--green);font-size:11px">+'+ent+'</span>':'')+
+        (sal>0?'<span style="color:var(--red);font-size:11px"> -'+sal+'</span>':'');
+    }
+  }).catch(()=>{});
 }
 
 function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');btn.classList.add('active');}

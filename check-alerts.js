@@ -9,6 +9,22 @@ function getToken() {
   return fs.existsSync(f) ? fs.readFileSync(f, 'utf8').trim() : null;
 }
 
+function getDiaState() {
+  const f = path.join(__dirname, 'alert-state-dia.json');
+  const hoy = new Date().toISOString().slice(0,10);
+  if (fs.existsSync(f)) {
+    const d = JSON.parse(fs.readFileSync(f, 'utf8'));
+    if (d.fecha === hoy) return d;
+  }
+  const nuevo = {fecha: hoy, obj_ent:0, obj_sal:0, pen_ent:0, pen_sal:0};
+  fs.writeFileSync(f, JSON.stringify(nuevo));
+  return nuevo;
+}
+
+function saveDiaState(d) {
+  fs.writeFileSync(path.join(__dirname, 'alert-state-dia.json'), JSON.stringify(d));
+}
+
 function getPrevState() {
   const f = path.join(__dirname, 'alert-state.json');
   return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {};
@@ -58,6 +74,7 @@ async function checkAlerts() {
 
   // Si no hay estado previo, solo guardamos estado inicial sin notificar
   const firstRun = Object.keys(prev).length === 0;
+  const dia = getDiaState();
 
   for (const item of C) {
     if (!item.objetivo) continue;
@@ -77,19 +94,23 @@ async function checkAlerts() {
     if (!prev[key]) continue;
 
     if (enObjetivo && !prev[key].enObjetivo) {
+      dia.obj_ent++;
       await guardar(item.tckr, item.banco, 'en_objetivo', price, item.objetivo);
       await sendNotification(token, `🎯 ${item.tckr} en objetivo`, `Precio ${price.toFixed(2)} ≥ Obj ${item.objetivo}`);
     }
     if (!enObjetivo && prev[key].enObjetivo) {
+      dia.obj_sal++;
       await guardar(item.tckr, item.banco, 'salio_objetivo', price, item.objetivo);
       await sendNotification(token, `⬇️ ${item.tckr} salió de objetivo`, `Precio ${price.toFixed(2)} < Obj ${item.objetivo}`);
     }
     const salioAhora = !enObjetivo && prev[key].enObjetivo;
     if (pendiente && !prev[key].pendiente && !salioAhora) {
+      dia.pen_ent++;
       await guardar(item.tckr, item.banco, 'pendiente', price, item.objetivo);
       await sendNotification(token, `⚠️ ${item.tckr} cerca del objetivo`, `A menos del 7% — Precio ${price.toFixed(2)}`);
     }
     if (!pendiente && prev[key].pendiente && !enObjetivo) {
+      dia.pen_sal++;
       await guardar(item.tckr, item.banco, 'salio_pendiente', price, item.objetivo);
       await sendNotification(token, `↩️ ${item.tckr} salió de pendientes`, `Precio ${price.toFixed(2)}`);
     }
@@ -108,6 +129,7 @@ async function checkAlerts() {
   }
 
   saveState(next);
+  saveDiaState(dia);
   if (firstRun) {
     console.log('✅ Primera ejecución: estado inicial guardado, sin notificaciones');
   } else {

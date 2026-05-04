@@ -195,6 +195,15 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
+    if (pathname === '/estado-dia' && req.method === 'GET') {
+      const fs = require('fs');
+      try {
+        const data = fs.readFileSync('./alert-state-dia.json', 'utf8');
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(data);
+      } catch(e) { res.writeHead(200); res.end(JSON.stringify({fecha:'',obj_ent:0,obj_sal:0,pen_ent:0,pen_sal:0})); }
+      return;
+    }
     if (pathname === '/names' && symbols) return handleNames(req, res, symbols);
     if (pathname === '/' && symbols) return handleSymbols(req, res, symbols);
     if (pathname === '/' || pathname === '/index.html') return handleIndex(req, res);
