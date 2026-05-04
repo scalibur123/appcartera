@@ -475,8 +475,8 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
             '<div class="card" id="card-ganancias">' +
             '<div class="card-label">Ganancias realizadas 2026</div>' +
             bloque("ESTA SEMANA", ganancias_data["sem_b"], ganancias_data["sem_n"], id_b="sem-b", id_n="sem-n") +
-            bloque("ESTE MES", ganancias_data["mes_b"], ganancias_data["mes_n"]) +
-            bloque("ANUAL", ganancias_data["ani_b"], ganancias_data["ani_n"]) +
+            bloque("ESTE MES", ganancias_data["mes_b"], ganancias_data["mes_n"], id_b="mes-b", id_n="mes-n") +
+            bloque("ANUAL", ganancias_data["ani_b"], ganancias_data["ani_n"], id_b="anual-b", id_n="anual-n") +
             '</div>'
         )
         END_MARKER = '<!--/card-ganancias-->'
