@@ -449,7 +449,7 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None)
                 f'<div style="padding:10px 0;border-bottom:1px solid var(--border)">' +
                 f'<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">{titulo}</div>' +
                 f'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">' +
-                f'<span style="font-size:12px;color:var(--muted)">bruto</span><span{ib} style="font-size:20px;font-weight:500">—</span></div>' +
+                f'<span style="font-size:12px;color:var(--muted)">bruto</span><span{ib} style="font-size:20px;font-weight:500">{fmtg(bruto)}</span></div>' +
                 f'<div style="display:flex;justify-content:space-between;align-items:baseline">' +
                 f'<span style="font-size:12px;color:var(--muted)">neto</span><span{ib_n} style="font-size:20px;font-weight:500">{fmtg(neto)}</span></div>' +
                 f'</div>'
