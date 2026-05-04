@@ -401,7 +401,7 @@ def actualizar_index_html(const_C_linea, mensual_data=None):
             nuevo_html
         )
         nuevo_html = re2.sub(
-            r'(<span class="mensual-val green">)[^<]*(</span>)',
+            r'(Equivale a</span><span class="mensual-val green">)[^<]*(</span>)',
             f'\g<1>{mensual_data["equiv_bruto"]} brutos\g<2>',
             nuevo_html
         )
