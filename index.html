@@ -330,6 +330,16 @@ function setSortC(s,btn){if(cSort===s){cSort=null;btn.classList.remove('active')
 function setSortD(s,btn){if(dSort===s){dSort=null;btn.classList.remove('active');}else{dSort=s;document.querySelectorAll('[id^="df-sort-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}renderDiana();}
 function sortItems(items,sortBy){if(!sortBy)return items;return [...items].sort((a,b)=>{if(sortBy==='pct'){const pa=prices[a.symbol]?.pct||-999;const pb=prices[b.symbol]?.pct||-999;return pb-pa;}if(sortBy==='val'){const va=(prices[a.symbol]?.price||0)*a.titulos;const vb=(prices[b.symbol]?.price||0)*b.titulos;return vb-va;}return a.tckr.localeCompare(b.tckr);});}
 
+
+window.goToCartera = function(ticker) {
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn')[1].classList.add('active');
+  document.getElementById('cartera').classList.add('active');
+  document.getElementById('csearch').value = ticker;
+  renderCartera();
+};
+
 window.loadHistorico = async function() {
   const el = document.getElementById("hist-list");
   try {
@@ -339,7 +349,8 @@ window.loadHistorico = async function() {
     el.innerHTML = data.map(d => {
       const fecha = new Date(d.fecha).toLocaleString("es-ES");
       const color = d.evento.includes("salio") ? "var(--red)" : "var(--green)";
-      return "<div style='padding:10px;border-bottom:1px solid var(--border)'><span style='color:"+color+";font-weight:600'>" + d.ticker + "</span> <span style='color:var(--muted);font-size:12px'>" + d.banco + "</span><br><span style='font-size:13px'>" + d.evento + " - " + d.precio + "</span><br><span style='color:var(--muted);font-size:11px'>" + fecha + "</span></div>";
+      const nombre = names[C.find(i=>i.tckr===d.ticker)?.symbol] || d.ticker;
+      return "<div onclick=\"goToCartera('"+d.ticker+"')\" style='padding:10px;border-bottom:1px solid var(--border);cursor:pointer'><span style='color:"+color+";font-weight:600'>" + d.ticker + "</span> <span style='color:var(--muted);font-size:11px'>" + nombre + "</span> <span style='color:var(--muted);font-size:12px;margin-left:4px'>" + d.banco + "</span><br><span style='font-size:13px'>" + d.evento + " — precio: " + d.precio + "</span><br><span style='color:var(--muted);font-size:11px'>" + fecha + "</span></div>";
     }).join("");
   } catch(e) { el.innerHTML = "Error cargando historico"; }
 };
