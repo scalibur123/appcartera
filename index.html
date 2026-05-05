@@ -92,7 +92,6 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   <button class="nav-btn" onclick="showTab('mensual',this)">Mensual</button>
   <button class="nav-btn" onclick="showTab('historico',this);loadHistorico()">Historico</button>
   <button class="nav-btn" onclick="showTab('earnings',this);loadEarnings()">Earnings</button>
-  <button class="nav-btn" onclick="showTab('earnings',this);loadEarnings()">Earnings</button>
 </div>
 
 <div id="eurusd-display" style="text-align:center;padding:6px 0;font-size:11px;color:var(--muted)">Cambio EUR/USD: --</div><div id="resumen" class="section active">
@@ -489,7 +488,7 @@ window.loadEarnings = async function() {
         fechaActual = d.fecha;
         const f = new Date(d.fecha);
         const label = f.toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'});
-        html += '<div style="padding:6px 0 4px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase">'+label+'</div>';
+        html += '<div style="padding:6px 0 4px;font-size:13px;font-weight:700;color:var(--amber);letter-spacing:1px;text-transform:uppercase;border-top:1px solid var(--border);margin-top:4px">'+label+'</div>';
       }
       const momento = d.momento ? (d.momento.includes('pre') ? '🌅 pre' : '🌆 post') : '';
       const est = d.estimacion != null ? ' · Est. '+d.estimacion : '';
