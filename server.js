@@ -270,11 +270,8 @@ setInterval(guardarSnapshotSiToca,60000);
 async function actualizarEarnings() {
   const apikey = process.env.ALPHAVANTAGE_KEY;
   if (!apikey) return console.log("No hay ALPHAVANTAGE_KEY");
-  const html = require("fs").readFileSync(require("path").join(__dirname,"index.html"),"utf8");
-  const m = html.match(/const C=(\[.*?\]);/s);
-  if (!m) return;
-  const C = JSON.parse(m[1]);
-  const symbols = new Set(C.map(i=>i.symbol.replace(/\.MC$|\.AS$|\.DE$|\.PA$|\.MI$|\.BR$|\.LS$/,"").toUpperCase()));
+  const tickersRaw = JSON.parse(require("fs").readFileSync(require("path").join(__dirname,"tickers.json"),"utf8"));
+  const symbols = new Set(Object.keys(tickersRaw).map(s=>s.replace(/\.MC$|\.AS$|\.DE$|\.PA$|\.MI$|\.BR$|\.LS$/,"").toUpperCase()));
   return new Promise((resolve)=>{
     const url = "https://www.alphavantage.co/query?function=EARNINGS_CALENDAR&horizon=3month&apikey="+apikey;
     https.get(url,{headers:{"User-Agent":"Mozilla/5.0"}},(res)=>{
