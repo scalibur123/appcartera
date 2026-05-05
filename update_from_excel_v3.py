@@ -526,11 +526,22 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
 
 
 def actualizar_earnings_local():
+    # Cargar .env si existe
+    env_file = PROYECTO / '.env'
+    if env_file.exists():
+        for line in env_file.read_text().splitlines():
+            if '=' in line and not line.startswith('#'):
+                k, v = line.split('=', 1)
+                os.environ.setdefault(k.strip(), v.strip())
     import json, csv, io
     from urllib.request import Request, urlopen
     from datetime import datetime
     from supabase import create_client
-    sb = create_client('https://ntvupakoulwiffvdcfox.supabase.co', 'sb_secret_Jq6YrenUpDtqrZyl8cVp0w_X7-EIkdv')
+    sb_url = os.environ.get('SUPABASE_URL', 'https://ntvupakoulwiffvdcfox.supabase.co')
+    sb_key = os.environ.get('SUPABASE_KEY', '')
+    if not sb_key:
+        print('⚠️  Sin SUPABASE_KEY, earnings omitidos'); return
+    sb = create_client(sb_url, sb_key)
     tickers_data = json.loads((PROYECTO / 'tickers.json').read_text())
     sufijos = ['.MC','.AS','.DE','.PA','.MI','.BR','.LS']
     symbols = set()

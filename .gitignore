@@ -16,3 +16,4 @@ node_modules/
 firebase-credentials.json
 fcm-token.txt
 alert-state.json
+.env
