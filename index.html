@@ -148,7 +148,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
     <button class="filter-btn" id="df-MYINV" onclick="fD('MYINV',this)">MYINV</button>
     <button class="filter-btn" id="df-R4/ING" onclick="fD('R4/ING',this)">R4/ING</button>
     <button class="filter-btn" id="df-MEDIO/ING" onclick="fD('MEDIO/ING',this)">MEDIO/ING</button>
-    <button class="filter-btn" id="df-sort-pct" onclick="setSortD('pct',this)">↑ % día</button>
+    <button class="filter-btn active" id="df-sort-obj" onclick="setSortD('obj',this)">↑ Obj</button><button class="filter-btn" id="df-sort-pct" onclick="setSortD('pct',this)">↑ % día</button>
     <button class="filter-btn" id="df-sort-val" onclick="setSortD('val',this)">↑ Valor</button>
   </div>
   <div class="list-count" id="d-count"></div>
@@ -172,7 +172,7 @@ const C=[{"tckr":"ABEO","nombre":"ABEO","titulos":800.0,"coste_eur":4922.2951,"p
 
 const SFX={"A3M":".MC","ACX":".MC","ADX":".MC","AED":".MC","ABI":".BR","ACA":".PA","ADS":".DE","AKZA":".AS","ALHG":".MC","ALM":".MC","ALO":".PA","AMP":".MC","AMV0":".MC","ANA":".MC","ARCAD":".BR","ARIS":".MC","BAYN":".DE","BEI":".DE","BMW":".DE","BNR":".DE","BOSS":".DE","CA":".PA","CABK":".MC","CIE":".MC","CLNX":".MC","COL":".MC","CON":".DE","DB1":".DE","DG":".PA","DOM":".PA","DTG":".DE","EDP":".LS","EGLA":".PA","ENC":".MC","ENG":".MC","ENXB":".DE","ERF":".PA","EVK":".DE","FAE":".MC","FDR":".MC","FNTN":".DE","FRA":".PA","GEST":".MC","HBX":".MC","HFG":".DE","IAG":".MC","IBE":".MC","INW":".MI","INPST":".MC","ITX":".MC","JEN":".MC","LDA":".MC","LEG":".MC","LHA":".DE","LI":".PA","LIGHT":".PA","MFEB":".MC","MONC":".MI","MTS":".MC","NEXI":".MI","NTGY":".MC","OCI":".AS","OHLA":".MC","ORY":".MC","PAH3":".DE","PHM":".MC","PUIG":".MC","REP":".MC","ROVI":".MC","S93":".DE","SAN":".MC","SAP":".DE","SCYR":".MC","SHL":".DE","SIX2":".DE","SOL":".MC","SPM":".MI","SQRL":".MC","STLAM":".MI","SW":".MC","SY1":".DE","SYENS":".MC","TE":".PA","TEF":".MC","TEP":".MC","TRG":".MC","TUB":".MC","TUI1":".DE","UIC1":".MC","UPM":".HE","VIS":".MC","VNA":".DE","VRLA":".MC","WCH":".DE","WLN":".PA","YACHT":".MC","ZAL":".DE"};
 
-let prices={}, names={}, cFilter='all', dFilters=[], busy=false, cSort="pct", dSort=null;
+let prices={}, names={}, cFilter='all', dFilters=[], busy=false, cSort="pct", dSort='obj';
 let eurUsd=null;
 function yT(i){return i.moneda==='EUR'?(i.tckr+(SFX[i.tckr]||'')):i.tckr;}
 function dbg(msg){const el=document.getElementById('dbg');if(el)el.textContent=msg;}
@@ -385,7 +385,7 @@ function renderDiana(){
     };
     return dFilters.every(f=>checks[f]?checks[f]():true);
   });
-  if(!dSort){data.sort((a,b)=>{const pa=prices[a.symbol]?.price,pb=prices[b.symbol]?.price;const da=pa?-(pa-a.objetivo)/Math.abs(a.objetivo):-999,db=pb?-(pb-b.objetivo)/Math.abs(b.objetivo):-999;return da-db;});}
+  if(!dSort||dSort==='obj'){data.sort((a,b)=>{const pa=prices[a.symbol]?.price,pb=prices[b.symbol]?.price;const da=pa?-(pa-a.objetivo)/Math.abs(a.objetivo):-999,db=pb?-(pb-b.objetivo)/Math.abs(b.objetivo):-999;return da-db;});}
   document.getElementById('d-count').textContent=data.length+' valores';
   document.getElementById('d-list').innerHTML=data.map(item=>{
     const p=prices[item.symbol];const price=p?.price;
