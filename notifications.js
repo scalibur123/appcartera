@@ -9,7 +9,7 @@ if (!admin.apps.length) {
 
 async function sendNotification(token, title, body) {
   try {
-    await admin.messaging().send({ token, notification: { title, body } });
+    await admin.messaging().send({ token, notification: { title, body }, apns: { headers: { 'apns-collapse-id': title } }, android: { collapseKey: title } });
     console.log(`✅ Notificación enviada: ${title}`);
   } catch (err) {
     console.error('❌ Error notificación:', err.message);
