@@ -294,7 +294,7 @@ async function actualizarEarnings() {
             await supabase.from("earnings").upsert({symbol:sym,nombre,fecha,estimacion,momento},{onConflict:"symbol,fecha"});
             count++;
           }
-          console.log("Earnings actualizados:",count,"valores");
+          console.log("Earnings actualizados:",count,"valores de",lines.length,"lineas, symbols:",symbols.size);
         }catch(e){console.error("Error earnings:",e.message);}
         resolve();
       });
