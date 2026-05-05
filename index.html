@@ -204,7 +204,12 @@ async function startLoad(){
     if(fxRes && fxRes['EURUSD=X']){
       eurUsd=fxRes['EURUSD=X'].price;
       const fxEl=document.getElementById('eurusd-display');
-      if(fxEl) fxEl.textContent='Cambio EUR/USD: '+eurUsd.toFixed(4);
+      if(fxEl){
+        const fxPct=fxRes['EURUSD=X'].pct;
+        const arrow=fxPct>0?'▲':'▼';
+        const arrowColor=fxPct>0?'var(--green)':'var(--red)';
+        fxEl.innerHTML='Cambio EUR/USD: '+eurUsd.toFixed(4)+' <span style="color:'+arrowColor+'">'+arrow+'</span>';
+      }
     }
   }catch(e){console.error('Error EURUSD',e);}
   const BATCH=50;
