@@ -172,7 +172,7 @@ const C=[{"tckr":"ABEO","nombre":"ABEO","titulos":800.0,"coste_eur":4922.2951,"p
 
 const SFX={"A3M":".MC","ACX":".MC","ADX":".MC","AED":".MC","ABI":".BR","ACA":".PA","ADS":".DE","AKZA":".AS","ALHG":".MC","ALM":".MC","ALO":".PA","AMP":".MC","AMV0":".MC","ANA":".MC","ARCAD":".BR","ARIS":".MC","BAYN":".DE","BEI":".DE","BMW":".DE","BNR":".DE","BOSS":".DE","CA":".PA","CABK":".MC","CIE":".MC","CLNX":".MC","COL":".MC","CON":".DE","DB1":".DE","DG":".PA","DOM":".PA","DTG":".DE","EDP":".LS","EGLA":".PA","ENC":".MC","ENG":".MC","ENXB":".DE","ERF":".PA","EVK":".DE","FAE":".MC","FDR":".MC","FNTN":".DE","FRA":".PA","GEST":".MC","HBX":".MC","HFG":".DE","IAG":".MC","IBE":".MC","INW":".MI","INPST":".MC","ITX":".MC","JEN":".MC","LDA":".MC","LEG":".MC","LHA":".DE","LI":".PA","LIGHT":".PA","MFEB":".MC","MONC":".MI","MTS":".MC","NEXI":".MI","NTGY":".MC","OCI":".AS","OHLA":".MC","ORY":".MC","PAH3":".DE","PHM":".MC","PUIG":".MC","REP":".MC","ROVI":".MC","S93":".DE","SAN":".MC","SAP":".DE","SCYR":".MC","SHL":".DE","SIX2":".DE","SOL":".MC","SPM":".MI","SQRL":".MC","STLAM":".MI","SW":".MC","SY1":".DE","SYENS":".MC","TE":".PA","TEF":".MC","TEP":".MC","TRG":".MC","TUB":".MC","TUI1":".DE","UIC1":".MC","UPM":".HE","VIS":".MC","VNA":".DE","VRLA":".MC","WCH":".DE","WLN":".PA","YACHT":".MC","ZAL":".DE"};
 
-let prices={}, names={}, cFilter='all', dFilter='all', busy=false, cSort="pct", dSort=null;
+let prices={}, names={}, cFilter='all', dFilters=[], busy=false, cSort="pct", dSort=null;
 let eurUsd=null;
 function yT(i){return i.moneda==='EUR'?(i.tckr+(SFX[i.tckr]||'')):i.tckr;}
 function dbg(msg){const el=document.getElementById('dbg');if(el)el.textContent=msg;}
@@ -316,9 +316,18 @@ function updateResumen(){
 }
 
 function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');btn.classList.add('active');}
-function goToDiana(f){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.nav-btn')[2].classList.add('active');document.getElementById('diana').classList.add('active');document.querySelectorAll('[id^="df-"]').forEach(b=>b.classList.remove('active'));document.getElementById('df-'+f).classList.add('active');dFilter=f;renderDiana();}
+function goToDiana(f){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.nav-btn')[2].classList.add('active');document.getElementById('diana').classList.add('active');document.querySelectorAll('[id^="df-"]').forEach(b=>b.classList.remove('active'));dFilters=[f];document.getElementById('df-'+f).classList.add('active');renderDiana();}
 function fC(f,btn){cFilter=f;document.querySelectorAll('[id^="cf-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCartera();}
-function fD(f,btn){dFilter=f;document.querySelectorAll('[id^="df-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderDiana();}
+function fD(f,btn){
+  if(f==='all'){dFilters=[];document.querySelectorAll('[id^="df-"]').forEach(b=>b.classList.remove('active'));document.getElementById('df-all').classList.add('active');}
+  else{
+    const idx=dFilters.indexOf(f);
+    if(idx>=0)dFilters.splice(idx,1);else dFilters.push(f);
+    document.getElementById('df-all').classList.toggle('active',dFilters.length===0);
+    btn.classList.toggle('active',dFilters.includes(f));
+  }
+  renderDiana();
+}
 
 function renderCartera(){
   const s=document.getElementById('csearch').value.trim().toUpperCase();
@@ -353,20 +362,23 @@ function renderCartera(){
 function renderDiana(){
   const ds=document.getElementById("dsearch")?.value.trim().toUpperCase()||"";
   let data=sortItems(C,dSort).filter(i=>i.objetivo).filter(item=>{ const dnombre=getDisplayName(item).toUpperCase();if(ds&&!item.tckr.includes(ds)&&!dnombre.includes(ds))return false;
+    if(dFilters.length===0)return true;
     const p=prices[item.symbol]?.price;
-    if(dFilter==='neg')return p!=null&&p>=item.objetivo;
-    if(dFilter==='warn'){if(!p)return false;const d=(item.objetivo-p)/item.objetivo;return d>=0&&d<=0.07;}
-    if(dFilter==='EU')return item.moneda==='EUR';
-    if(dFilter==='US')return item.moneda==='USD';
-    if(dFilter==='ING')return item.banco.toUpperCase().includes('ING');
-    if(dFilter==='R4')return item.banco.toUpperCase().includes('R4');
-    if(dFilter==='IBKR')return item.banco.toUpperCase().includes('IBKR');
-    if(dFilter==='MEDIOLANUM')return item.banco.toUpperCase().includes('MEDIO');
-    if(dFilter==='REVOLUT')return item.banco.toUpperCase().includes('REVOLUT');
-    if(dFilter==='MYINV')return item.banco.toUpperCase().includes('MYINV');
-    if(dFilter==='R4/ING')return item.banco==='R4/ING';
-    if(dFilter==='MEDIO/ING')return item.banco==='MEDIO/ING';
-    return true;
+    const checks={
+      'neg':()=>p!=null&&p>=item.objetivo,
+      'warn':()=>{if(!p)return false;const d=(item.objetivo-p)/item.objetivo;return d>=0&&d<=0.07;},
+      'EU':()=>item.moneda==='EUR',
+      'US':()=>item.moneda==='USD',
+      'ING':()=>item.banco.toUpperCase().includes('ING'),
+      'R4':()=>item.banco.toUpperCase().includes('R4'),
+      'IBKR':()=>item.banco.toUpperCase().includes('IBKR'),
+      'MEDIOLANUM':()=>item.banco.toUpperCase().includes('MEDIO'),
+      'REVOLUT':()=>item.banco.toUpperCase().includes('REVOLUT'),
+      'MYINV':()=>item.banco.toUpperCase().includes('MYINV'),
+      'R4/ING':()=>item.banco==='R4/ING',
+      'MEDIO/ING':()=>item.banco==='MEDIO/ING'
+    };
+    return dFilters.every(f=>checks[f]?checks[f]():true);
   });
   if(!dSort){data.sort((a,b)=>{const pa=prices[a.symbol]?.price,pb=prices[b.symbol]?.price;const da=pa?-(pa-a.objetivo)/Math.abs(a.objetivo):-999,db=pb?-(pb-b.objetivo)/Math.abs(b.objetivo):-999;return da-db;});}
   document.getElementById('d-count').textContent=data.length+' valores';
