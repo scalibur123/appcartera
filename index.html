@@ -326,10 +326,17 @@ function fC(f,btn){cFilter=f;document.querySelectorAll('[id^="cf-"]').forEach(b=
 function fD(f,btn){
   if(f==='all'){dFilters=[];document.querySelectorAll('[id^="df-"]').forEach(b=>b.classList.remove('active'));document.getElementById('df-all').classList.add('active');}
   else{
+    const grupos={'EU':'zona','US':'zona','neg':'estado','warn':'estado','ING':'banco','R4':'banco','IBKR':'banco','MEDIOLANUM':'banco','REVOLUT':'banco','MYINV':'banco','R4/ING':'banco','MEDIO/ING':'banco'};
+    const grupo=grupos[f];
+    const mismo=dFilters.find(x=>grupos[x]===grupo);
+    if(mismo){
+      dFilters=dFilters.filter(x=>x!==mismo);
+      document.getElementById('df-'+mismo).classList.remove('active');
+    }
     const idx=dFilters.indexOf(f);
-    if(idx>=0)dFilters.splice(idx,1);else dFilters.push(f);
+    if(idx>=0){dFilters.splice(idx,1);btn.classList.remove('active');}
+    else{dFilters.push(f);btn.classList.add('active');}
     document.getElementById('df-all').classList.toggle('active',dFilters.length===0);
-    btn.classList.toggle('active',dFilters.includes(f));
   }
   renderDiana();
 }
