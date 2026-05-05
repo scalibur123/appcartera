@@ -524,6 +524,36 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
     print(f"✅ index.html actualizado. Backup: {backup.name}")
 
 
+
+def actualizar_earnings_local():
+    import json, csv, io
+    from urllib.request import Request, urlopen
+    from datetime import datetime
+    from supabase import create_client
+    sb = create_client('https://ntvupakoulwiffvdcfox.supabase.co', 'sb_secret_Jq6YrenUpDtqrZyl8cVp0w_X7-EIkdv')
+    tickers_data = json.loads((PROYECTO / 'tickers.json').read_text())
+    sufijos = ['.MC','.AS','.DE','.PA','.MI','.BR','.LS']
+    symbols = set()
+    for s in tickers_data.keys():
+        t = s.upper()
+        for sf in sufijos: t = t.replace(sf,'')
+        symbols.add(t)
+    url = 'https://www.alphavantage.co/query?function=EARNINGS_CALENDAR&horizon=3month&apikey=9JNVRNFZ3D5VBP5E'
+    data = urlopen(Request(url, headers={'User-Agent':'Mozilla/5.0'})).read().decode()
+    reader = csv.DictReader(io.StringIO(data))
+    hoy = datetime.now().strftime('%Y-%m-%d')
+    count = 0
+    for row in reader:
+        sym = row['symbol'].strip().upper()
+        if sym not in symbols: continue
+        fecha = row['reportDate'].strip()
+        if fecha < hoy: continue
+        est = row.get('estimate','').strip()
+        momento = row.get('timeOfTheDay','').strip()
+        sb.table('earnings').upsert({'symbol':sym,'nombre':row.get('name','').strip(),'fecha':fecha,'estimacion':float(est) if est else None,'momento':momento or None},on_conflict='symbol,fecha').execute()
+        count += 1
+    print(f'✅ Earnings actualizados: {count} valores')
+
 def main():
     print(f"📂 Leyendo Excel: {EXCEL}")
     posiciones, sin_mic, mensual_data = leer_excel_con_mic()
@@ -572,6 +602,10 @@ def main():
 
     print("\n🎯 LISTO. Siguiente paso:")
     print("   python3 validate.py")
+    try:
+        actualizar_earnings_local()
+    except Exception as e:
+        print(f"⚠️  Earnings: {e}")
 
 
 if __name__ == "__main__":
