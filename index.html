@@ -298,11 +298,11 @@ function updateResumen(){
     const colorR = (v) => v >= 0 ? 'var(--green)' : 'var(--red)';
     const mesB = document.getElementById('mes-b');
     const anualB = document.getElementById('anual-b');
-    if (mesB) { mesB.innerHTML = '<span style="color:'+colorR(RENDIMIENTO_MES)+';font-size:20px;font-weight:500">'+fmtR(RENDIMIENTO_MES)+'</span>'; }
-    if (anualB) { anualB.innerHTML = '<span style="color:'+colorR(RENDIMIENTO_ANUAL)+';font-size:20px;font-weight:500">'+fmtR(RENDIMIENTO_ANUAL)+'</span>'; }
+    if (mesB) { const mesTotal=RENDIMIENTO_MES+varB; mesB.innerHTML = '<span style="color:'+colorR(mesTotal)+';font-size:20px;font-weight:500">'+fmtR(mesTotal)+'</span>'; }
+    if (anualB) { const anualTotal=RENDIMIENTO_ANUAL+varB; anualB.innerHTML = '<span style="color:'+colorR(anualTotal)+';font-size:20px;font-weight:500">'+fmtR(anualTotal)+'</span>'; }
     const mesN=document.getElementById('mes-n');const anualN=document.getElementById('anual-n');
-    if (mesN) { mesN.innerHTML = '<span style="color:'+colorR(RENDIMIENTO_MES_N)+';font-size:20px;font-weight:500">'+fmtR(RENDIMIENTO_MES_N)+'</span>'; }
-    if (anualN) { anualN.innerHTML = '<span style="color:'+colorR(RENDIMIENTO_ANUAL_N)+';font-size:20px;font-weight:500">'+fmtR(RENDIMIENTO_ANUAL_N)+'</span>'; }
+    if (mesN) { const mesNTotal=RENDIMIENTO_MES_N+varN; mesN.innerHTML = '<span style="color:'+colorR(mesNTotal)+';font-size:20px;font-weight:500">'+fmtR(mesNTotal)+'</span>'; }
+    if (anualN) { const anualNTotal=RENDIMIENTO_ANUAL_N+varN; anualN.innerHTML = '<span style="color:'+colorR(anualNTotal)+';font-size:20px;font-weight:500">'+fmtR(anualNTotal)+'</span>'; }
   }
   fetch('/estado-dia').then(r=>r.json()).then(dia=>{
     const negEl=document.getElementById('cnt-neg-dia');
