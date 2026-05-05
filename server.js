@@ -195,6 +195,16 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
+    if (pathname === '/earnings' && req.method === 'GET') {
+      const { supabase } = require('./supabase-client');
+      const hoy = new Date().toISOString().slice(0,10);
+      supabase.from('earnings').select('*').gte('fecha', hoy).order('fecha').then(({data,error}) => {
+        if (error) { res.writeHead(500); res.end(JSON.stringify([])); return; }
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify(data || []));
+      });
+      return;
+    }
     if (pathname === '/estado-dia' && req.method === 'GET') {
       const fs = require('fs');
       try {
@@ -255,6 +265,48 @@ function guardarSnapshotSiToca(){
   }catch(e){console.error(e.message);}
 }
 setInterval(guardarSnapshotSiToca,60000);
+
+// Actualizar earnings una vez al dia
+async function actualizarEarnings() {
+  const apikey = process.env.ALPHAVANTAGE_KEY;
+  if (!apikey) return console.log("No hay ALPHAVANTAGE_KEY");
+  const html = require("fs").readFileSync(require("path").join(__dirname,"index.html"),"utf8");
+  const m = html.match(/const C=(\[.*?\]);/s);
+  if (!m) return;
+  const C = JSON.parse(m[1]);
+  const symbols = new Set(C.map(i=>i.symbol.replace(/\.MC$|\.AS$|\.DE$|\.PA$|\.MI$|\.BR$|\.LS$/,"").toUpperCase()));
+  return new Promise((resolve)=>{
+    const url = "https://www.alphavantage.co/query?function=EARNINGS_CALENDAR&horizon=3month&apikey="+apikey;
+    https.get(url,{headers:{"User-Agent":"Mozilla/5.0"}},(res)=>{
+      let d="";
+      res.on("data",c=>d+=c);
+      res.on("end",async ()=>{
+        try{
+          const lines=d.trim().split("\n").slice(1);
+          const {supabase}=require("./supabase-client");
+          let count=0;
+          for(const line of lines){
+            const parts=line.split(",");
+            if(parts.length<4)continue;
+            const sym=parts[0].trim().toUpperCase();
+            if(!symbols.has(sym))continue;
+            const nombre=parts[1].trim();
+            const fecha=parts[2].trim();
+            const estimacion=parseFloat(parts[4])||null;
+            const momento=parts[6]?parts[6].trim():null;
+            await supabase.from("earnings").upsert({symbol:sym,nombre,fecha,estimacion,momento},{onConflict:"symbol,fecha"});
+            count++;
+          }
+          console.log("Earnings actualizados:",count,"valores");
+        }catch(e){console.error("Error earnings:",e.message);}
+        resolve();
+      });
+    }).on("error",(e)=>{ console.error("Error earnings fetch:",e.message); resolve(); });
+  });
+}
+// Ejecutar al inicio y luego cada 24h
+setTimeout(actualizarEarnings, 30000);
+setInterval(actualizarEarnings, 24*60*60*1000);
 // Mantener servidor activo
 setInterval(() => {
   https.get('https://appcartera.onrender.com', () => {}).on('error', () => {});
