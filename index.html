@@ -30,6 +30,11 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
 .nav-btn.active{background:var(--surface2);border-color:var(--border);color:var(--text);font-weight:500}
 .section{display:none;padding:14px 18px}
 .section.active{display:block}
+.section{animation:none}
+@keyframes slideInRight{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideInLeft{from{transform:translateX(-100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.slide-in-right{animation:slideInRight 0.25s ease-out}
+.slide-in-left{animation:slideInLeft 0.25s ease-out}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:10px}
 .card-label{font-size:10px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:14px;font-weight:500}
 .plusv-row{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)}
@@ -331,7 +336,7 @@ function updateResumen(){
   }).catch(()=>{});
 }
 
-function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');btn.classList.add('active');}
+function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');btn.classList.add('active');window.scrollTo(0,0);}
 
 // Swipe lateral para cambiar pestanas
 (function(){
@@ -354,7 +359,10 @@ function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.clas
     if(next===idx)return;
     const nextId=tabs[next];
     const btn=document.querySelector('.nav-btn:nth-child('+(next+1)+')');
+    const dir = dx < 0 ? 'slide-in-right' : 'slide-in-left';
     showTab(nextId,btn);
+    const nextEl = document.getElementById(nextId);
+    if(nextEl){ nextEl.classList.add(dir); setTimeout(()=>nextEl.classList.remove(dir),300); }
     if(tabCallbacks[nextId])tabCallbacks[nextId]();
   },{passive:true});
 })();
