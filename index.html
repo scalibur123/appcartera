@@ -140,14 +140,19 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
     <button class="filter-btn" id="df-US" onclick="fD('US',this)">🇺🇸 USA</button>
     <button class="filter-btn" id="df-neg" onclick="fD('neg',this)">En objetivo ✓</button>
     <button class="filter-btn" id="df-warn" onclick="fD('warn',this)">Pendientes</button>
-    <button class="filter-btn" id="df-ING" onclick="fD('ING',this)">ING</button>
-    <button class="filter-btn" id="df-R4" onclick="fD('R4',this)">R4</button>
-    <button class="filter-btn" id="df-IBKR" onclick="fD('IBKR',this)">IBKR</button>
-    <button class="filter-btn" id="df-MEDIOLANUM" onclick="fD('MEDIOLANUM',this)">MEDIOLANUM</button>
-    <button class="filter-btn" id="df-REVOLUT" onclick="fD('REVOLUT',this)">REVOLUT</button>
-    <button class="filter-btn" id="df-MYINV" onclick="fD('MYINV',this)">MYINV</button>
-    <button class="filter-btn" id="df-R4/ING" onclick="fD('R4/ING',this)">R4/ING</button>
-    <button class="filter-btn" id="df-MEDIO/ING" onclick="fD('MEDIO/ING',this)">MEDIO/ING</button>
+    <div style="position:relative;display:inline-block">
+      <button class="filter-btn" id="df-banco-btn" onclick="toggleBancoMenu()" style="min-width:80px">Banco ▼</button>
+      <div id="df-banco-menu" style="display:none;position:absolute;top:100%;left:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;z-index:100;min-width:140px;padding:6px 0;box-shadow:0 4px 12px rgba(0,0,0,0.3)">
+        <div id="df-ING" onclick="fD('ING',this)" style="padding:8px 14px;font-size:13px;cursor:pointer">ING</div>
+        <div id="df-R4" onclick="fD('R4',this)" style="padding:8px 14px;font-size:13px;cursor:pointer">R4</div>
+        <div id="df-IBKR" onclick="fD('IBKR',this)" style="padding:8px 14px;font-size:13px;cursor:pointer">IBKR</div>
+        <div id="df-MEDIOLANUM" onclick="fD('MEDIOLANUM',this)" style="padding:8px 14px;font-size:13px;cursor:pointer">MEDIOLANUM</div>
+        <div id="df-REVOLUT" onclick="fD('REVOLUT',this)" style="padding:8px 14px;font-size:13px;cursor:pointer">REVOLUT</div>
+        <div id="df-MYINV" onclick="fD('MYINV',this)" style="padding:8px 14px;font-size:13px;cursor:pointer">MYINV</div>
+        <div id="df-R4/ING" onclick="fD('R4/ING',this)" style="padding:8px 14px;font-size:13px;cursor:pointer">R4/ING</div>
+        <div id="df-MEDIO/ING" onclick="fD('MEDIO/ING',this)" style="padding:8px 14px;font-size:13px;cursor:pointer">MEDIO/ING</div>
+      </div>
+    </div>
     <button class="filter-btn active" id="df-sort-obj" onclick="setSortD('obj',this)">↑ Obj</button><button class="filter-btn" id="df-sort-pct" onclick="setSortD('pct',this)">↑ % día</button>
     <button class="filter-btn" id="df-sort-val" onclick="setSortD('val',this)">↑ Valor</button>
   </div>
@@ -337,6 +342,11 @@ function fD(f,btn){
     if(idx>=0){dFilters.splice(idx,1);btn.classList.remove('active');}
     else{dFilters.push(f);btn.classList.add('active');}
     document.getElementById('df-all').classList.toggle('active',dFilters.length===0);
+    const bancos=['ING','R4','IBKR','MEDIOLANUM','REVOLUT','MYINV','R4/ING','MEDIO/ING'];
+    const bancoActivo=dFilters.find(x=>bancos.includes(x));
+    const bancoBtn=document.getElementById('df-banco-btn');
+    if(bancoBtn){bancoBtn.textContent=bancoActivo?bancoActivo+' ▼':'Banco ▼';bancoBtn.classList.toggle('active',!!bancoActivo);}
+    document.getElementById('df-banco-menu').style.display='none';
   }
   renderDiana();
 }
@@ -411,6 +421,15 @@ function renderDiana(){
 startLoad();
 
 function setSortC(s,btn){if(cSort===s){cSort=null;btn.classList.remove('active');}else{cSort=s;document.querySelectorAll('[id^="cf-sort-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}renderCartera();}
+function toggleBancoMenu(){
+  const m=document.getElementById('df-banco-menu');
+  m.style.display=m.style.display==='none'?'block':'none';
+}
+document.addEventListener('click',function(e){
+  const btn=document.getElementById('df-banco-btn');
+  const menu=document.getElementById('df-banco-menu');
+  if(menu&&btn&&!btn.contains(e.target)&&!menu.contains(e.target)){menu.style.display='none';}
+});
 function setSortD(s,btn){if(dSort===s){dSort=null;btn.classList.remove('active');}else{dSort=s;document.querySelectorAll('[id^="df-sort-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}renderDiana();}
 function sortItems(items,sortBy){if(!sortBy)return items;return [...items].sort((a,b)=>{if(sortBy==='pct'){const pa=prices[a.symbol]?.pct||-999;const pb=prices[b.symbol]?.pct||-999;return pb-pa;}if(sortBy==='val'){const va=(prices[a.symbol]?.price||0)*a.titulos;const vb=(prices[b.symbol]?.price||0)*b.titulos;return vb-va;}return a.tckr.localeCompare(b.tckr);});}
 
