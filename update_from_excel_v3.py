@@ -526,6 +526,7 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
 
 
 def actualizar_earnings_local():
+    import os
     # Cargar .env si existe
     env_file = PROYECTO / '.env'
     if env_file.exists():
