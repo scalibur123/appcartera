@@ -342,7 +342,17 @@ function updateResumen(){
 
     actualizarBloque('sem-b','sem-n',snapSemana);
     actualizarBloque('mes-b','mes-n',snapMes);
-    actualizarBloque('anual-b','anual-n',snapAnual);
+
+    // ANUAL = RENDIMIENTO_ANUAL (Excel sem 1-18) + variación desde lunes (snapshot 5-may)
+    if(typeof RENDIMIENTO_ANUAL !== 'undefined' && snapSemana) {
+      const varSemana = valorAhora - snapSemana.valor_total;
+      const anualTotal = RENDIMIENTO_ANUAL + varSemana;
+      const anualTotalN = anualTotal * (1 - IRPF);
+      const elAnualB = document.getElementById('anual-b');
+      const elAnualN = document.getElementById('anual-n');
+      if(elAnualB) elAnualB.innerHTML = '<span style="color:'+colorR(anualTotal)+';font-size:20px;font-weight:500">'+fmtR(anualTotal)+'</span>';
+      if(elAnualN) elAnualN.innerHTML = '<span style="color:'+colorR(anualTotalN)+';font-size:20px;font-weight:500">'+fmtR(anualTotalN)+'</span>';
+    }
   }).catch(e=>console.error('Error snapshots:',e));
   fetch('/estado-dia').then(r=>r.json()).then(dia=>{
     const negEl=document.getElementById('cnt-neg-dia');
