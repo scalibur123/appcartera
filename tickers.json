@@ -239,7 +239,7 @@
     "moneda": "USD",
     "titulos": 248.0,
     "coste_eur": 4741.8103,
-    "precio_excel": 15.99,
+    "precio_excel": 16,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "BAX": {
