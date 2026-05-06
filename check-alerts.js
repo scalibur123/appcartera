@@ -9,29 +9,14 @@ function getToken() {
   return fs.existsSync(f) ? fs.readFileSync(f, 'utf8').trim() : null;
 }
 
-function getDiaState() {
-  const f = path.join(__dirname, 'alert-state-dia.json');
-  const hoy = new Date().toISOString().slice(0,10);
-  if (fs.existsSync(f)) {
-    const d = JSON.parse(fs.readFileSync(f, 'utf8'));
-    if (d.fecha === hoy) return d;
-  }
-  const nuevo = {fecha: hoy, obj_ent:0, obj_sal:0, pen_ent:0, pen_sal:0};
-  fs.writeFileSync(f, JSON.stringify(nuevo));
-  return nuevo;
+async function getStateFromDB(key) {
+  const { data, error } = await supabase.from('alert_state').select('value').eq('key', key).single();
+  if (error || !data) return null;
+  return data.value;
 }
 
-function saveDiaState(d) {
-  fs.writeFileSync(path.join(__dirname, 'alert-state-dia.json'), JSON.stringify(d));
-}
-
-function getPrevState() {
-  const f = path.join(__dirname, 'alert-state.json');
-  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {};
-}
-
-function saveState(state) {
-  fs.writeFileSync(path.join(__dirname, 'alert-state.json'), JSON.stringify(state));
+async function saveStateToDB(key, value) {
+  await supabase.from('alert_state').upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
 }
 
 function getC() {
@@ -69,12 +54,15 @@ async function checkAlerts() {
   if (!token) return console.log('No hay token FCM');
 
   const C = getC();
-  const prev = getPrevState();
-  const next = {};
+  const hoy = new Date().toISOString().slice(0, 10);
 
-  // Si no hay estado previo, solo guardamos estado inicial sin notificar
+  // Cargar estado previo desde Supabase
+  const prev = await getStateFromDB('alert_state') || {};
+  const diaRaw = await getStateFromDB('dia_state');
+  let dia = (diaRaw && diaRaw.fecha === hoy) ? diaRaw : { fecha: hoy, obj_ent: 0, obj_sal: 0, pen_ent: 0, pen_sal: 0 };
+
+  const next = {};
   const firstRun = Object.keys(prev).length === 0;
-  const dia = getDiaState();
 
   for (const item of C) {
     if (!item.objetivo) continue;
@@ -128,10 +116,11 @@ async function checkAlerts() {
     }
   }
 
-  saveState(next);
-  saveDiaState(dia);
+  await saveStateToDB('alert_state', next);
+  await saveStateToDB('dia_state', dia);
+
   if (firstRun) {
-    console.log('✅ Primera ejecución: estado inicial guardado, sin notificaciones');
+    console.log('✅ Primera ejecución: estado inicial guardado en Supabase, sin notificaciones');
   } else {
     console.log('✅ Chequeo completado');
   }
