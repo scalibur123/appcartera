@@ -336,8 +336,9 @@ function updateResumen(){
     // MES = RENDIMIENTO_MES (Excel) + variación desde lunes (snapshot 5-may)
     // ANUAL = RENDIMIENTO_ANUAL (Excel sem 1-18) + variación desde lunes (snapshot 5-may)
     if(typeof RENDIMIENTO_MES !== 'undefined' && typeof RENDIMIENTO_ANUAL !== 'undefined') {
-      if(snapSemana) {
-        const varDesLunes = valorAhora - snapSemana.valor_total;
+      const snapViernes=snaps.find(s=>s.fecha<lunesStr&&s.fecha>='2026-01-01'&&snaps.filter(x=>x.fecha<lunesStr&&x.fecha>='2026-01-01').sort((a,b)=>b.fecha.localeCompare(a.fecha))[0].fecha===s.fecha);
+      if(snapViernes) {
+        const varDesLunes = valorAhora - snapViernes.valor_total;
         const mesTotal = RENDIMIENTO_MES + varDesLunes;
         const mesTotalN = RENDIMIENTO_MES_N + varDesLunes*(1-IRPF);
         const anualTotal = RENDIMIENTO_ANUAL + varDesLunes;
