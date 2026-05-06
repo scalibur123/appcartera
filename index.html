@@ -400,7 +400,51 @@ function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.clas
     if(tabCallbacks[nextId])tabCallbacks[nextId]();
   },{passive:true});
 })();
-function goToDiana(f){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.nav-btn')[2].classList.add('active');document.getElementById('diana').classList.add('active');document.querySelectorAll('[id^="df-"]').forEach(b=>b.classList.remove('active'));dFilters=[f];document.getElementById('df-'+f).classList.add('active');renderDiana();}
+function goToDiana(f){
+  const hoy=new Date().toISOString().slice(0,10);
+  fetch('/historico').then(r=>r.json()).then(alertas=>{
+    const deHoy=alertas.filter(a=>a.fecha&&a.fecha.slice(0,10)===hoy);
+    let entrados=[], salidos=[];
+    if(f==='neg'){
+      entrados=deHoy.filter(a=>a.evento==='en_objetivo');
+      salidos=deHoy.filter(a=>a.evento==='salio_objetivo');
+    } else {
+      entrados=deHoy.filter(a=>a.evento==='pendiente');
+      salidos=deHoy.filter(a=>a.evento==='salio_pendiente');
+    }
+    if(entrados.length===0&&salidos.length===0){
+      document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+      document.querySelectorAll('.nav-btn')[2].classList.add('active');
+      document.getElementById('diana').classList.add('active');
+      document.querySelectorAll('[id^="df-"]').forEach(b=>b.classList.remove('active'));
+      dFilters=[f];document.getElementById('df-'+f).classList.add('active');renderDiana();
+      return;
+    }
+    // Mostrar modal
+    let html='<div id="dia-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="this.remove()">';
+    html+='<div style="background:var(--card);border-radius:16px;padding:20px;min-width:260px;max-width:90vw;max-height:80vh;overflow-y:auto" onclick="event.stopPropagation()">';
+    html+='<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px">'+(f==='neg'?'EN OBJETIVO HOY':'PENDIENTES HOY')+'</div>';
+    if(entrados.length>0){
+      html+='<div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:6px">▲ ENTRADOS</div>';
+      entrados.forEach(a=>{html+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--green);font-weight:600">'+a.ticker+'</span><span style="color:var(--muted);font-size:12px">'+a.banco+'</span></div>';});
+    }
+    if(salidos.length>0){
+      html+='<div style="font-size:11px;color:var(--red);font-weight:700;margin:'+(entrados.length>0?'12':'0')+'px 0 6px">▼ SALIDOS</div>';
+      salidos.forEach(a=>{html+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--red);font-weight:600">'+a.ticker+'</span><span style="color:var(--muted);font-size:12px">'+a.banco+'</span></div>';});
+    }
+    html+='<div style="text-align:center;margin-top:14px;color:var(--muted);font-size:12px">Toca fuera para cerrar</div>';
+    html+='</div></div>';
+    document.body.insertAdjacentHTML('beforeend',html);
+  }).catch(()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn')[2].classList.add('active');
+    document.getElementById('diana').classList.add('active');
+    document.querySelectorAll('[id^="df-"]').forEach(b=>b.classList.remove('active'));
+    dFilters=[f];document.getElementById('df-'+f).classList.add('active');renderDiana();
+  });
+}
 function fC(f,btn){cFilter=f;document.querySelectorAll('[id^="cf-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCartera();}
 function fD(f,btn){
   if(f==='all'){dFilters=[];document.querySelectorAll('[id^="df-"]').forEach(b=>b.classList.remove('active'));document.getElementById('df-all').classList.add('active');}
