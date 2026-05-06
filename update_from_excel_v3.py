@@ -155,6 +155,8 @@ def leer_excel_con_mic():
     wb = openpyxl.load_workbook(EXCEL, data_only=True, keep_vba=False)
     ws = wb[HOJA]
     mensual_data = None
+    plusv_hoy = 0
+    plusv_semana = 0
     # Leer datos pestaña Mensual
     try:
         ws_m = wb['Mensual']
