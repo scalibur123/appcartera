@@ -279,18 +279,11 @@ function updateResumen(){
     }
   }
   const varN=varB*(1-0.20925);
-  const sbEl=document.getElementById('sem-b');
-  const snEl=document.getElementById('sem-n');
-  if(sbEl){
-    const sg=v=>v>=0?'+':'';
-    sbEl.textContent=sg(varB)+fE(varB);
-    sbEl.style.color=varB>=0?'var(--green)':'var(--red)';
-  }
-  if(snEl){
-    const sg=v=>v>=0?'+':'';
-    snEl.textContent=sg(varN)+fE(varN);
-    snEl.style.color=varN>=0?'var(--green)':'var(--red)';
-  }
+  // Valor total cartera ahora en euros
+  let valorAhora=0;
+  for(const i of C){const p=prices[i.symbol];if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;valorAhora+=i.titulos*pe;}}
+
+  // Plusvalías vivas (vs coste)
   let b=0;
   for(const i of C){const p=prices[i.symbol];if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;b+=i.titulos*pe-i.coste_eur;}}
   const n=b*(1-0.20925);
@@ -302,29 +295,55 @@ function updateResumen(){
   const warnCount=wo.filter(i=>{const d=(i.objetivo-prices[i.symbol].price)/i.objetivo;return d>=0&&d<=0.07;}).length;
   aC(document.getElementById('cnt-neg'),negCount);
   aC(document.getElementById('cnt-warn'),warnCount);
-  // Actualizar ESTE MES y ANUAL con datos del Excel
-  // Actualizar HOY
+
+  // HOY sigue usando variación % de Yahoo (más preciso que snapshot)
   const hoyB=document.getElementById('hoy-b');
   const hoyN=document.getElementById('hoy-n');
-  if(hoyB){hoyB.innerHTML='<span style="color:'+( varB>=0?'var(--green)':'var(--red)')+';font-size:20px;font-weight:500">'+(varB>=0?'+':'')+fE(Math.abs(varB))+'</span>';}
-  if(hoyN){hoyN.innerHTML='<span style="color:'+( varN>=0?'var(--green)':'var(--red)')+';font-size:20px;font-weight:500">'+(varN>=0?'+':'')+fE(Math.abs(varN))+'</span>';}
-  if (typeof RENDIMIENTO_MES !== 'undefined') {
-    const fmtR = (v) => {
-      const s = v < 0;
-      const abs = Math.abs(v);
-      const parts = abs.toFixed(2).split('.');
-      const int = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      return (s ? '-' : '+') + int + ',' + parts[1] + ' €';
-    };
-    const colorR = (v) => v >= 0 ? 'var(--green)' : 'var(--red)';
-    const mesB = document.getElementById('mes-b');
-    const anualB = document.getElementById('anual-b');
-    if (mesB) { const mesTotal=RENDIMIENTO_MES+varB; mesB.innerHTML = '<span style="color:'+colorR(mesTotal)+';font-size:20px;font-weight:500">'+fmtR(mesTotal)+'</span>'; }
-    if (anualB) { const anualTotal=RENDIMIENTO_ANUAL+varB; anualB.innerHTML = '<span style="color:'+colorR(anualTotal)+';font-size:20px;font-weight:500">'+fmtR(anualTotal)+'</span>'; }
-    const mesN=document.getElementById('mes-n');const anualN=document.getElementById('anual-n');
-    if (mesN) { const mesNTotal=RENDIMIENTO_MES_N+varN; mesN.innerHTML = '<span style="color:'+colorR(mesNTotal)+';font-size:20px;font-weight:500">'+fmtR(mesNTotal)+'</span>'; }
-    if (anualN) { const anualNTotal=RENDIMIENTO_ANUAL_N+varN; anualN.innerHTML = '<span style="color:'+colorR(anualNTotal)+';font-size:20px;font-weight:500">'+fmtR(anualNTotal)+'</span>'; }
-  }
+  if(hoyB){hoyB.innerHTML='<span style="color:'+(varB>=0?'var(--green)':'var(--red)')+';font-size:20px;font-weight:500">'+(varB>=0?'+':'')+fE(Math.abs(varB))+'</span>';}
+  if(hoyN){hoyN.innerHTML='<span style="color:'+(varN>=0?'var(--green)':'var(--red)')+';font-size:20px;font-weight:500">'+(varN>=0?'+':'')+fE(Math.abs(varN))+'</span>';}
+
+  // SEMANA, MES, ANUAL desde snapshots Supabase
+  const fmtR=(v)=>{const s=v<0;const abs=Math.abs(v);const parts=abs.toFixed(2).split('.');const int=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return(s?'-':'+')+int+','+parts[1]+' €';};
+  const colorR=(v)=>v>=0?'var(--green)':'var(--red)';
+  const IRPF=0.20925;
+
+  fetch('/snapshots').then(r=>r.json()).then(snaps=>{
+    const hoy=new Date().toISOString().slice(0,10);
+    const diasSemana=[0,6].includes(new Date().getDay())?0:new Date().getDay();
+
+    // Buscar snapshot más reciente anterior a hoy → base SEMANA
+    // Buscar lunes de esta semana o viernes anterior
+    const lunesStr=(()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10);})();
+    // snapshot de semana: el más reciente anterior o igual al lunes
+    const snapsSemana=snaps.filter(s=>s.fecha<lunesStr).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    const snapSemana=snapsSemana[0];
+
+    // snapshot anual: 2025-12-31
+    const snapAnual=snaps.find(s=>s.fecha==='2025-12-31');
+
+    // snapshot ayer: día hábil anterior a hoy
+    const snapsAyer=snaps.filter(s=>s.fecha<hoy).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    const snapAyer=snapsAyer[0];
+
+    // ESTE MES: primer día del mes actual
+    const primerMes=hoy.slice(0,8)+'01';
+    const snapsMes=snaps.filter(s=>s.fecha<primerMes).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    const snapMes=snapsMes[0];
+
+    function actualizarBloque(idB,idN,snapRef){
+      if(!snapRef) return;
+      const difB=valorAhora-snapRef.valor_total;
+      const difN=difB*(1-IRPF);
+      const elB=document.getElementById(idB);
+      const elN=document.getElementById(idN);
+      if(elB) elB.innerHTML='<span style="color:'+colorR(difB)+';font-size:20px;font-weight:500">'+fmtR(difB)+'</span>';
+      if(elN) elN.innerHTML='<span style="color:'+colorR(difN)+';font-size:20px;font-weight:500">'+fmtR(difN)+'</span>';
+    }
+
+    actualizarBloque('sem-b','sem-n',snapSemana);
+    actualizarBloque('mes-b','mes-n',snapMes);
+    actualizarBloque('anual-b','anual-n',snapAnual);
+  }).catch(e=>console.error('Error snapshots:',e));
   fetch('/estado-dia').then(r=>r.json()).then(dia=>{
     const negEl=document.getElementById('cnt-neg-dia');
     const warnEl=document.getElementById('cnt-warn-dia');

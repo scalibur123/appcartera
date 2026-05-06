@@ -214,6 +214,15 @@ const server = http.createServer(async (req, res) => {
       } catch(e) { res.writeHead(200); res.end(JSON.stringify({fecha:'',obj_ent:0,obj_sal:0,pen_ent:0,pen_sal:0})); }
       return;
     }
+    if (pathname === '/snapshots' && req.method === 'GET') {
+      const { supabase } = require('./supabase-client');
+      supabase.from('cartera_snapshots').select('fecha,valor_total').order('fecha').then(({data,error}) => {
+        if (error) { res.writeHead(500); res.end(JSON.stringify([])); return; }
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify(data || []));
+      });
+      return;
+    }
     if (pathname === '/names' && symbols) return handleNames(req, res, symbols);
     if (pathname === '/' && symbols) return handleSymbols(req, res, symbols);
     if (pathname === '/' || pathname === '/index.html') return handleIndex(req, res);
