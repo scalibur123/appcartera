@@ -409,7 +409,7 @@ function goToDiana(f){
     const deHoyFiltrado=deHoy.filter(a=>a.evento===eventoEnt||a.evento===eventoSal);
     // Por ticker, quedarse solo con el último evento
     const porTicker={};
-    deHoyFiltrado.sort((a,b)=>a.fecha.localeCompare(b.fecha)).forEach(a=>{porTicker[a.ticker+'_'+a.banco]=a;});
+    deHoyFiltrado.sort((a,b)=>new Date(a.fecha)-new Date(b.fecha)).forEach(a=>{porTicker[a.ticker+'_'+a.banco]=a;});
     const ultimosEventos=Object.values(porTicker);
     const entrados=ultimosEventos.filter(a=>a.evento===eventoEnt);
     const salidos=ultimosEventos.filter(a=>a.evento===eventoSal);
