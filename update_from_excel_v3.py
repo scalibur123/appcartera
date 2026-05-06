@@ -189,6 +189,26 @@ def leer_excel_con_mic():
 
         equiv_bruto_calculado = calcular_bruto_desde_neto(neto_anual_nomina)
         
+        # Leer compras desglosadas (col D=ticker, I=fecha, K=titulos, N=coste_eur)
+        compras_por_ticker = {}
+        for row in range(5, 258):
+            tckr_r = ws.cell(row=row, column=4).value
+            fecha_i = ws.cell(row=row, column=9).value
+            titulos_i = ws.cell(row=row, column=11).value
+            coste_i = ws.cell(row=row, column=14).value
+            if tckr_r and fecha_i and titulos_i and coste_i:
+                tk = str(tckr_r).strip()
+                if tk not in compras_por_ticker:
+                    compras_por_ticker[tk] = []
+                fecha_str = fecha_i.strftime('%d/%m/%Y') if hasattr(fecha_i, 'strftime') else str(fecha_i)[:10]
+                precio_compra = round(coste_i / titulos_i, 4) if titulos_i else 0
+                compras_por_ticker[tk].append({
+                    'fecha': fecha_str,
+                    'titulos': titulos_i,
+                    'precio': precio_compra,
+                    'coste': round(coste_i, 2)
+                })
+
         def fmt_eur(v):
             return f"{v:,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
         
@@ -278,7 +298,7 @@ def leer_excel_con_mic():
     if fubo: print(f'DEBUG FUBO en posiciones: objetivo={fubo.get("objetivo")}, banco={fubo.get("banco")}')
     if abeo: print(f'DEBUG ABEO en posiciones: objetivo={abeo.get("objetivo")}, banco={abeo.get("banco")}')
 
-    return [posiciones[t] for t in orden], sin_mic, mensual_data
+    return [posiciones[t] for t in orden], sin_mic, mensual_data, compras_por_ticker
 
 
 def resolver_simbolo_yahoo(p, overrides):
@@ -312,7 +332,7 @@ def resolver_simbolo_yahoo(p, overrides):
     return ticker, "sin_resolver"
 
 
-def construir_const_C_compacta(posiciones, ticker_map):
+def construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker={}):
     items = []
     for p in posiciones:
         tckr = p["tckr"]
@@ -335,6 +355,7 @@ def construir_const_C_compacta(posiciones, ticker_map):
             "banco": p.get("banco", "-"),
             "objetivo": p.get("objetivo"),
             "symbol": sym,
+            "compras": compras_por_ticker.get(tckr, []),
         }
         items.append(json.dumps(item_json, ensure_ascii=False, separators=(",", ":")))
     return "const C=[" + ",".join(items) + "];"
@@ -581,7 +602,7 @@ def actualizar_earnings_local():
 
 def main():
     print(f"📂 Leyendo Excel: {EXCEL}")
-    posiciones, sin_mic, mensual_data = leer_excel_con_mic()
+    posiciones, sin_mic, mensual_data, compras_por_ticker = leer_excel_con_mic()
     ganancias_data = leer_ganancias_realizadas()
     rendimiento_data = leer_rendimiento_cartera()
     print(f"✅ {len(posiciones)} tickers unicos cargados")
@@ -622,7 +643,7 @@ def main():
         json.dump(ticker_map, f, indent=2, ensure_ascii=False)
     print(f"\n✅ Guardado {TICKERS_JSON}")
 
-    const_C = construir_const_C_compacta(posiciones, ticker_map)
+    const_C = construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker)
     actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data)
 
     print("\n🎯 LISTO. Siguiente paso:")
