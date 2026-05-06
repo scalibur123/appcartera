@@ -206,12 +206,16 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (pathname === '/estado-dia' && req.method === 'GET') {
-      const fs = require('fs');
-      try {
-        const data = fs.readFileSync('./alert-state-dia.json', 'utf8');
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end(data);
-      } catch(e) { res.writeHead(200); res.end(JSON.stringify({fecha:'',obj_ent:0,obj_sal:0,pen_ent:0,pen_sal:0})); }
+      const { supabase } = require('./supabase-client');
+      const hoy = new Date().toISOString().slice(0,10);
+      supabase.from('alert_state').select('value').eq('key','dia_state').single().then(({data,error})=>{
+        const d = (data && data.value && data.value.fecha===hoy) ? data.value : {fecha:hoy,obj_ent:0,obj_sal:0,pen_ent:0,pen_sal:0};
+        res.writeHead(200,{'Content-Type':'application/json'});
+        res.end(JSON.stringify(d));
+      }).catch(()=>{
+        res.writeHead(200,{'Content-Type':'application/json'});
+        res.end(JSON.stringify({fecha:hoy,obj_ent:0,obj_sal:0,pen_ent:0,pen_sal:0}));
+      });
       return;
     }
     if (pathname === '/snapshots' && req.method === 'GET') {
