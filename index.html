@@ -404,14 +404,15 @@ function goToDiana(f){
   const hoy=new Date().toISOString().slice(0,10);
   fetch('/historico').then(r=>r.json()).then(alertas=>{
     const deHoy=alertas.filter(a=>a.fecha&&a.fecha.slice(0,10)===hoy);
-    let entrados=[], salidos=[];
-    if(f==='neg'){
-      entrados=deHoy.filter(a=>a.evento==='en_objetivo');
-      salidos=deHoy.filter(a=>a.evento==='salio_objetivo');
-    } else {
-      entrados=deHoy.filter(a=>a.evento==='pendiente');
-      salidos=deHoy.filter(a=>a.evento==='salio_pendiente');
-    }
+    const eventos = f==='neg' ? ['en_objetivo','salio_objetivo'] : ['pendiente','salio_pendiente'];
+    const eventoEnt = eventos[0], eventoSal = eventos[1];
+    const deHoyFiltrado=deHoy.filter(a=>a.evento===eventoEnt||a.evento===eventoSal);
+    // Por ticker, quedarse solo con el último evento
+    const porTicker={};
+    deHoyFiltrado.sort((a,b)=>a.fecha.localeCompare(b.fecha)).forEach(a=>{porTicker[a.ticker+'_'+a.banco]=a;});
+    const ultimosEventos=Object.values(porTicker);
+    const entrados=ultimosEventos.filter(a=>a.evento===eventoEnt);
+    const salidos=ultimosEventos.filter(a=>a.evento===eventoSal);
     if(entrados.length===0&&salidos.length===0){
       document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
       document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
