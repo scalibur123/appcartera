@@ -327,8 +327,11 @@ function updateResumen(){
   // HOY sigue usando variación % de Yahoo (más preciso que snapshot)
   const hoyB=document.getElementById('hoy-b');
   const hoyN=document.getElementById('hoy-n');
-  if(hoyB){hoyB.innerHTML='<span style="color:'+(varB>=0?'var(--green)':'var(--red)')+';font-size:20px;font-weight:500">'+(varB>=0?'+':'')+fE(Math.abs(varB))+'</span>';}
-  if(hoyN){hoyN.innerHTML='<span style="color:'+(varN>=0?'var(--green)':'var(--red)')+';font-size:20px;font-weight:500">'+(varN>=0?'+':'')+fE(Math.abs(varN))+'</span>';}
+  const plusvHoy = typeof PLUSV_HOY !== 'undefined' ? PLUSV_HOY : 0;
+  const varBtotal = varB + plusvHoy;
+  if(hoyB){hoyB.innerHTML='<span style="color:'+(varBtotal>=0?'var(--green)':'var(--red)')+';font-size:20px;font-weight:500">'+(varBtotal>=0?'+':'')+fE(Math.abs(varBtotal))+'</span>';}
+  const varNtotal = varBtotal*(1-0.20925);
+  if(hoyN){hoyN.innerHTML='<span style="color:'+(varNtotal>=0?'var(--green)':'var(--red)')+';font-size:20px;font-weight:500">'+(varNtotal>=0?'+':'')+fE(Math.abs(varNtotal))+'</span>';}
 
   // SEMANA, MES, ANUAL desde snapshots Supabase
   const fmtR=(v)=>{const s=v<0;const abs=Math.abs(v);const parts=abs.toFixed(2).split('.');const int=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return(s?'-':'+')+int+','+parts[1]+' €';};

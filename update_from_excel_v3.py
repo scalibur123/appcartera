@@ -231,6 +231,7 @@ def leer_excel_con_mic():
             'sueldo_bruto': fmt_eur(sueldo_mensual_bruto),
             'sueldo_neto': fmt_eur(neto_mensual),
             'plusv_semana': round(plusv_semana, 2),
+            'plusv_hoy': round(plusv_hoy, 2),
         }
     except Exception as e:
         print(f"Warning: no se pudo leer pestaña Mensual: {e}")
@@ -509,8 +510,9 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
         if 'var PLUSV_SEMANA=' not in nuevo_html:
             nuevo_html = nuevo_html.replace(
                 'var RENDIMIENTO_MES=',
-                f'var PLUSV_SEMANA={mensual_data["plusv_semana"]};var RENDIMIENTO_MES='
+                f'var PLUSV_HOY={mensual_data["plusv_hoy"]};var PLUSV_SEMANA={mensual_data["plusv_semana"]};var RENDIMIENTO_MES='
             )
+        nuevo_html = re.sub(r'var PLUSV_HOY=[0-9.]+;', f'var PLUSV_HOY={mensual_data["plusv_hoy"]};', nuevo_html)
 
 
     if ganancias_data:
