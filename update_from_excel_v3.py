@@ -162,6 +162,7 @@ def leer_excel_con_mic():
         neto_anual = ws_m['S13'].value or 0
         equiv_bruto = ws_m['S15'].value or 0
         neto_mensual = ws_m['J13'].value or 0
+        sueldo_mensual_bruto = ws_m['N13'].value or 0
         neto_anual_nomina = neto_mensual * 14
 
         def calcular_bruto_desde_neto(neto_anual):
@@ -196,6 +197,8 @@ def leer_excel_con_mic():
             'neto_anual': fmt_eur(neto_anual),
             'equiv_bruto': fmt_eur(equiv_bruto_calculado),
             'neto_nomina': fmt_eur(neto_anual_nomina),
+            'sueldo_bruto': fmt_eur(sueldo_mensual_bruto),
+            'sueldo_neto': fmt_eur(neto_mensual),
         }
     except Exception as e:
         print(f"Warning: no se pudo leer pestaña Mensual: {e}")
@@ -452,6 +455,16 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
         nuevo_html = re2.sub(
             r'(Equivale a</span><span class="mensual-val green">)[^<]*(</span>)',
             f'\g<1>{mensual_data["equiv_bruto"]} brutos\g<2>',
+            nuevo_html
+        )
+        nuevo_html = re2.sub(
+            r'(id="sueldo-bruto-val">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["sueldo_bruto"]}\g<2>',
+            nuevo_html
+        )
+        nuevo_html = re2.sub(
+            r'(id="sueldo-neto-val">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["sueldo_neto"]}\g<2>',
             nuevo_html
         )
 
