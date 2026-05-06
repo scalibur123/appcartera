@@ -188,10 +188,16 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
 <div id="vista-cartera" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:8888;overflow-y:auto">
   <div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:1">
     <button onclick="hideVista()" style="background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;margin-right:12px">←</button>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button id="vbtn-mundo" class="filter-btn active" onclick="setVistaZona('mundo')">🌍 Mundo</button>
       <button id="vbtn-eu" class="filter-btn" onclick="setVistaZona('eu')">🇪🇺 Europa</button>
       <button id="vbtn-us" class="filter-btn" onclick="setVistaZona('us')">🇺🇸 USA</button>
+      <div style="width:100%;height:1px;background:var(--border);margin:4px 0"></div>
+      <button id="vsort-dia" class="filter-btn active" onclick="setVistaSort('dia')">% Día</button>
+      <button id="vsort-az" class="filter-btn" onclick="setVistaSort('az')">A-Z</button>
+      <button id="vsort-pos" class="filter-btn" onclick="setVistaSort('pos')">Posición</button>
+      <button id="vsort-sub" class="filter-btn" onclick="setVistaSort('sub')">↑ Subidas</button>
+      <button id="vsort-baj" class="filter-btn" onclick="setVistaSort('baj')">↓ Bajadas</button>
     </div>
   </div>
   <div id="vista-header" style="padding:16px;border-bottom:1px solid var(--border)"></div>
@@ -657,7 +663,8 @@ initNotifications();
 <script>var RENDIMIENTO_MES=21431;var RENDIMIENTO_MES_N=16932.06119593892;var RENDIMIENTO_ANUAL=128726.34;var RENDIMIENTO_ANUAL_N=101703.24606454388;
 function showVista(){document.getElementById('vista-cartera').style.display='block';renderVista();}
 function hideVista(){document.getElementById('vista-cartera').style.display='none';}
-let vistaZona='mundo';
+let vistaZona='mundo';let vistaSort='dia';
+function setVistaSort(s){vistaSort=s;['dia','az','pos','sub','baj'].forEach(x=>{const el=document.getElementById('vsort-'+x);if(el)el.classList.remove('active');});const el=document.getElementById('vsort-'+s);if(el)el.classList.add('active');renderVista();}
 function setVistaZona(z){
   vistaZona=z;
   ['mundo','eu','us'].forEach(x=>document.getElementById('vbtn-'+x).classList.remove('active'));
@@ -696,11 +703,18 @@ function renderVista(){
     <div style="font-size:13px;color:${col(totalMercado-totalCoste)};margin-top:2px">Posición: ${fE2(totalMercado-totalCoste)} (${fP(pctPos)})</div>
   `;
 
-  // Ordenar por variación día descendente
+  // Ordenar según vistaSort
   items.sort((a,b)=>{
     const pa=prices[a.symbol],pb=prices[b.symbol];
-    const va=pa.pct||0,vb=pb.pct||0;
-    return vb-va;
+    if(vistaSort==='az') return a.tckr.localeCompare(b.tckr);
+    if(vistaSort==='pos'){
+      const posa=(pa?a.titulos*(a.moneda==='USD'&&eurUsd?pa.price/eurUsd:pa.price):0);
+      const posb=(pb?b.titulos*(b.moneda==='USD'&&eurUsd?pb.price/eurUsd:pb.price):0);
+      return posb-posa;
+    }
+    if(vistaSort==='sub') return (pb.pct||0)-(pa.pct||0);
+    if(vistaSort==='baj') return (pa.pct||0)-(pb.pct||0);
+    return (pb.pct||0)-(pa.pct||0);
   });
 
   let html='';
