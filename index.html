@@ -561,7 +561,7 @@ function renderDiana(){
     const pcc=p?(p.pct>=0?'var(--green)':'var(--red)'):'var(--muted)';
     let ds='',dc='';
     if(price!=null){const d=(price-item.objetivo)/item.objetivo*100;ds=(d>=0?'+':'')+fN(d)+'% obj';dc=d>=0?'pos':'neg';}
-    return`<div class="list-row"><div class="row-left"><span class="tckr">${item.tckr}${getDisplayName(item)!==item.tckr?`<br><span style="font-size:11px;color:var(--muted);font-weight:normal">${getDisplayName(item)}</span>`:''}</span><span class="banco-pill">${item.banco}</span></div><div class="row-right"><span class="price-val ${atO?'at-obj':nearO?'near-obj':'normal'}">${ps} <span style="font-size:10px;color:${pcc}">${pcs}</span></span>${price!=null?`<span class="pill ${dc}">${ds}</span>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}<span class="price-sub">Obj. ${fN(item.objetivo)}${p?(` · Val.`+fE(item.titulos*(item.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price))):''}</span></div></div>`;
+    return`<div class="list-row" onclick="showDetalle('${item.tckr}')" style="cursor:pointer"><div class="row-left"><span class="tckr">${item.tckr}${getDisplayName(item)!==item.tckr?`<br><span style="font-size:11px;color:var(--muted);font-weight:normal">${getDisplayName(item)}</span>`:''}</span><span class="banco-pill">${item.banco}</span></div><div class="row-right"><span class="price-val ${atO?'at-obj':nearO?'near-obj':'normal'}">${ps} <span style="font-size:10px;color:${pcc}">${pcs}</span></span>${price!=null?`<span class="pill ${dc}">${ds}</span>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}<span class="price-sub">Obj. ${fN(item.objetivo)}${p?(` · Val.`+fE(item.titulos*(item.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price))):''}</span></div></div>`;
   }).join('');
 }
 
