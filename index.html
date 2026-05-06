@@ -313,8 +313,9 @@ function updateResumen(){
 
     // Buscar snapshot más reciente anterior a hoy → base SEMANA
     // Buscar lunes de esta semana o viernes anterior
-    const snapsAntesHoy=snaps.filter(s=>s.fecha<hoy&&s.fecha>='2026-01-01').sort((a,b)=>b.fecha.localeCompare(a.fecha));
-    const snapSemana=snapsAntesHoy[0];
+    const lunesStr=(()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10);})();
+    const snapsAntesLunes=snaps.filter(s=>s.fecha<lunesStr&&s.fecha>='2026-01-01').sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    const snapSemana=snapsAntesLunes[0];
     const primerMes=hoy.slice(0,8)+'01';
     const snapsMes=snaps.filter(s=>s.fecha<primerMes&&s.fecha>='2026-01-01').sort((a,b)=>b.fecha.localeCompare(a.fecha));
     const snapMes=snapsMes[0];
