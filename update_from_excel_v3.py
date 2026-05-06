@@ -162,6 +162,17 @@ def leer_excel_con_mic():
         neto_anual = ws_m['S13'].value or 0
         equiv_bruto = ws_m['S15'].value or 0
         neto_mensual = ws_m['J13'].value or 0
+        # Plusvalías realizadas esta semana (no incluidas en F57 hasta el sábado)
+        from datetime import date, timedelta
+        hoy_d = date.today()
+        lunes_d = hoy_d - timedelta(days=hoy_d.weekday())
+        plusv_semana = 0
+        ws_ej = wb['2026']
+        for row in range(262, 401):
+            fecha_v = ws_ej.cell(row=row, column=17).value
+            plusv = ws_ej.cell(row=row, column=25).value
+            if fecha_v and hasattr(fecha_v, 'date') and fecha_v.date() >= lunes_d and plusv:
+                plusv_semana += plusv
         sueldo_mensual_bruto = ws_m['N13'].value or 0
         neto_anual_nomina = neto_mensual * 14
 
@@ -219,6 +230,7 @@ def leer_excel_con_mic():
             'neto_nomina': fmt_eur(neto_anual_nomina),
             'sueldo_bruto': fmt_eur(sueldo_mensual_bruto),
             'sueldo_neto': fmt_eur(neto_mensual),
+            'plusv_semana': round(plusv_semana, 2),
         }
     except Exception as e:
         print(f"Warning: no se pudo leer pestaña Mensual: {e}")
@@ -488,6 +500,18 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
             f'\g<1>{mensual_data["sueldo_neto"]}\g<2>',
             nuevo_html
         )
+        # Inyectar PLUSV_SEMANA
+        nuevo_html = re.sub(
+            r'var PLUSV_SEMANA=[0-9.]+;',
+            f'var PLUSV_SEMANA={mensual_data["plusv_semana"]};',
+            nuevo_html
+        )
+        if 'var PLUSV_SEMANA=' not in nuevo_html:
+            nuevo_html = nuevo_html.replace(
+                'var RENDIMIENTO_MES=',
+                f'var PLUSV_SEMANA={mensual_data["plusv_semana"]};var RENDIMIENTO_MES='
+            )
+
 
     if ganancias_data:
         def fmtg(v):
