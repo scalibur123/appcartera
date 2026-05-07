@@ -34,7 +34,8 @@ async function fetchPrice(symbol) {
       res.on('end', () => {
         try {
           const r = JSON.parse(data).chart.result[0];
-          resolve({ price: r.meta.regularMarketPrice, high52: r.meta.fiftyTwoWeekHigh || null });
+          const p = r.meta.regularMarketPrice; const prev = r.meta.chartPreviousClose || r.meta.previousClose || p; const pct = prev ? ((p - prev) / prev) * 100 : 0;
+          resolve({ price: p, high52: r.meta.fiftyTwoWeekHigh || null, pct });
         } catch { resolve(null); }
       });
     }).on('error', () => resolve(null));
@@ -71,12 +72,14 @@ async function checkAlerts() {
     const high52 = result ? result.high52 : null;
     if (!price) continue;
 
+    const pctDia = result ? result.pct : 0;
     const enObjetivo = price >= item.objetivo;
     const dist = (item.objetivo - price) / item.objetivo;
     const pendiente = !enObjetivo && dist >= 0 && dist <= 0.07;
     const key = item.symbol + '_' + item.banco;
 
-    next[key] = { enObjetivo, pendiente };
+    const yaNotifSubida = prev[key] ? (prev[key].subida5notif || false) : false;
+    next[key] = { enObjetivo, pendiente, subida5notif: yaNotifSubida || (pctDia >= 5) };
 
     if (firstRun) continue;
     if (!prev[key]) continue;
@@ -101,6 +104,20 @@ async function checkAlerts() {
       dia.pen_sal++;
       await guardar(item.tckr, item.banco, 'salio_pendiente', price, item.objetivo);
       await sendNotification(token, `↩️ ${item.tckr} salió de pendientes`, `Precio ${price.toFixed(2)}`);
+    }
+
+    // Alerta subida >5% en el día (una sola vez)
+    if (pctDia >= 5 && !yaNotifSubida) {
+      await guardar(item.tckr, item.banco, 'subida_5pct', price, item.objetivo || 0);
+      await sendNotification(token, `😊 ${item.tckr} sube +${pctDia.toFixed(1)}% hoy`, `Precio ${price.toFixed(2)} · +${pctDia.toFixed(2)}%`);
+      next[key].subida5notif = true;
+    }
+
+    // Alerta subida >5% en el día (una sola vez)
+    if (pctDia >= 5 && !yaNotifSubida) {
+      await guardar(item.tckr, item.banco, 'subida_5pct', price, item.objetivo || 0);
+      await sendNotification(token, `😊 ${item.tckr} sube +${pctDia.toFixed(1)}% hoy`, `Precio ${price.toFixed(2)} · +${pctDia.toFixed(2)}%`);
+      next[key].subida5notif = true;
     }
 
     // Alerta máximo 52 semanas
