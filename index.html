@@ -821,7 +821,7 @@ function showDetalle(tckr) {
       </div>
       <div style="display:flex;justify-content:space-between;padding:8px 0">
         <span style="color:var(--muted)">Máx. 52 semanas</span>
-        <span style="font-weight:600">${p.high52 ? (item.moneda==='USD'&&eurUsd?(p.high52/eurUsd).toFixed(3):p.high52.toFixed(3))+' €' : '—'}</span>
+        <span style="font-weight:600">${p.high52 ? (p.price>=p.high52 ? '🆕 Nuevo máximo' : (item.moneda==='USD'&&eurUsd?(p.high52/eurUsd).toFixed(3):p.high52.toFixed(3))+' €') : '—'}</span>
       </div>
     </div>
     ${comprasHtml}
