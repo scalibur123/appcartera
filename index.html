@@ -117,7 +117,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
 </div>
 
 <div id="cartera" class="section">
-  <div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" type="search" placeholder="Buscar ticker o nombre…" id="csearch" oninput="renderCartera()" autocomplete="off" autocorrect="off" autocapitalize="off"></div>
+  <div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" type="search" placeholder="Buscar ticker o nombre…" id="csearch" oninput="renderCartera();document.getElementById('cclr').style.display=this.value?'block':'none'" autocomplete="off" autocorrect="off" autocapitalize="off"><button id="cclr" onclick="document.getElementById('csearch').value='';renderCartera();this.style.display='none'" style="display:none;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 8px">✕</button></div>
   <div class="filters">
     <button class="filter-btn active" id="cf-all" onclick="fC('all',this)">Todos</button>
     <button class="filter-btn" id="cf-EU" onclick="fC('EU',this)">🇪🇺 Europa</button>
@@ -140,7 +140,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
 </div>
 
 <div id="diana" class="section">
-  <div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" type="search" placeholder="Buscar ticker o nombre…" id="dsearch" oninput="renderDiana()" autocomplete="off" autocorrect="off" autocapitalize="off"></div>
+  <div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" type="search" placeholder="Buscar ticker o nombre…" id="dsearch" oninput="renderDiana();document.getElementById('dclr').style.display=this.value?'block':'none'" autocomplete="off" autocorrect="off" autocapitalize="off"><button id="dclr" onclick="document.getElementById('dsearch').value='';renderDiana();this.style.display='none'" style="display:none;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 8px">✕</button></div>
   <div class="filters">
     <button class="filter-btn active" id="df-all" onclick="fD('all',this)">Todos</button>
     <button class="filter-btn" id="df-EU" onclick="fD('EU',this)">🇪🇺 Europa</button>
@@ -676,14 +676,16 @@ initNotifications();
 function showVista(){
   const v=document.getElementById('vista-cartera');
   v.style.display='block';
-  if(Object.keys(prices).length>0) renderVista();
-  else setTimeout(renderVista,1000);
+  const tryRender=()=>{if(Object.keys(prices).length>0){renderVista();}else{setTimeout(tryRender,500);}};tryRender();
   // Swipe lateral entre zonas
   let vx0=null;
-  v.ontouchstart=e=>{vx0=e.touches[0].clientX;};
+  let vy0=null;
+  v.ontouchstart=e=>{vx0=e.touches[0].clientX;vy0=e.touches[0].clientY;};
   v.ontouchend=e=>{
     if(vx0===null)return;
     const dx=e.changedTouches[0].clientX-vx0;
+    const dy=Math.abs(e.changedTouches[0].clientY-vy0);
+    if(dy>40){vx0=null;return;}// vertical scroll, no swipe
     if(Math.abs(dx)>60){
       const zonas=['mundo','eu','us'];
       const idx=zonas.indexOf(vistaZona);
