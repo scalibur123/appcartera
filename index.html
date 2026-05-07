@@ -815,9 +815,13 @@ function showDetalle(tckr) {
         <span style="color:var(--muted)">B/P abiertas</span>
         <span style="color:${col(bp)};font-weight:600">${fE2(bp)} (${fP(bpPct)})</span>
       </div>
-      <div style="display:flex;justify-content:space-between;padding:8px 0">
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
         <span style="color:var(--muted)">Objetivo</span>
         <span style="font-weight:600">${item.objetivo ? item.objetivo.toFixed(3)+' €' : '—'}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0">
+        <span style="color:var(--muted)">Máx. 52 semanas</span>
+        <span style="font-weight:600">${p.high52 ? (item.moneda==='USD'&&eurUsd?(p.high52/eurUsd).toFixed(3):p.high52.toFixed(3))+' €' : '—'}</span>
       </div>
     </div>
     ${comprasHtml}
