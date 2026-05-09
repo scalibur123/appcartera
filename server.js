@@ -218,6 +218,23 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
+    if (pathname === '/bases' && req.method === 'GET') {
+      const { supabase } = require('./supabase-client');
+      Promise.all([
+        supabase.from('alert_state').select('value').eq('key','base_semana').single(),
+        supabase.from('alert_state').select('value').eq('key','base_mes').single(),
+        supabase.from('alert_state').select('value').eq('key','base_anual').single(),
+      ]).then(([s,m,a])=>{
+        res.writeHead(200,{'Content-Type':'application/json'});
+        res.end(JSON.stringify({
+          semana: s.data?.value?.valor || 0,
+          mes: m.data?.value?.valor || 0,
+          anual: a.data?.value?.valor || 0,
+          fecha: s.data?.value?.fecha || ''
+        }));
+      }).catch(()=>{ res.writeHead(500); res.end('{}'); });
+      return;
+    }
     if (pathname === '/snapshots' && req.method === 'GET') {
       const { supabase } = require('./supabase-client');
       supabase.from('cartera_snapshots').select('fecha,valor_total').order('fecha').then(({data,error}) => {

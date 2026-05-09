@@ -364,27 +364,48 @@ function updateResumen(){
     actualizarBloque('sem-b','sem-n',snapSemana);
     actualizarBloque('mes-b','mes-n',snapMes);
 
-    // MES = RENDIMIENTO_MES (Excel) + variación desde lunes (snapshot 5-may)
-    // ANUAL = RENDIMIENTO_ANUAL (Excel sem 1-18) + variación desde lunes (snapshot 5-may)
-    if(typeof RENDIMIENTO_MES !== 'undefined' && typeof RENDIMIENTO_ANUAL !== 'undefined') {
-      const snapViernes=snaps.find(s=>s.fecha<lunesStr&&s.fecha>='2026-01-01'&&snaps.filter(x=>x.fecha<lunesStr&&x.fecha>='2026-01-01').sort((a,b)=>b.fecha.localeCompare(a.fecha))[0].fecha===s.fecha);
-      if(snapViernes) {
-        const plusvSem = typeof PLUSV_SEMANA !== 'undefined' ? PLUSV_SEMANA : 0;
-        const varDesLunes = valorAhora - snapViernes.valor_total + plusvSem;
-        const mesTotal = RENDIMIENTO_MES + varDesLunes;
-        const mesTotalN = RENDIMIENTO_MES_N + varDesLunes*(1-IRPF);
-        const anualTotal = RENDIMIENTO_ANUAL + varDesLunes;
-        const anualTotalN = RENDIMIENTO_ANUAL_N + varDesLunes*(1-IRPF);
-        const elMesB=document.getElementById('mes-b');
-        const elMesN=document.getElementById('mes-n');
-        const elAnualB=document.getElementById('anual-b');
-        const elAnualN=document.getElementById('anual-n');
-        if(elMesB) elMesB.innerHTML='<span style="color:'+colorR(mesTotal)+';font-size:20px;font-weight:500">'+fmtR(mesTotal)+'</span>';
-        if(elMesN) elMesN.innerHTML='<span style="color:'+colorR(mesTotalN)+';font-size:20px;font-weight:500">'+fmtR(mesTotalN)+'</span>';
-        if(elAnualB) elAnualB.innerHTML='<span style="color:'+colorR(anualTotal)+';font-size:20px;font-weight:500">'+fmtR(anualTotal)+'</span>';
-        if(elAnualN) elAnualN.innerHTML='<span style="color:'+colorR(anualTotalN)+';font-size:20px;font-weight:500">'+fmtR(anualTotalN)+'</span>';
+    // SEMANA, MES, ANUAL desde bases Supabase + variacion diaria acumulada
+    fetch('/bases').then(r=>r.json()).then(bases=>{
+      // Detectar si mercado cerrado (fin de semana o fuera de horario)
+      const ahora=new Date();
+      const diaSemana=ahora.getDay(); // 0=dom, 6=sab
+      const horaUTC=ahora.getUTCHours();
+      // Mercado USA: lunes-viernes 14:30-21:00 UTC
+      // Mercado Europa: lunes-viernes 08:00-16:30 UTC
+      const mercadoAbierto = diaSemana>=1 && diaSemana<=5 && horaUTC>=8 && horaUTC<21;
+      
+      // varHoy: solo si mercado abierto
+      const plusvSem = typeof PLUSV_SEMANA !== 'undefined' ? PLUSV_SEMANA : 0;
+      const varHoyAcum = mercadoAbierto ? (varBtotal + plusvSem) : 0;
+
+      // HOY ya se actualiza arriba con varBtotal — si mercado cerrado forzar 0
+      if(!mercadoAbierto){
+        const hoyB=document.getElementById('hoy-b');
+        const hoyN=document.getElementById('hoy-n');
+        if(hoyB) hoyB.innerHTML='<span style="color:var(--muted);font-size:20px;font-weight:500">0,00 €</span>';
+        if(hoyN) hoyN.innerHTML='<span style="color:var(--muted);font-size:20px;font-weight:500">0,00 €</span>';
       }
-    }
+
+      const semTotal = bases.semana + varHoyAcum;
+      const mesTotal = bases.mes + varHoyAcum;
+      const anualTotal = bases.anual + varHoyAcum;
+      const semTotalN = semTotal*(1-IRPF);
+      const mesTotalN = mesTotal*(1-IRPF);
+      const anualTotalN = anualTotal*(1-IRPF);
+
+      const elSemB=document.getElementById('sem-b');
+      const elSemN=document.getElementById('sem-n');
+      const elMesB=document.getElementById('mes-b');
+      const elMesN=document.getElementById('mes-n');
+      const elAnualB=document.getElementById('anual-b');
+      const elAnualN=document.getElementById('anual-n');
+      if(elSemB) elSemB.innerHTML='<span style="color:'+colorR(semTotal)+';font-size:20px;font-weight:500">'+fmtR(semTotal)+'</span>';
+      if(elSemN) elSemN.innerHTML='<span style="color:'+colorR(semTotalN)+';font-size:20px;font-weight:500">'+fmtR(semTotalN)+'</span>';
+      if(elMesB) elMesB.innerHTML='<span style="color:'+colorR(mesTotal)+';font-size:20px;font-weight:500">'+fmtR(mesTotal)+'</span>';
+      if(elMesN) elMesN.innerHTML='<span style="color:'+colorR(mesTotalN)+';font-size:20px;font-weight:500">'+fmtR(mesTotalN)+'</span>';
+      if(elAnualB) elAnualB.innerHTML='<span style="color:'+colorR(anualTotal)+';font-size:20px;font-weight:500">'+fmtR(anualTotal)+'</span>';
+      if(elAnualN) elAnualN.innerHTML='<span style="color:'+colorR(anualTotalN)+';font-size:20px;font-weight:500">'+fmtR(anualTotalN)+'</span>';
+    }).catch(e=>console.error('Error bases:',e));
   }).catch(e=>console.error('Error snapshots:',e));
   fetch('/estado-dia').then(r=>r.json()).then(dia=>{
     const negEl=document.getElementById('cnt-neg-dia');
