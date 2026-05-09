@@ -264,6 +264,20 @@ server.listen(PORT, () => {
 setInterval(() => { try { delete require.cache[require.resolve("./check-alerts")]; require("./check-alerts"); } catch(e) { console.error(e); } }, 5*60*1000);
 
 
+// Reset base_semana cada lunes a las 8:00
+setInterval(()=>{
+  const ahora = new Date();
+  if(ahora.getDay()===1 && ahora.getUTCHours()===8 && ahora.getUTCMinutes()<1){
+    const {supabase} = require('./supabase-client');
+    const hoy = ahora.toISOString().slice(0,10);
+    supabase.from('alert_state').upsert({
+      key:'base_semana',
+      value:{valor:0, fecha:hoy},
+      updated_at: new Date().toISOString()
+    },{onConflict:'key'}).then(()=>console.log('✅ base_semana reseteada a 0'));
+  }
+}, 60000);
+
 // Snapshot diario
 function guardarSnapshotSiToca(){
   var ahora=new Date();
