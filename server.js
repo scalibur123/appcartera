@@ -264,6 +264,34 @@ server.listen(PORT, () => {
 setInterval(() => { try { delete require.cache[require.resolve("./check-alerts")]; require("./check-alerts"); } catch(e) { console.error(e); } }, 5*60*1000);
 
 
+// Actualizar bases cada sabado a las 18:00 (mercado cerrado)
+setInterval(()=>{
+  const ahora = new Date();
+  if(ahora.getDay()===6 && ahora.getUTCHours()===17 && ahora.getUTCMinutes()<1){
+    const {supabase} = require('./supabase-client');
+    const hoy = ahora.toISOString().slice(0,10);
+    // Leer snapshots para calcular semana y mes
+    supabase.from('cartera_snapshots').select('fecha,valor_total').order('fecha').then(({data})=>{
+      if(!data||data.length<2) return;
+      const snaps = data.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+      const snapHoy = snaps[0]; // viernes cierre
+      const lunesStr = (()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10);})();
+      const snapAnteriorLunes = snaps.find(s=>s.fecha<lunesStr);
+      const snap31dic = snaps.find(s=>s.fecha==='2025-12-31');
+      const snap1mayo = snaps.filter(s=>s.fecha<hoy.slice(0,8)+'01').sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+      if(!snapHoy||!snapAnteriorLunes||!snap31dic) return;
+      const semana = snapHoy.valor_total - snapAnteriorLunes.valor_total;
+      const mes = snap1mayo ? snapHoy.valor_total - snap1mayo.valor_total : 0;
+      const anual = snapHoy.valor_total - snap31dic.valor_total;
+      Promise.all([
+        supabase.from('alert_state').upsert({key:'base_semana',value:{valor:semana,fecha:hoy},updated_at:new Date().toISOString()},{onConflict:'key'}),
+        supabase.from('alert_state').upsert({key:'base_mes',value:{valor:mes,fecha:hoy},updated_at:new Date().toISOString()},{onConflict:'key'}),
+        supabase.from('alert_state').upsert({key:'base_anual',value:{valor:anual,fecha:hoy},updated_at:new Date().toISOString()},{onConflict:'key'}),
+      ]).then(()=>console.log('✅ Bases actualizadas automaticamente:', {semana,mes,anual}));
+    });
+  }
+}, 60000);
+
 // Reset base_semana cada lunes a las 8:00
 setInterval(()=>{
   const ahora = new Date();
