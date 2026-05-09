@@ -274,14 +274,15 @@ setInterval(()=>{
     supabase.from('cartera_snapshots').select('fecha,valor_total').order('fecha').then(({data})=>{
       if(!data||data.length<2) return;
       const snaps = data.sort((a,b)=>b.fecha.localeCompare(a.fecha));
-      const snapHoy = snaps[0]; // viernes cierre
+      const snapHoy = snaps[0]; // cierre hoy
       const lunesStr = (()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10);})();
-      const snapAnteriorLunes = snaps.find(s=>s.fecha<lunesStr);
+      const snapViernesAnterior = snaps.find(s=>s.fecha<lunesStr);
       const snap31dic = snaps.find(s=>s.fecha==='2025-12-31');
-      const snap1mayo = snaps.filter(s=>s.fecha<hoy.slice(0,8)+'01').sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
-      if(!snapHoy||!snapAnteriorLunes||!snap31dic) return;
-      const semana = snapHoy.valor_total - snapAnteriorLunes.valor_total;
-      const mes = snap1mayo ? snapHoy.valor_total - snap1mayo.valor_total : 0;
+      const primerMes = hoy.slice(0,8)+'01';
+      const snap1mes = snaps.filter(s=>s.fecha<primerMes).sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+      if(!snapHoy||!snapViernesAnterior||!snap31dic) return;
+      const semana = snapHoy.valor_total - snapViernesAnterior.valor_total;
+      const mes = snap1mes ? snapHoy.valor_total - snap1mes.valor_total : 0;
       const anual = snapHoy.valor_total - snap31dic.valor_total;
       Promise.all([
         supabase.from('alert_state').upsert({key:'base_semana',value:{valor:semana,fecha:hoy},updated_at:new Date().toISOString()},{onConflict:'key'}),
