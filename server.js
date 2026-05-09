@@ -267,7 +267,7 @@ setInterval(() => { try { delete require.cache[require.resolve("./check-alerts")
 // Actualizar bases cada sabado a las 18:00 (mercado cerrado)
 setInterval(()=>{
   const ahora = new Date();
-  if(ahora.getDay()===6 && ahora.getUTCHours()===17 && ahora.getUTCMinutes()<1){
+  if(ahora.getDay()===5 && ahora.getUTCHours()===21 && ahora.getUTCMinutes()<1){
     const {supabase} = require('./supabase-client');
     const hoy = ahora.toISOString().slice(0,10);
     // Leer snapshots para calcular semana y mes
@@ -295,7 +295,7 @@ setInterval(()=>{
 // Reset base_semana cada lunes a las 8:00
 setInterval(()=>{
   const ahora = new Date();
-  if(ahora.getDay()===1 && ahora.getUTCHours()===8 && ahora.getUTCMinutes()<1){
+  if(ahora.getDay()===1 && ahora.getUTCHours()===5 && ahora.getUTCMinutes()<1){
     const {supabase} = require('./supabase-client');
     const hoy = ahora.toISOString().slice(0,10);
     supabase.from('alert_state').upsert({
@@ -313,7 +313,7 @@ function guardarSnapshotSiToca(){
   var min=ahora.getMinutes();
   var dia=ahora.getDay();
   if(dia===0||dia===6)return;
-  if(hora!==17||min<30||min>35)return;
+  if(hora!==21||min<15||min>20)return;
   var fecha=ahora.toISOString().slice(0,10);
   var f=require("fs"),p=require("path");
   try{
