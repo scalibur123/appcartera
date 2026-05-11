@@ -325,7 +325,7 @@ function guardarVariacionDiaria(){
   const horaUTC=ahora.getUTCHours();
   const minUTC=ahora.getUTCMinutes();
   if(dia===0||dia===6)return;
-  if(horaUTC!==21||minUTC>5)return;
+  if(horaUTC!==21||minUTC<59)return;
   const fecha=ahora.toISOString().slice(0,10);
   const f=require('fs'),p=require('path');
   try{
