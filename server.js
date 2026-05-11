@@ -235,6 +235,16 @@ const server = http.createServer(async (req, res) => {
       }).catch(()=>{ res.writeHead(500); res.end('{}'); });
       return;
     }
+    if (pathname === '/variaciones-diarias' && req.method === 'GET') {
+      const { supabase } = require('./supabase-client');
+      const anioActual = new Date().getFullYear().toString();
+      supabase.from('variaciones_diarias').select('fecha,valor').gte('fecha', anioActual+'-01-01').order('fecha').then(({data,error}) => {
+        if (error) { res.writeHead(500); res.end(JSON.stringify([])); return; }
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify(data || []));
+      });
+      return;
+    }
     if (pathname === '/snapshots' && req.method === 'GET') {
       const { supabase } = require('./supabase-client');
       supabase.from('cartera_snapshots').select('fecha,valor_total').order('fecha').then(({data,error}) => {
@@ -306,6 +316,44 @@ setInterval(()=>{
     },{onConflict:'key'}).then(()=>console.log('✅ base_semana reseteada a 0'));
   }
 }, 60000);
+
+
+// Guardar variacion diaria a las 21:00 UTC (cierre mercado USA)
+function guardarVariacionDiaria(){
+  const ahora=new Date();
+  const dia=ahora.getDay();
+  const horaUTC=ahora.getUTCHours();
+  const minUTC=ahora.getUTCMinutes();
+  if(dia===0||dia===6)return;
+  if(horaUTC!==21||minUTC>5)return;
+  const fecha=ahora.toISOString().slice(0,10);
+  const f=require('fs'),p=require('path');
+  try{
+    const prices=JSON.parse(f.readFileSync(p.join(__dirname,'price-cache.json'),'utf8'));
+    const html=f.readFileSync(p.join(__dirname,'index.html'),'utf8');
+    const m=html.match(/const C=(\[.*?\]);/s);
+    if(!m)return;
+    const C=JSON.parse(m[1]);
+    const eu=prices['EURUSD=X'];
+    const eurUsd=eu?eu.price:1;
+    let varDia=0;
+    for(const i of C){
+      const pr=prices[i.symbol];
+      if(!pr||pr.pct==null)continue;
+      const precioAyer=pr.price/(1+pr.pct/100);
+      const varPrecio=pr.price-precioAyer;
+      const varEur=i.moneda==='USD'&&eurUsd?varPrecio*i.titulos/eurUsd:varPrecio*i.titulos;
+      varDia+=varEur;
+    }
+    varDia=Math.round(varDia*100)/100;
+    const {supabase}=require('./supabase-client');
+    supabase.from('variaciones_diarias').upsert({fecha,valor:varDia},{onConflict:'fecha'}).then(r=>{
+      if(r.error)console.error('Error variacion diaria:',r.error.message);
+      else console.log('✅ Variacion diaria:',fecha,varDia);
+    });
+  }catch(e){console.error('Error guardarVariacionDiaria:',e.message);}
+}
+setInterval(guardarVariacionDiaria,60000);
 
 // Snapshot diario
 function guardarSnapshotSiToca(){
