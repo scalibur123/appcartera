@@ -372,7 +372,7 @@ function updateResumen(){
       const horaUTC=ahora.getUTCHours();
       // Mercado USA: lunes-viernes 14:30-21:00 UTC
       // Mercado Europa: lunes-viernes 08:00-16:30 UTC
-      const mercadoAbierto = diaSemana>=1 && diaSemana<=5 && horaUTC>=8 && horaUTC<21;
+      const mercadoAbierto = diaSemana>=1 && diaSemana<=5 && horaUTC>=7 && horaUTC<21;
       
       // varHoy: solo si mercado abierto
       const plusvSem = typeof PLUSV_SEMANA !== 'undefined' ? PLUSV_SEMANA : 0;
