@@ -340,72 +340,57 @@ function updateResumen(){
 
   fetch('/snapshots').then(r=>r.json()).then(snaps=>{
     const hoy=new Date().toISOString().slice(0,10);
-    const diasSemana=[0,6].includes(new Date().getDay())?0:new Date().getDay();
+    const ahora=new Date();
+    const horaUTC=ahora.getUTCHours();
+    const minUTC=ahora.getUTCMinutes();
+    const diaSemana=ahora.getDay();
+    const esDiaLaboral=diaSemana>=1&&diaSemana<=5;
+    // Mercado europeo: lun-vie 07:00-15:30 UTC
+    const mercadoEU=esDiaLaboral&&horaUTC>=7&&(horaUTC<15||(horaUTC===15&&minUTC<30));
+    // Mercado USA: lun-vie 14:30-21:00 UTC
+    const mercadoUSA=esDiaLaboral&&(horaUTC>14||(horaUTC===14&&minUTC>=30))&&horaUTC<21;
 
-    // Buscar snapshot más reciente anterior a hoy → base SEMANA
-    // Buscar lunes de esta semana o viernes anterior
+    // HOY: solo tickers del mercado abierto ahora mismo
+    let varHoy=0;
+    if(mercadoEU||mercadoUSA){
+      for(const i of C){
+        const p=prices[i.symbol];
+        if(!p||p.pct==null) continue;
+        const esUSA=i.moneda==='USD';
+        if(mercadoEU&&!mercadoUSA&&esUSA) continue;
+        const precioAyer=p.price/(1+p.pct/100);
+        const varPrecio=p.price-precioAyer;
+        const varEur=esUSA&&eurUsd?varPrecio*i.titulos/eurUsd:varPrecio*i.titulos;
+        varHoy+=varEur;
+      }
+    }
+    const varHoyN=varHoy*(1-IRPF);
+    const hoyBel=document.getElementById('hoy-b');
+    const hoyNel=document.getElementById('hoy-n');
+    if(hoyBel) hoyBel.innerHTML='<span style="color:'+colorR(varHoy)+';font-size:20px;font-weight:500">'+fmtR(varHoy)+'</span>';
+    if(hoyNel) hoyNel.innerHTML='<span style="color:'+colorR(varHoyN)+';font-size:20px;font-weight:500">'+fmtR(varHoyN)+'</span>';
+
+    // SEMANA: valor ahora vs snapshot del viernes anterior al lunes de esta semana
     const lunesStr=(()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10);})();
-    const snapsAntesLunes=snaps.filter(s=>s.fecha<lunesStr&&s.fecha>='2026-01-01').sort((a,b)=>b.fecha.localeCompare(a.fecha));
-    const snapSemana=snapsAntesLunes[0];
+    const snapSemana=snaps.filter(s=>s.fecha<lunesStr&&s.fecha>='2026-01-01').sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+    // MES: valor ahora vs snapshot antes del día 1 del mes
     const primerMes=hoy.slice(0,8)+'01';
-    const snapsMes=snaps.filter(s=>s.fecha<primerMes&&s.fecha>='2026-01-01').sort((a,b)=>b.fecha.localeCompare(a.fecha));
-    const snapMes=snapsMes[0];
+    const snapMes=snaps.filter(s=>s.fecha<primerMes&&s.fecha>='2026-01-01').sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+    // ANUAL: valor ahora vs snapshot antes del 1 de enero
+    const primerAnio=hoy.slice(0,4)+'-01-01';
+    const snapAnual=snaps.filter(s=>s.fecha<primerAnio).sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
 
-    function actualizarBloque(idB,idN,snapRef){
-      if(!snapRef) return;
-      const difB=valorAhora-snapRef.valor_total;
+    function pintarBloque(idB,idN,difB){
       const difN=difB*(1-IRPF);
       const elB=document.getElementById(idB);
       const elN=document.getElementById(idN);
       if(elB) elB.innerHTML='<span style="color:'+colorR(difB)+';font-size:20px;font-weight:500">'+fmtR(difB)+'</span>';
       if(elN) elN.innerHTML='<span style="color:'+colorR(difN)+';font-size:20px;font-weight:500">'+fmtR(difN)+'</span>';
     }
+    if(snapSemana) pintarBloque('sem-b','sem-n',valorAhora-snapSemana.valor_total);
+    if(snapMes)    pintarBloque('mes-b','mes-n',valorAhora-snapMes.valor_total);
+    if(snapAnual)  pintarBloque('anual-b','anual-n',valorAhora-snapAnual.valor_total);
 
-    actualizarBloque('sem-b','sem-n',snapSemana);
-    actualizarBloque('mes-b','mes-n',snapMes);
-
-    // SEMANA, MES, ANUAL desde bases Supabase + variacion diaria acumulada
-    fetch('/bases').then(r=>r.json()).then(bases=>{
-      // Detectar si mercado cerrado (fin de semana o fuera de horario)
-      const ahora=new Date();
-      const diaSemana=ahora.getDay(); // 0=dom, 6=sab
-      const horaUTC=ahora.getUTCHours();
-      // Mercado USA: lunes-viernes 14:30-21:00 UTC
-      // Mercado Europa: lunes-viernes 08:00-16:30 UTC
-      const mercadoAbierto = diaSemana>=1 && diaSemana<=5 && horaUTC>=7 && horaUTC<21;
-      
-      // varHoy: solo si mercado abierto
-      const plusvSem = typeof PLUSV_SEMANA !== 'undefined' ? PLUSV_SEMANA : 0;
-      const varHoyAcum = mercadoAbierto ? (varBtotal + plusvSem) : 0;
-
-      // HOY ya se actualiza arriba con varBtotal — si mercado cerrado forzar 0
-      if(!mercadoAbierto){
-        const hoyB=document.getElementById('hoy-b');
-        const hoyN=document.getElementById('hoy-n');
-        if(hoyB) hoyB.innerHTML='<span style="color:var(--muted);font-size:20px;font-weight:500">0,00 €</span>';
-        if(hoyN) hoyN.innerHTML='<span style="color:var(--muted);font-size:20px;font-weight:500">0,00 €</span>';
-      }
-
-      const semTotal = bases.semana + varHoyAcum;
-      const mesTotal = bases.mes + varHoyAcum;
-      const anualTotal = bases.anual + varHoyAcum;
-      const semTotalN = semTotal*(1-IRPF);
-      const mesTotalN = mesTotal*(1-IRPF);
-      const anualTotalN = anualTotal*(1-IRPF);
-
-      const elSemB=document.getElementById('sem-b');
-      const elSemN=document.getElementById('sem-n');
-      const elMesB=document.getElementById('mes-b');
-      const elMesN=document.getElementById('mes-n');
-      const elAnualB=document.getElementById('anual-b');
-      const elAnualN=document.getElementById('anual-n');
-      if(elSemB) elSemB.innerHTML='<span style="color:'+colorR(semTotal)+';font-size:20px;font-weight:500">'+fmtR(semTotal)+'</span>';
-      if(elSemN) elSemN.innerHTML='<span style="color:'+colorR(semTotalN)+';font-size:20px;font-weight:500">'+fmtR(semTotalN)+'</span>';
-      if(elMesB) elMesB.innerHTML='<span style="color:'+colorR(mesTotal)+';font-size:20px;font-weight:500">'+fmtR(mesTotal)+'</span>';
-      if(elMesN) elMesN.innerHTML='<span style="color:'+colorR(mesTotalN)+';font-size:20px;font-weight:500">'+fmtR(mesTotalN)+'</span>';
-      if(elAnualB) elAnualB.innerHTML='<span style="color:'+colorR(anualTotal)+';font-size:20px;font-weight:500">'+fmtR(anualTotal)+'</span>';
-      if(elAnualN) elAnualN.innerHTML='<span style="color:'+colorR(anualTotalN)+';font-size:20px;font-weight:500">'+fmtR(anualTotalN)+'</span>';
-    }).catch(e=>console.error('Error bases:',e));
   }).catch(e=>console.error('Error snapshots:',e));
   fetch('/estado-dia').then(r=>r.json()).then(dia=>{
     const negEl=document.getElementById('cnt-neg-dia');
