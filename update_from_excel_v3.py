@@ -175,6 +175,8 @@ def leer_excel_con_mic():
             plusv = ws_ej.cell(row=row, column=25).value
             if fecha_v and hasattr(fecha_v, 'date') and fecha_v.date() >= lunes_d and plusv:
                 plusv_semana += plusv
+            if fecha_v and hasattr(fecha_v, 'date') and fecha_v.date() == hoy_d and plusv:
+                plusv_hoy += plusv
         sueldo_mensual_bruto = ws_m['N13'].value or 0
         neto_anual_nomina = neto_mensual * 14
 
