@@ -99,7 +99,6 @@ async function fetchNamesBatch(symbols) {
 async function handleSymbols(req, res, symbolsParam) {
   const symbols = symbolsParam.split(',').map(s => s.trim()).filter(Boolean);
   const results = await fetchYahooBatch(symbols);
-  // Devolver formato compatible con la app: {quoteResponse:{result:[...]}}
   const out = {
     quoteResponse: {
       result: results.filter(r => !r.error).map(r => ({
@@ -153,6 +152,33 @@ function handleStatic(req, res, urlPath) {
   res.end(fs.readFileSync(file));
 }
 
+// ============== VARIACIONES DIARIAS ==============
+
+async function guardarVariacionDiaria(fecha, valorHoy) {
+  try {
+    const { supabase } = require('./supabase-client');
+    // Obtener snapshot del día laboral anterior
+    const { data } = await supabase
+      .from('cartera_snapshots')
+      .select('fecha,valor_total')
+      .lt('fecha', fecha)
+      .order('fecha', { ascending: false })
+      .limit(1);
+    if (!data || !data[0]) {
+      console.log('variacion-diaria: no hay snapshot anterior para', fecha);
+      return;
+    }
+    const valorAyer = data[0].valor_total;
+    const variacion = Math.round((valorHoy - valorAyer) * 100) / 100;
+    await supabase
+      .from('variaciones_diarias')
+      .upsert({ fecha, valor: variacion }, { onConflict: 'fecha' });
+    console.log(`✅ Variación diaria guardada: ${fecha} = ${variacion.toFixed(2)}`);
+  } catch (e) {
+    console.error('Error guardarVariacionDiaria:', e.message);
+  }
+}
+
 // ============== ROUTER ==============
 
 const server = http.createServer(async (req, res) => {
@@ -162,7 +188,6 @@ const server = http.createServer(async (req, res) => {
     const symbols = url.searchParams.get('symbols');
 
     console.log(new Date().toISOString(), req.method, pathname);
-
 
     if (pathname === "/save-token" && req.method === "POST") {
       let body = "";
@@ -195,6 +220,7 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
+
     if (pathname === '/earnings' && req.method === 'GET') {
       const { supabase } = require('./supabase-client');
       const hoy = new Date().toISOString().slice(0,10);
@@ -205,6 +231,7 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
+
     if (pathname === '/estado-dia' && req.method === 'GET') {
       const { supabase } = require('./supabase-client');
       const hoy = new Date().toISOString().slice(0,10);
@@ -218,6 +245,7 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
+
     if (pathname === '/bases' && req.method === 'GET') {
       const { supabase } = require('./supabase-client');
       Promise.all([
@@ -235,16 +263,7 @@ const server = http.createServer(async (req, res) => {
       }).catch(()=>{ res.writeHead(500); res.end('{}'); });
       return;
     }
-    if (pathname === '/variaciones-diarias' && req.method === 'GET') {
-      const { supabase } = require('./supabase-client');
-      const anioActual = new Date().getFullYear().toString();
-      supabase.from('variaciones_diarias').select('fecha,valor').gte('fecha', anioActual+'-01-01').order('fecha').then(({data,error}) => {
-        if (error) { res.writeHead(500); res.end(JSON.stringify([])); return; }
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end(JSON.stringify(data || []));
-      });
-      return;
-    }
+
     if (pathname === '/snapshots' && req.method === 'GET') {
       const { supabase } = require('./supabase-client');
       supabase.from('cartera_snapshots').select('fecha,valor_total').order('fecha').then(({data,error}) => {
@@ -254,6 +273,24 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
+
+    // ── NUEVO: variaciones diarias para HOY/SEMANA/MES/ANUAL ──
+    if (pathname === '/variaciones-diarias' && req.method === 'GET') {
+      const { supabase } = require('./supabase-client');
+      const primerAnio = new Date().toISOString().slice(0, 4) + '-01-01';
+      supabase
+        .from('variaciones_diarias')
+        .select('fecha,valor')
+        .gte('fecha', primerAnio)
+        .order('fecha')
+        .then(({ data, error }) => {
+          if (error) { res.writeHead(500); res.end(JSON.stringify([])); return; }
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(data || []));
+        });
+      return;
+    }
+
     if (pathname === '/names' && symbols) return handleNames(req, res, symbols);
     if (pathname === '/' && symbols) return handleSymbols(req, res, symbols);
     if (pathname === '/' || pathname === '/index.html') return handleIndex(req, res);
@@ -273,18 +310,16 @@ server.listen(PORT, () => {
 // Chequeo alertas cada 5 min
 setInterval(() => { try { delete require.cache[require.resolve("./check-alerts")]; require("./check-alerts"); } catch(e) { console.error(e); } }, 5*60*1000);
 
-
 // Actualizar bases cada sabado a las 18:00 (mercado cerrado)
 setInterval(()=>{
   const ahora = new Date();
   if(ahora.getDay()===5 && ahora.getUTCHours()===21 && ahora.getUTCMinutes()>=30 && ahora.getUTCMinutes()<31){
     const {supabase} = require('./supabase-client');
     const hoy = ahora.toISOString().slice(0,10);
-    // Leer snapshots para calcular semana y mes
     supabase.from('cartera_snapshots').select('fecha,valor_total').order('fecha').then(({data})=>{
       if(!data||data.length<2) return;
       const snaps = data.sort((a,b)=>b.fecha.localeCompare(a.fecha));
-      const snapHoy = snaps[0]; // cierre hoy
+      const snapHoy = snaps[0];
       const lunesStr = (()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10);})();
       const snapViernesAnterior = snaps.find(s=>s.fecha<lunesStr);
       const snap31dic = snaps.find(s=>s.fecha==='2025-12-31');
@@ -317,45 +352,7 @@ setInterval(()=>{
   }
 }, 60000);
 
-
-// Guardar variacion diaria a las 21:00 UTC (cierre mercado USA)
-function guardarVariacionDiaria(){
-  const ahora=new Date();
-  const dia=ahora.getDay();
-  const horaUTC=ahora.getUTCHours();
-  const minUTC=ahora.getUTCMinutes();
-  if(dia===0||dia===6)return;
-  if(horaUTC!==21||minUTC<59)return;
-  const fecha=ahora.toISOString().slice(0,10);
-  const f=require('fs'),p=require('path');
-  try{
-    const prices=JSON.parse(f.readFileSync(p.join(__dirname,'price-cache.json'),'utf8'));
-    const html=f.readFileSync(p.join(__dirname,'index.html'),'utf8');
-    const m=html.match(/const C=(\[.*?\]);/s);
-    if(!m)return;
-    const C=JSON.parse(m[1]);
-    const eu=prices['EURUSD=X'];
-    const eurUsd=eu?eu.price:1;
-    let varDia=0;
-    for(const i of C){
-      const pr=prices[i.symbol];
-      if(!pr||pr.pct==null)continue;
-      const precioAyer=pr.price/(1+pr.pct/100);
-      const varPrecio=pr.price-precioAyer;
-      const varEur=i.moneda==='USD'&&eurUsd?varPrecio*i.titulos/eurUsd:varPrecio*i.titulos;
-      varDia+=varEur;
-    }
-    varDia=Math.round(varDia*100)/100;
-    const {supabase}=require('./supabase-client');
-    supabase.from('variaciones_diarias').upsert({fecha,valor:varDia},{onConflict:'fecha'}).then(r=>{
-      if(r.error)console.error('Error variacion diaria:',r.error.message);
-      else console.log('✅ Variacion diaria:',fecha,varDia);
-    });
-  }catch(e){console.error('Error guardarVariacionDiaria:',e.message);}
-}
-setInterval(guardarVariacionDiaria,60000);
-
-// Snapshot diario
+// Snapshot diario + variación diaria
 function guardarSnapshotSiToca(){
   var ahora=new Date();
   var hora=ahora.getHours();
@@ -380,8 +377,13 @@ function guardarSnapshotSiToca(){
     }
     var sb=require("./supabase-client").supabase;
     sb.from("cartera_snapshots").upsert({fecha:fecha,valor_total:Math.round(total*100)/100},{onConflict:"fecha"}).then(function(r){
-      if(r.error)console.error(r.error.message);
-      else console.log("Snapshot:",fecha,total.toFixed(2));
+      if(r.error){
+        console.error(r.error.message);
+      } else {
+        console.log("Snapshot:",fecha,total.toFixed(2));
+        // ── NUEVO: guardar variación diaria (cotización) ──
+        guardarVariacionDiaria(fecha, Math.round(total*100)/100);
+      }
     });
   }catch(e){console.error(e.message);}
 }
@@ -425,6 +427,7 @@ async function actualizarEarnings() {
 // Ejecutar al inicio y luego cada 24h
 setTimeout(actualizarEarnings, 30000);
 setInterval(actualizarEarnings, 24*60*60*1000);
+
 // Mantener servidor activo
 setInterval(() => {
   https.get('https://appcartera.onrender.com', () => {}).on('error', () => {});
