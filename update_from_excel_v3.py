@@ -418,12 +418,11 @@ def leer_rendimiento_cartera():
              'Julio':7,'Agosto':8,'Septiembre':9,'Octubre':10,'Noviembre':11,'Diciembre':12}
     mes_hoy = datetime.now().month
     total_mes = 0
-    total_anual = 0
+    total_anual = ws['F57'].value or 0
     for row in ws.iter_rows(min_row=4, max_row=60, values_only=True):
         if row[3] is not None and isinstance(row[5], (int,float)) and row[5] != 0:
             if meses.get(row[3], 0) == mes_hoy:
                 total_mes = row[5]
-            total_anual += row[5]
     ws_irpf = wb['IRPF']
     tipo_irpf = ws_irpf.cell(35, 6).value or 0.20925
     return {'mes': total_mes, 'mes_n': total_mes*(1-tipo_irpf), 'anual': total_anual, 'anual_n': total_anual*(1-tipo_irpf)}
