@@ -880,3 +880,57 @@ function hideDetalle() { document.getElementById('detalle-valor').style.display 
 <div id="ventas" class="section"><div style="padding:16px" id="ventas-content">Cargando...</div></div>
 </body>
 </html>
+<script>
+window.renderVentas = function() {
+  const el = document.getElementById('ventas-content');
+  if (!window.VENTAS_ANUAL || !VENTAS_ANUAL.length) {
+    el.innerHTML = '<p style="color:var(--muted)">Sin ventas registradas.</p>';
+    return;
+  }
+  const nombresMes = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const meses = {};
+  VENTAS_ANUAL.forEach(v => {
+    const d = new Date(v.fecha);
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    if (!meses[key]) meses[key] = { nombre: nombresMes[d.getMonth()], ventas: [], bruto: 0, neto: 0 };
+    meses[key].ventas.push(v);
+    meses[key].bruto += v.bruto;
+    meses[key].neto  += v.neto;
+  });
+  function fmt(v) {
+    const color = v >= 0 ? 'var(--green)' : 'var(--red)';
+    const signo = v >= 0 ? '+' : '';
+    const num = Math.abs(v).toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2});
+    return '<span style="color:' + color + '">' + signo + num + ' \u20ac</span>';
+  }
+  function fmtFecha(iso) {
+    const d = new Date(iso);
+    return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
+  }
+  let html = '';
+  const totalB = VENTAS_ANUAL.reduce((s,v) => s+v.bruto, 0);
+  const totalN = VENTAS_ANUAL.reduce((s,v) => s+v.neto, 0);
+  html += '<div style="padding:10px 0 16px;border-bottom:2px solid var(--border);margin-bottom:16px">';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">TOTAL ANUAL</div>';
+  html += '<div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--muted)">Bruto</span>' + fmt(totalB) + '</div>';
+  html += '<div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--muted)">Neto</span>' + fmt(totalN) + '</div>';
+  html += '</div>';
+  Object.keys(meses).sort().reverse().forEach(key => {
+    const m = meses[key];
+    html += '<div style="margin-bottom:20px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:6px">';
+    html += '<span style="font-weight:700;font-size:15px;color:var(--text)">' + m.nombre + '</span>';
+    html += '<span style="font-size:12px;color:var(--muted)">' + fmt(m.bruto) + ' / ' + fmt(m.neto) + '</span>';
+    html += '</div>';
+    m.ventas.slice().reverse().forEach(v => {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 4px;border-bottom:1px solid var(--border)">';
+      html += '<div><span style="font-weight:600;font-size:14px">' + v.ticker + '</span>';
+      html += '<span style="font-size:11px;color:var(--muted);margin-left:8px">' + fmtFecha(v.fecha) + '</span></div>';
+      html += '<div style="text-align:right;font-size:13px">' + fmt(v.bruto) + '<br><span style="font-size:11px;color:var(--muted)">neto ' + fmt(v.neto) + '</span></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  el.innerHTML = html;
+};
+</script>
