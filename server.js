@@ -359,7 +359,7 @@ function guardarSnapshotSiToca(){
   var minUTC=ahora.getUTCMinutes();
   var dia=ahora.getDay();
   if(dia===0||dia===6)return;
-  if(horaUTC!==15||minUTC<35||minUTC>40)return;
+  if(horaUTC!==20||minUTC<20||minUTC>25)return;
   var fecha=ahora.toISOString().slice(0,10);
   var f=require("fs"),p=require("path");
   try{
