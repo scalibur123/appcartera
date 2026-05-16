@@ -175,8 +175,6 @@ def leer_excel_con_mic():
             plusv = ws_ej.cell(row=row, column=25).value
             if fecha_v and hasattr(fecha_v, 'date') and fecha_v.date() >= lunes_d and plusv:
                 plusv_semana += plusv
-            if fecha_v and hasattr(fecha_v, 'date') and fecha_v.date() == hoy_d and plusv:
-                plusv_hoy += plusv
         sueldo_mensual_bruto = ws_m['N13'].value or 0
         neto_anual_nomina = neto_mensual * 14
 
@@ -459,7 +457,35 @@ def leer_ganancias_realizadas():
 
     return r
 
-def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None):
+
+def leer_ventas():
+    """Lee las ventas del año desde pestaña 2026, filas 258-380.
+    Col D=ticker, Col Q(17)=fecha venta, Col Y(25)=plusvalia bruta, Col Z(26)=plusvalia neta.
+    """
+    wb = openpyxl.load_workbook(open(str(EXCEL), 'rb'), read_only=True, data_only=True)
+    ws = wb['2026']
+    ventas = []
+    for row in range(258, 381):
+        ticker  = ws.cell(row=row, column=4).value   # col D
+        fecha   = ws.cell(row=row, column=17).value  # col Q
+        bruto   = ws.cell(row=row, column=25).value  # col Y
+        neto    = ws.cell(row=row, column=26).value  # col Z
+        if not ticker or not fecha or not bruto or not neto:
+            continue
+        if not isinstance(fecha, datetime):
+            continue
+        ventas.append({
+            'ticker': str(ticker).strip(),
+            'fecha':  fecha.strftime('%Y-%m-%d'),
+            'bruto':  round(float(bruto), 2),
+            'neto':   round(float(neto), 2),
+        })
+    ventas.sort(key=lambda x: x['fecha'])
+    print(f"✅ {len(ventas)} ventas leidas del Excel")
+    return ventas
+
+
+def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None, ventas_data=None):
     if not INDEX_HTML.exists():
         print(f"❌ index.html no encontrado: {INDEX_HTML}")
         sys.exit(1)
@@ -558,6 +584,7 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
                 nuevo_html = nuevo_html.replace(card_con_marker + card_con_marker, card_con_marker)
         else:
             nuevo_html = nuevo_html.replace('<p class="note">', card_con_marker + '\n  <p class="note">')
+
     if rendimiento_data:
         # Inyectar como variables JS
         js_vars = f'<script>var RENDIMIENTO_MES={rendimiento_data["mes"]};var RENDIMIENTO_MES_N={rendimiento_data["mes_n"]};var RENDIMIENTO_ANUAL={rendimiento_data["anual"]};var RENDIMIENTO_ANUAL_N={rendimiento_data["anual_n"]};</script>'
@@ -566,6 +593,7 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
             nuevo_html = re4.sub(r'<script>var RENDIMIENTO_MES=.*?;</script>', js_vars, nuevo_html)
         else:
             nuevo_html = nuevo_html.replace('</body>', js_vars + '</body>')
+
     if False and rendimiento_data:
         def fmtr(v):
             color = "var(--green)" if v >= 0 else "var(--red)"
@@ -583,6 +611,89 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
             lambda m: m.group(0)[:m.group(0).rfind('<span')] + fmtr(rendimiento_data["anual"]),
             nuevo_html, flags=re3.DOTALL, count=1
         )
+
+    # === PESTAÑA VENTAS ===
+    if ventas_data is not None:
+        ventas_js = f'var VENTAS_ANUAL={json.dumps(ventas_data, ensure_ascii=False)};'
+        # Inyectar o actualizar variable JS
+        if 'var VENTAS_ANUAL=' in nuevo_html:
+            nuevo_html = re.sub(r'var VENTAS_ANUAL=\[.*?\];', ventas_js, nuevo_html, flags=re.DOTALL)
+        else:
+            nuevo_html = nuevo_html.replace('</body>', f'<script>{ventas_js}</script>\n</body>')
+
+        # Añadir boton en nav si no existe
+        if "showTab('ventas'" not in nuevo_html:
+            nuevo_html = nuevo_html.replace(
+                "<button class=\"nav-btn\" onclick=\"showTab('mensual',this)\">Mensual</button>",
+                "<button class=\"nav-btn\" onclick=\"showTab('mensual',this)\">Mensual</button>\n  <button class=\"nav-btn\" onclick=\"showTab('ventas',this);renderVentas()\">Ventas</button>"
+            )
+
+        # Añadir seccion HTML si no existe
+        if 'id="ventas"' not in nuevo_html:
+            ventas_section = '<div id="ventas" class="section"><div style="padding:16px" id="ventas-content">Cargando...</div></div>'
+            nuevo_html = nuevo_html.replace('</body>', ventas_section + '\n</body>')
+
+        # Añadir funcion JS si no existe
+        if 'function renderVentas' not in nuevo_html:
+            ventas_fn = """
+window.renderVentas = function() {
+  const el = document.getElementById('ventas-content');
+  if (!window.VENTAS_ANUAL || !VENTAS_ANUAL.length) {
+    el.innerHTML = '<p style="color:var(--muted)">Sin ventas registradas.</p>';
+    return;
+  }
+  const nombresMes = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const meses = {};
+  VENTAS_ANUAL.forEach(v => {
+    const d = new Date(v.fecha);
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    if (!meses[key]) meses[key] = { nombre: nombresMes[d.getMonth()], ventas: [], bruto: 0, neto: 0 };
+    meses[key].ventas.push(v);
+    meses[key].bruto += v.bruto;
+    meses[key].neto  += v.neto;
+  });
+  function fmt(v) {
+    const color = v >= 0 ? 'var(--green)' : 'var(--red)';
+    const signo = v >= 0 ? '+' : '';
+    const num = Math.abs(v).toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2});
+    return '<span style="color:' + color + '">' + signo + num + ' \u20ac</span>';
+  }
+  function fmtFecha(iso) {
+    const d = new Date(iso);
+    return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
+  }
+  let html = '';
+  // Total anual arriba
+  const totalB = VENTAS_ANUAL.reduce((s,v) => s+v.bruto, 0);
+  const totalN = VENTAS_ANUAL.reduce((s,v) => s+v.neto, 0);
+  html += '<div style="padding:10px 0 16px;border-bottom:2px solid var(--border);margin-bottom:16px">';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">TOTAL ANUAL</div>';
+  html += '<div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--muted)">Bruto</span>' + fmt(totalB) + '</div>';
+  html += '<div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--muted)">Neto</span>' + fmt(totalN) + '</div>';
+  html += '</div>';
+  // Por meses (mas reciente primero)
+  Object.keys(meses).sort().reverse().forEach(key => {
+    const m = meses[key];
+    html += '<div style="margin-bottom:20px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:6px">';
+    html += '<span style="font-weight:700;font-size:15px;color:var(--text)">' + m.nombre + '</span>';
+    html += '<span style="font-size:12px;color:var(--muted)">' + fmt(m.bruto) + ' / ' + fmt(m.neto) + '</span>';
+    html += '</div>';
+    // Ventas del mes (mas reciente primero)
+    m.ventas.slice().reverse().forEach(v => {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 4px;border-bottom:1px solid var(--border)">';
+      html += '<div><span style="font-weight:600;font-size:14px">' + v.ticker + '</span>';
+      html += '<span style="font-size:11px;color:var(--muted);margin-left:8px">' + fmtFecha(v.fecha) + '</span></div>';
+      html += '<div style="text-align:right;font-size:13px">' + fmt(v.bruto) + '<br><span style="font-size:11px;color:var(--muted)">neto ' + fmt(v.neto) + '</span></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  el.innerHTML = html;
+};
+"""
+            nuevo_html = nuevo_html.replace('</script>\n</body>', ventas_fn + '</script>\n</body>')
+
     nuevo_html = asegurar_historico(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
     print(f"✅ index.html actualizado. Backup: {backup.name}")
@@ -635,6 +746,7 @@ def main():
     posiciones, sin_mic, mensual_data, compras_por_ticker = leer_excel_con_mic()
     ganancias_data = leer_ganancias_realizadas()
     rendimiento_data = leer_rendimiento_cartera()
+    ventas_data = leer_ventas()
     print(f"✅ {len(posiciones)} tickers unicos cargados")
 
     overrides = cargar_overrides()
@@ -674,7 +786,7 @@ def main():
     print(f"\n✅ Guardado {TICKERS_JSON}")
 
     const_C = construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker)
-    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data)
+    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data, ventas_data=ventas_data)
 
     print("\n🎯 LISTO. Siguiente paso:")
     print("   python3 validate.py")
@@ -687,4 +799,3 @@ def main():
 if __name__ == "__main__":
     main()
 # version updater - añadido automaticamente
-
