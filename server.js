@@ -355,11 +355,11 @@ setInterval(()=>{
 // Snapshot diario + variación diaria
 function guardarSnapshotSiToca(){
   var ahora=new Date();
-  var hora=ahora.getHours();
-  var min=ahora.getMinutes();
+  var horaUTC=ahora.getUTCHours();
+  var minUTC=ahora.getUTCMinutes();
   var dia=ahora.getDay();
   if(dia===0||dia===6)return;
-  if(hora!==21||min<30||min>35)return;
+  if(horaUTC!==15||minUTC<35||minUTC>40)return;
   var fecha=ahora.toISOString().slice(0,10);
   var f=require("fs"),p=require("path");
   try{
