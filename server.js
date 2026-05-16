@@ -341,7 +341,7 @@ setInterval(()=>{
 // Reset base_semana cada lunes a las 8:00
 setInterval(()=>{
   const ahora = new Date();
-  if(ahora.getDay()===1 && ahora.getUTCHours()===5 && ahora.getUTCMinutes()<1){
+  if(ahora.getDay()===1 && ahora.getUTCHours()===5 && ahora.getUTCMinutes()>=59){
     const {supabase} = require('./supabase-client');
     const hoy = ahora.toISOString().slice(0,10);
     supabase.from('alert_state').upsert({
