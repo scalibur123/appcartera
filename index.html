@@ -417,8 +417,8 @@ function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.clas
 
 // Swipe lateral para cambiar pestanas
 (function(){
-  const tabs=['resumen','cartera','diana','mensual','historico','earnings'];
-  const tabCallbacks={'historico':()=>loadHistorico(),'earnings':()=>loadEarnings()};
+  const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings'];
+  const tabCallbacks={'ventas':()=>renderVentas(),'historico':()=>loadHistorico(),'earnings':()=>loadEarnings()};
   let swipeStartX=0, swipeStartY=0;
   document.addEventListener('touchstart',function(e){
     swipeStartX=e.touches[0].clientX;
