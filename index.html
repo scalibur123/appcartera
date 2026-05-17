@@ -114,7 +114,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   </div>
   
   <div class="card" id="card-ganancias"><div class="card-label">Cartera · Valores</div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">HOY</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="hoy-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="hoy-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div></div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">ESTA SEMANA</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="sem-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+8.961,08 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="sem-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+6.708,41 €</span></span></div></div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">ESTE MES</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="mes-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+21.575,39 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="mes-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+16.043,93 €</span></span></div></div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">ANUAL</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="anual-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+103.845,25 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="anual-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+80.565,35 €</span></span></div></div></div><!--/card-ganancias-->
-  <p class="note">Datos del Excel del 16 may 2026. Pulsa ↻ para actualizar.</p>
+  <p class="note">Datos del Excel del 17 may 2026. Pulsa ↻ para actualizar.</p>
 </div>
 
 <div id="cartera" class="section">
@@ -814,7 +814,7 @@ function showDetalle(tckr) {
       const varCPct = c.precio > 0 ? ((pe - c.precio) / c.precio) * 100 : 0;
       comprasHtml += `<div style="padding:10px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr auto;gap:2px">
         <div>
-          <div style="font-size:13px;font-weight:600">${c.titulos} acc @ ${c.precio.toFixed(3)} €</div>
+          <div style="font-size:13px;font-weight:600">${c.titulos} acc @ ${c.precio.toFixed(2)} € <span style="font-size:11px;font-weight:400;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1px 7px;margin-left:4px">${item.banco}</span></div>
           <div style="font-size:11px;color:var(--muted)">${c.fecha} · Coste: ${c.coste.toLocaleString('es-ES',{minimumFractionDigits:2})} €</div>
         </div>
         <div style="text-align:right">
@@ -833,7 +833,7 @@ function showDetalle(tckr) {
         <div style="font-size:12px;color:var(--muted)">${item.banco} · ${item.tckr}</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:24px;font-weight:700">${item.moneda==='USD'?p.price.toFixed(3)+' $':pe.toFixed(3)+' €'}</div>
+        <div style="font-size:24px;font-weight:700">${item.moneda==='USD'?p.price.toFixed(2)+' $':pe.toFixed(2)+' €'}</div>
         <div style="color:${col(varDiaPct)};font-size:14px">${fP(varDiaPct)}</div>
       </div>
     </div>
@@ -852,11 +852,11 @@ function showDetalle(tckr) {
       </div>
       <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
         <span style="color:var(--muted)">Objetivo</span>
-        <span style="font-weight:600">${item.objetivo ? item.objetivo.toFixed(3)+' €' : '—'}</span>
+        <span style="font-weight:600">${item.objetivo ? item.objetivo.toFixed(2)+' €' : '—'}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:8px 0">
         <span style="color:var(--muted)">Máx. 52 semanas</span>
-        <span style="font-weight:600">${p.high52 ? (p.price>=p.high52 ? '🆕 Nuevo máximo' : (item.moneda==='USD'&&eurUsd?(p.high52/eurUsd).toFixed(3):p.high52.toFixed(3))+' €') : '—'}</span>
+        <span style="font-weight:600">${p.high52 ? (p.price>=p.high52 ? '🆕 Nuevo máximo' : (item.moneda==='USD'&&eurUsd?(p.high52/eurUsd).toFixed(2):p.high52.toFixed(2))+' €') : '—'}</span>
       </div>
     </div>
     ${comprasHtml}
