@@ -126,19 +126,23 @@ def cargar_mic_externos():
 
 def leer_diana(wb, tickers_vivos):
     if 'DIANA' not in wb.sheetnames:
-        return {}
+        return {}, {}
     ws = wb['DIANA']
     objetivos = {}
+    objetivos_analistas = {}
     for row in range(12, 221):
         ticker = ws[f'B{row}'].value
         objetivo = ws[f'AC{row}'].value
+        obj_analistas = ws[f'AF{row}'].value
         if not ticker or not isinstance(ticker, str): continue
         ticker = ticker.strip()
         if ticker not in tickers_vivos: continue
-        if ticker in objetivos: continue
-        if not isinstance(objetivo, (int, float)): continue
-        objetivos[ticker] = round(float(objetivo), 4)
-    return objetivos
+        if ticker not in objetivos:
+            if isinstance(objetivo, (int, float)):
+                objetivos[ticker] = round(float(objetivo), 4)
+            if isinstance(obj_analistas, (int, float)):
+                objetivos_analistas[ticker] = round(float(obj_analistas), 4)
+    return objetivos, objetivos_analistas
 
 def leer_excel_con_mic():
     """
@@ -309,11 +313,14 @@ def leer_excel_con_mic():
 
     # Leer objetivos de pestana DIANA
     tickers_vivos = set(posiciones.keys())
-    objetivos = leer_diana(wb, tickers_vivos)
+    objetivos, objetivos_analistas = leer_diana(wb, tickers_vivos)
     for t, obj in objetivos.items():
         if t in posiciones:
             posiciones[t]['objetivo'] = obj
-    print(f'OK {len(objetivos)} objetivos leidos de pestana DIANA')
+    for t, obj in objetivos_analistas.items():
+        if t in posiciones:
+            posiciones[t]['objetivo_analistas'] = obj
+    print(f'OK {len(objetivos)} objetivos y {len(objetivos_analistas)} objetivos analistas leidos de pestana DIANA')
 
     # DEBUG
     fubo = posiciones.get('FUBO')
@@ -377,6 +384,7 @@ def construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker={}):
             "moneda": p["moneda"],
             "banco": p.get("banco", "-"),
             "objetivo": p.get("objetivo"),
+            "objetivo_analistas": p.get("objetivo_analistas"),
             "symbol": sym,
             "compras": compras_por_ticker.get(tckr, []),
         }

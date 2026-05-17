@@ -3,6 +3,20 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
+// Cargar variables de entorno desde .env
+try {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+      const l = line.trim();
+      if (!l || l.startsWith('#')) return;
+      const idx = l.indexOf('=');
+      if (idx > 0) process.env[l.slice(0, idx).trim()] = l.slice(idx + 1).trim();
+    });
+    console.log('✅ Variables .env cargadas');
+  }
+} catch(e) { console.error('Error cargando .env:', e.message); }
+
 const PORT = process.env.PORT || 3000;
 const BATCH = 15;
 const TIMEOUT = 8000;
@@ -443,25 +457,27 @@ setInterval(() => {
   https.get('https://appcartera.onrender.com', () => {}).on('error', () => {});
 }, 14 * 60 * 1000);
 
-// ============== PRICE TARGETS FINNHUB ==============
+// ============== PRICE TARGETS FMP ==============
 
-function fetchFinnhubTarget(symbol) {
+function fetchFMPTarget(symbol) {
   const cleanSymbol = symbol.replace(/\.[A-Z]+$/, '');
   return new Promise((resolve) => {
-    const apikey = process.env.FINNHUB_KEY || 'd84nlnpr01qutij9ijr0d84nlnpr01qutij9ijrg';
-    const url = `https://finnhub.io/api/v1/stock/price-target?symbol=${encodeURIComponent(cleanSymbol)}&token=${apikey}`;
+    const apikey = process.env.FMP_KEY || 't40MuetxNEIqW5RSQHWytS94r7JUH7HT';
+    const url = `https://financialmodelingprep.com/stable/price-target-consensus?symbol=${encodeURIComponent(cleanSymbol)}&apikey=${apikey}`;
     const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 8000 }, (res) => {
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
         try {
           const r = JSON.parse(data);
-          if (!r || !r.targetMean || r.targetMean === 0) return resolve(null);
+          // FMP devuelve array o objeto
+          const d = Array.isArray(r) ? r[0] : r;
+          if (!d || !d.targetConsensus || d.targetConsensus === 0) return resolve(null);
           resolve({
-            targetMean: r.targetMean,
-            targetHigh: r.targetHigh,
-            targetLow: r.targetLow,
-            analysts: r.numberOfAnalysts || 0
+            targetMean: d.targetConsensus,
+            targetHigh: d.targetHigh || d.targetConsensus,
+            targetLow: d.targetLow || d.targetConsensus,
+            analysts: d.numberOfAnalysts || 0
           });
         } catch { resolve(null); }
       });
@@ -486,8 +502,8 @@ async function actualizarPriceTargets() {
 
     let actualizados = 0, sinDatos = 0;
     for (const item of C) {
-      await new Promise(r => setTimeout(r, 1100));
-      const target = await fetchFinnhubTarget(item.symbol);
+      await new Promise(r => setTimeout(r, 300)); // FMP permite más velocidad
+      const target = await fetchFMPTarget(item.symbol);
       if (!target) { sinDatos++; continue; }
       const precioActual = priceCache[item.symbol] ? priceCache[item.symbol].price : null;
       if (!precioActual) { sinDatos++; continue; }
