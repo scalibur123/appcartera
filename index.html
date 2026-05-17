@@ -814,7 +814,7 @@ function showDetalle(tckr) {
       const varCPct = c.precio > 0 ? ((pe - c.precio) / c.precio) * 100 : 0;
       comprasHtml += `<div style="padding:10px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr auto;gap:2px">
         <div>
-          <div style="font-size:13px;font-weight:600">${c.titulos} acc @ ${c.precio.toFixed(2)} € <span style="font-size:11px;font-weight:400;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1px 7px;margin-left:4px">${item.banco}</span></div>
+          <div style="font-size:13px;font-weight:600">${c.titulos} acc @ ${c.precio.toFixed(2)} € <span style="font-size:11px;font-weight:400;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1px 7px;margin-left:4px">${c.banco || item.banco}</span></div>
           <div style="font-size:11px;color:var(--muted)">${c.fecha} · Coste: ${c.coste.toLocaleString('es-ES',{minimumFractionDigits:2})} €</div>
         </div>
         <div style="text-align:right">

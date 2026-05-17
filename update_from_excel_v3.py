@@ -219,7 +219,8 @@ def leer_excel_con_mic():
                     'fecha': fecha_str,
                     'titulos': titulos_i,
                     'precio': precio_compra,
-                    'coste': round(coste_i, 2)
+                    'coste': round(coste_i, 2),
+                    'banco': normalizar_banco(ws.cell(row=row, column=8).value),
                 })
 
         def fmt_eur(v):
@@ -283,7 +284,7 @@ def leer_excel_con_mic():
                 "moneda": moneda,
                 "precio_excel": precio_excel,
                 "mic": mic,
-                "banco": normalizar_banco(ws[f"H{row}"].value),
+                "bancos": set([normalizar_banco(ws[f"H{row}"].value)]),
                 "objetivo": None,
             }
             orden.append(ticker)
@@ -292,12 +293,19 @@ def leer_excel_con_mic():
 
         posiciones[ticker]["titulos"] += titulos
         posiciones[ticker]["coste_eur"] += coste_eur
+        # Acumular todos los bancos distintos
+        posiciones[ticker]["bancos"].add(normalizar_banco(ws[f"H{row}"].value))
         # Si en una fila posterior aparece el MIC, actualizar
         if mic and not posiciones[ticker]["mic"]:
             posiciones[ticker]["mic"] = mic
             posiciones[ticker]["nombre"] = nombre_completo or ticker
             if ticker in sin_mic:
                 sin_mic.remove(ticker)
+
+    # Convertir set de bancos a string ordenado
+    for t in posiciones:
+        bancos = posiciones[t].pop("bancos")
+        posiciones[t]["banco"] = "/".join(sorted(b for b in bancos if b and b != '-'))
 
     # Leer objetivos de pestana DIANA
     tickers_vivos = set(posiciones.keys())
