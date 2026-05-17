@@ -888,45 +888,52 @@ function hideDetalle() { document.getElementById('detalle-valor').style.display 
 <div id="ventas" class="section"><div style="padding:16px" id="ventas-content">Cargando...</div></div>
 <script>
 window.loadAnalistas = function() {
-  const el = document.getElementById('analistas-list');
+  var el = document.getElementById('analistas-list');
+  if (!el) return;
   el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:30px">Calculando...</div>';
-  const precios = prices || {};
+  var precios = (typeof prices !== 'undefined') ? prices : {};
   if (!Object.keys(precios).length) {
-    el.innerHTML = '<p style="color:var(--muted)">Esperando precios... Vuelve a abrir esta pestaña en unos segundos.</p>';
+    el.innerHTML = '<p style="color:var(--muted)">Esperando precios... Abre esta pestaña de nuevo en unos segundos.</p>';
     return;
   }
-  const eurUsd = precios['EURUSD=X'] ? precios['EURUSD=X'].price : 1;
+  var eurUsd = precios['EURUSD=X'] ? precios['EURUSD=X'].price : 1;
   function fmtE(v) {
     if (!v && v !== 0) return '—';
-    return v.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+    return v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
   }
   function fmtPct(v) {
     if (v == null) return '—';
-    const s = v >= 0 ? '+' : '';
-    return s + v.toFixed(1) + '%';
+    return (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
   }
-  const conDatos = C.filter(item => item.objetivo_analistas && item.objetivo_analistas > 0).map(item => {
-    const p = precios[item.symbol];
-    const precioRaw = p ? p.price : null;
-    const precioEur = precioRaw ? (item.moneda === 'USD' ? precioRaw / eurUsd : precioRaw) : null;
-    const targetEur = item.objetivo_analistas;
-    const upside = (precioEur && targetEur) ? ((targetEur - precioEur) / targetEur) * 100 : null;
-    return { tckr: item.tckr, nombre: item.nombre, banco: item.banco, precioEur, targetEur, upside, porEncima: precioEur && targetEur ? precioEur >= targetEur : false };
-  }).filter(d => d.precioEur);
+  var conDatos = C.filter(function(item) {
+    return item.objetivo_analistas && item.objetivo_analistas > 0;
+  }).map(function(item) {
+    var p = precios[item.symbol];
+    var pr = p ? p.price : null;
+    var pe = pr ? (item.moneda === 'USD' ? pr / eurUsd : pr) : null;
+    var te = item.objetivo_analistas;
+    var up = (pe && te) ? ((te - pe) / te) * 100 : null;
+    return {tckr:item.tckr, nombre:item.nombre, banco:item.banco, precioEur:pe, targetEur:te, upside:up, porEncima: pe && te ? pe >= te : false};
+  }).filter(function(d) { return d.precioEur; });
+
   if (!conDatos.length) {
-    el.innerHTML = '<p style="color:var(--muted)">Sin datos. Ejecuta <b>actualizar</b> para cargar los objetivos del Excel.</p>';
+    el.innerHTML = '<p style="color:var(--muted)">Sin datos. Ejecuta actualizar para cargar los objetivos del Excel.</p>';
     return;
   }
-  const porEncima = conDatos.filter(d => d.porEncima).sort((a,b) => a.upside - b.upside);
-  const resto = conDatos.filter(d => !d.porEncima).sort((a,b) => a.upside - b.upside);
-  let html = '';
+
+  var porEncima = conDatos.filter(function(d){return d.porEncima;}).sort(function(a,b){return a.upside-b.upside;});
+  var resto = conDatos.filter(function(d){return !d.porEncima;}).sort(function(a,b){return a.upside-b.upside;});
+  var html = '';
+
   if (porEncima.length > 0) {
     html += '<div style="margin-bottom:20px">';
     html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:10px;margin-bottom:10px">';
-    html += '<span style="font-size:16px">⚠️</span><div><div style="font-size:13px;font-weight:700;color:var(--red)">Por encima del objetivo de analistas</div>';
-    html += '<div style="font-size:11px;color:var(--muted)">' + porEncima.length + ' valor' + (porEncima.length>1?'es':'') + ' — considera toma de beneficios</div></div></div>';
-    porEncima.forEach(d => {
-      html += '<div onclick="showDetalle('' + d.tckr + '')" style="padding:12px;border-bottom:1px solid var(--border);cursor:pointer;background:rgba(239,68,68,0.04);border-radius:8px;margin-bottom:6px">';
+    html += '<span style="font-size:16px">⚠️</span><div>';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--red)">Por encima del objetivo de analistas</div>';
+    html += '<div style="font-size:11px;color:var(--muted)">' + porEncima.length + ' valor' + (porEncima.length > 1 ? 'es' : '') + ' — considera toma de beneficios</div>';
+    html += '</div></div>';
+    porEncima.forEach(function(d) {
+      html += '<div data-tckr="' + d.tckr + '" class="analista-row" style="padding:12px;border-bottom:1px solid var(--border);cursor:pointer;background:rgba(239,68,68,0.04);border-radius:8px;margin-bottom:6px">';
       html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">';
       html += '<div><span style="font-weight:700;font-size:15px">' + d.tckr + '</span>';
       html += '<span style="font-size:11px;color:var(--muted);margin-left:6px">' + (d.nombre||'') + '</span>';
@@ -939,10 +946,11 @@ window.loadAnalistas = function() {
     });
     html += '</div>';
   }
+
   if (resto.length > 0) {
-    html += '<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:10px;margin-top:4px">RESTO DE CARTERA (' + resto.length + ' valores)</div>';
-    resto.forEach(d => {
-      html += '<div onclick="showDetalle('' + d.tckr + '')" style="padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:4px">';
+    html += '<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:10px">RESTO DE CARTERA (' + resto.length + ' valores)</div>';
+    resto.forEach(function(d) {
+      html += '<div data-tckr="' + d.tckr + '" class="analista-row" style="padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:4px">';
       html += '<div><span style="font-weight:600;font-size:14px">' + d.tckr + '</span>';
       html += '<span style="font-size:11px;color:var(--muted);margin-left:6px">' + (d.nombre||'') + '</span>';
       html += '<div style="font-size:11px;color:var(--muted);margin-top:2px">Obj. analistas: ' + fmtE(d.targetEur) + '</div></div>';
@@ -950,63 +958,15 @@ window.loadAnalistas = function() {
       html += '<div style="font-size:11px;color:var(--muted)">' + fmtE(d.precioEur) + '</div></div></div>';
     });
   }
-  el.innerHTML = html || '<p style="color:var(--muted)">Sin datos suficientes.</p>';
-};
 
-window.renderVentas = function() {
-  const el = document.getElementById('ventas-content');
-  if (!window.VENTAS_ANUAL || !VENTAS_ANUAL.length) {
-    el.innerHTML = '<p style="color:var(--muted)">Sin ventas registradas.</p>';
-    return;
-  }
-  const nombresMes = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const meses = {};
-  VENTAS_ANUAL.forEach(v => {
-    const d = new Date(v.fecha);
-    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-    if (!meses[key]) meses[key] = { nombre: nombresMes[d.getMonth()], ventas: [], bruto: 0, neto: 0 };
-    meses[key].ventas.push(v);
-    meses[key].bruto += v.bruto;
-    meses[key].neto  += v.neto;
-  });
-  function fmt(v) {
-    const color = v >= 0 ? 'var(--green)' : 'var(--red)';
-    const signo = v >= 0 ? '+' : '';
-    const num = Math.abs(v).toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2});
-    return '<span style="color:' + color + '">' + signo + num + ' €</span>';
-  }
-  function fmtFecha(iso) {
-    const d = new Date(iso);
-    return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
-  }
-  let html = '';
-  // Total anual arriba
-  const totalB = VENTAS_ANUAL.reduce((s,v) => s+v.bruto, 0);
-  const totalN = VENTAS_ANUAL.reduce((s,v) => s+v.neto, 0);
-  html += '<div style="padding:10px 0 16px;border-bottom:2px solid var(--border);margin-bottom:16px">';
-  html += '<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">TOTAL ANUAL</div>';
-  html += '<div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--muted)">Bruto</span>' + fmt(totalB) + '</div>';
-  html += '<div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--muted)">Neto</span>' + fmt(totalN) + '</div>';
-  html += '</div>';
-  // Por meses (mas reciente primero)
-  Object.keys(meses).sort().reverse().forEach(key => {
-    const m = meses[key];
-    html += '<div style="margin-bottom:20px">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:6px">';
-    html += '<span style="font-weight:700;font-size:15px;color:var(--text)">' + m.nombre + '</span>';
-    html += '<span style="font-size:12px;color:var(--muted)">' + fmt(m.bruto) + ' / ' + fmt(m.neto) + '</span>';
-    html += '</div>';
-    // Ventas del mes (mas reciente primero)
-    m.ventas.slice().reverse().forEach(v => {
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 4px;border-bottom:1px solid var(--border)">';
-      html += '<div><span style="font-weight:600;font-size:14px">' + v.ticker + '</span>';
-      html += '<span style="font-size:11px;color:var(--muted);margin-left:8px">' + fmtFecha(v.fecha) + '</span></div>';
-      html += '<div style="text-align:right;font-size:13px">' + fmt(v.bruto) + '<br><span style="font-size:11px;color:var(--muted)">neto ' + fmt(v.neto) + '</span></div>';
-      html += '</div>';
+  el.innerHTML = html || '<p style="color:var(--muted)">Sin datos suficientes.</p>';
+
+  // Añadir eventos click después de renderizar
+  el.querySelectorAll('.analista-row').forEach(function(row) {
+    row.addEventListener('click', function() {
+      showDetalle(this.dataset.tckr);
     });
-    html += '</div>';
   });
-  el.innerHTML = html;
 };
 </script>
 </body>
