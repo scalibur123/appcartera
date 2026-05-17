@@ -815,7 +815,7 @@ function showDetalle(tckr) {
       const varCPct = c.precio > 0 ? ((pe - c.precio) / c.precio) * 100 : 0;
       comprasHtml += `<div style="padding:10px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr auto;gap:2px">
         <div>
-          <div style="font-size:13px;font-weight:600">${c.titulos} acc @ ${c.precio.toFixed(3)} €</div>
+          <div style="font-size:13px;font-weight:600">${c.titulos} acc @ ${c.precio.toFixed(2)}</div>
           <div style="font-size:11px;color:var(--muted)">${c.fecha} · Coste: ${c.coste.toLocaleString('es-ES',{minimumFractionDigits:2})} €</div>
         </div>
         <div style="text-align:right">
@@ -834,7 +834,7 @@ function showDetalle(tckr) {
         <div style="font-size:12px;color:var(--muted)">${item.banco} · ${item.tckr}</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:24px;font-weight:700">${item.moneda==='USD'?p.price.toFixed(3)+' $':pe.toFixed(3)+' €'}</div>
+        <div style="font-size:24px;font-weight:700">${item.moneda==='USD'?p.price.toFixed(2):pe.toFixed(2)}</div>
         <div style="color:${col(varDiaPct)};font-size:14px">${fP(varDiaPct)}</div>
       </div>
     </div>
@@ -853,11 +853,11 @@ function showDetalle(tckr) {
       </div>
       <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
         <span style="color:var(--muted)">Objetivo</span>
-        <span style="font-weight:600">${item.objetivo ? item.objetivo.toFixed(3)+' €' : '—'}</span>
+        <span style="font-weight:600">${item.objetivo ? item.objetivo.toFixed(2) : '—'}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:8px 0">
         <span style="color:var(--muted)">Máx. 52 semanas</span>
-        <span style="font-weight:600">${p.high52 ? (p.price>=p.high52 ? '🆕 Nuevo máximo' : (item.moneda==='USD'&&eurUsd?(p.high52/eurUsd).toFixed(3):p.high52.toFixed(3))+' €') : '—'}</span>
+        <span style="font-weight:600">${p.high52 ? (p.price>=p.high52 ? '🆕 Nuevo máximo' : p.high52.toFixed(2)) : '—'}</span>
       </div>
     </div>
     ${comprasHtml}
