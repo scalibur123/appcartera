@@ -712,102 +712,56 @@ window.renderVentas = function() {
 
     # Asegurar pestaña Analistas
     if "showTab('analistas'" not in nuevo_html:
-        # Añadir botón nav
         nuevo_html = nuevo_html.replace(
             "<button class=\"nav-btn\" onclick=\"showTab('earnings',this);loadEarnings()\">Earnings</button>",
             "<button class=\"nav-btn\" onclick=\"showTab('earnings',this);loadEarnings()\">Earnings</button>\n  <button class=\"nav-btn\" onclick=\"showTab('analistas',this);loadAnalistas()\">Analistas</button>"
         )
     if 'id="analistas"' not in nuevo_html:
-        # Añadir sección
-        analistas_section = '''<div id="analistas" class="section">
-  <div style="padding:16px">
-    <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:4px">PRECIO OBJETIVO · CONSENSO ANALISTAS</div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Objetivos de consenso introducidos manualmente desde Investing.com. Se actualizan al ejecutar <b>actualizar</b>.</div>
-    <div id="analistas-list">Cargando...</div>
-  </div>
-</div>'''
-        nuevo_html = nuevo_html.replace('</body>', analistas_section + '\n</body>')
+        nuevo_html = nuevo_html.replace('</body>',
+            '''<div id="analistas" class="section"><div style="padding:16px"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:4px">PRECIO OBJETIVO · CONSENSO ANALISTAS</div><div style="font-size:11px;color:var(--muted);margin-bottom:14px">Objetivos de consenso introducidos manualmente desde Investing.com.</div><div id="analistas-list">Cargando...</div></div></div>
+</body>''', 1)
     if 'loadAnalistas' not in nuevo_html:
-        analistas_fn = """
+        nuevo_html = nuevo_html.replace('</body>', '''<script>
 window.loadAnalistas = function() {
-  const el = document.getElementById('analistas-list');
+  var el = document.getElementById('analistas-list');
   el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:30px">Calculando...</div>';
-  const precios = prices || {};
-  if (!Object.keys(precios).length) {
-    el.innerHTML = '<p style="color:var(--muted)">Esperando precios... Vuelve a abrir esta pestaña en unos segundos.</p>';
-    return;
-  }
-  const eurUsd = precios['EURUSD=X'] ? precios['EURUSD=X'].price : 1;
-  function fmtE(v) {
-    if (!v && v !== 0) return '—';
-    return v.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
-  }
-  function fmtPct(v) {
-    if (v == null) return '—';
-    const s = v >= 0 ? '+' : '';
-    return s + v.toFixed(1) + '%';
-  }
-  const conDatos = C.filter(item => item.objetivo_analistas && item.objetivo_analistas > 0).map(item => {
-    const p = precios[item.symbol];
-    const precioRaw = p ? p.price : null;
-    const precioEur = precioRaw ? (item.moneda === 'USD' ? precioRaw / eurUsd : precioRaw) : null;
-    const targetEur = item.objetivo_analistas;
-    const upside = (precioEur && targetEur) ? ((targetEur - precioEur) / targetEur) * 100 : null;
-    return { tckr: item.tckr, nombre: item.nombre, banco: item.banco, precioEur, targetEur, upside, porEncima: precioEur && targetEur ? precioEur >= targetEur : false };
-  }).filter(d => d.precioEur);
-  if (!conDatos.length) {
-    el.innerHTML = '<p style="color:var(--muted)">Sin datos. Ejecuta <b>actualizar</b> para cargar los objetivos de analistas del Excel.</p>';
-    return;
-  }
-  const porEncima = conDatos.filter(d => d.porEncima).sort((a,b) => a.upside - b.upside);
-  const resto = conDatos.filter(d => !d.porEncima).sort((a,b) => a.upside - b.upside);
-  let html = '';
-  if (porEncima.length > 0) {
-    html += '<div style="margin-bottom:20px">';
-    html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:10px;margin-bottom:10px">';
-    html += '<span style="font-size:16px">⚠️</span><div><div style="font-size:13px;font-weight:700;color:var(--red)">Por encima del objetivo de analistas</div>';
-    html += '<div style="font-size:11px;color:var(--muted)">' + porEncima.length + ' valor' + (porEncima.length>1?'es':'') + ' — considera toma de beneficios</div></div></div>';
-    porEncima.forEach(d => {
-      html += '<div onclick="showDetalle(\'' + d.tckr + '\')" style="padding:12px;border-bottom:1px solid var(--border);cursor:pointer;background:rgba(239,68,68,0.04);border-radius:8px;margin-bottom:6px">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">';
-      html += '<div><span style="font-weight:700;font-size:15px">' + d.tckr + '</span>';
-      html += '<span style="font-size:11px;color:var(--muted);margin-left:6px">' + (d.nombre||'') + '</span>';
-      html += '<span style="font-size:10px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:1px 6px;margin-left:4px">' + d.banco + '</span></div>';
-      html += '<span style="color:var(--red);font-weight:700;font-size:14px">' + fmtPct(d.upside) + '</span></div>';
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px">';
-      html += '<div><div style="color:var(--muted)">Precio actual</div><div style="font-weight:600">' + fmtE(d.precioEur) + '</div></div>';
-      html += '<div><div style="color:var(--muted)">Obj. analistas</div><div style="font-weight:600;color:var(--amber)">' + fmtE(d.targetEur) + '</div></div>';
-      html += '</div></div>';
+  var precios = prices || {};
+  if (!Object.keys(precios).length) { el.innerHTML = '<p style="color:var(--muted)">Esperando precios...</p>'; return; }
+  var eurUsd = precios['EURUSD=X'] ? precios['EURUSD=X'].price : 1;
+  function fmtE(v) { if (!v && v !== 0) return '—'; return v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
+  function fmtPct(v) { if (v==null) return '—'; return (v>=0?'+':'')+v.toFixed(1)+'%'; }
+  var conDatos = C.filter(function(item){return item.objetivo_analistas&&item.objetivo_analistas>0;}).map(function(item){
+    var p=precios[item.symbol]; var pr=p?p.price:null;
+    var pe=pr?(item.moneda==='USD'?pr/eurUsd:pr):null;
+    var te=item.objetivo_analistas;
+    var up=(pe&&te)?((te-pe)/te)*100:null;
+    return {tckr:item.tckr,nombre:item.nombre,banco:item.banco,precioEur:pe,targetEur:te,upside:up,porEncima:pe&&te?pe>=te:false};
+  }).filter(function(d){return d.precioEur;});
+  if (!conDatos.length) { el.innerHTML = '<p style="color:var(--muted)">Sin datos. Ejecuta actualizar.</p>'; return; }
+  var porEncima=conDatos.filter(function(d){return d.porEncima;}).sort(function(a,b){return a.upside-b.upside;});
+  var resto=conDatos.filter(function(d){return !d.porEncima;}).sort(function(a,b){return a.upside-b.upside;});
+  var html='';
+  if (porEncima.length>0) {
+    html+='<div style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:10px;margin-bottom:10px"><span style="font-size:16px">⚠️</span><div><div style="font-size:13px;font-weight:700;color:var(--red)">Por encima del objetivo de analistas</div><div style="font-size:11px;color:var(--muted)">'+porEncima.length+' valor'+(porEncima.length>1?'es':'')+' — considera toma de beneficios</div></div></div>';
+    porEncima.forEach(function(d){
+      html+='<div onclick="showDetalle(\''+d.tckr+'\')" style="padding:12px;border-bottom:1px solid var(--border);cursor:pointer;background:rgba(239,68,68,0.04);border-radius:8px;margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><div><span style="font-weight:700;font-size:15px">'+d.tckr+'</span><span style="font-size:11px;color:var(--muted);margin-left:6px">'+(d.nombre||'')+'</span><span style="font-size:10px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:1px 6px;margin-left:4px">'+d.banco+'</span></div><span style="color:var(--red);font-weight:700;font-size:14px">'+fmtPct(d.upside)+'</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px"><div><div style="color:var(--muted)">Precio actual</div><div style="font-weight:600">'+fmtE(d.precioEur)+'</div></div><div><div style="color:var(--muted)">Obj. analistas</div><div style="font-weight:600;color:var(--amber)">'+fmtE(d.targetEur)+'</div></div></div></div>';
     });
-    html += '</div>';
+    html+='</div>';
   }
-  if (resto.length > 0) {
-    html += '<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:10px;margin-top:4px">RESTO DE CARTERA (' + resto.length + ' valores)</div>';
-    resto.forEach(d => {
-      html += '<div onclick="showDetalle(\'' + d.tckr + '\')" style="padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:4px">';
-      html += '<div><span style="font-weight:600;font-size:14px">' + d.tckr + '</span>';
-      html += '<span style="font-size:11px;color:var(--muted);margin-left:6px">' + (d.nombre||'') + '</span>';
-      html += '<div style="font-size:11px;color:var(--muted);margin-top:2px">Obj. analistas: ' + fmtE(d.targetEur) + '</div></div>';
-      html += '<div style="text-align:right"><div style="color:var(--green);font-weight:600;font-size:13px">' + fmtPct(d.upside) + '</div>';
-      html += '<div style="font-size:11px;color:var(--muted)">' + fmtE(d.precioEur) + '</div></div></div>';
+  if (resto.length>0) {
+    html+='<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:10px">RESTO DE CARTERA ('+resto.length+' valores)</div>';
+    resto.forEach(function(d){
+      html+='<div onclick="showDetalle(\''+d.tckr+'\')" style="padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:4px"><div><span style="font-weight:600;font-size:14px">'+d.tckr+'</span><span style="font-size:11px;color:var(--muted);margin-left:6px">'+(d.nombre||'')+'</span><div style="font-size:11px;color:var(--muted);margin-top:2px">Obj: '+fmtE(d.targetEur)+'</div></div><div style="text-align:right"><div style="color:var(--green);font-weight:600;font-size:13px">'+fmtPct(d.upside)+'</div><div style="font-size:11px;color:var(--muted)">'+fmtE(d.precioEur)+'</div></div></div>';
     });
   }
-  el.innerHTML = html || '<p style="color:var(--muted)">Sin datos suficientes.</p>';
+  el.innerHTML = html||'<p style="color:var(--muted)">Sin datos.</p>';
 };
-"""
-        nuevo_html = nuevo_html.replace('</script>\n</body>', analistas_fn + '</script>\n</body>')
-    # Actualizar array de tabs del swipe
-    import re as re2
-    nuevo_html = re2.sub(
-        r"const tabs=\['resumen'.*?\];",
-        "const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','analistas'];",
-        nuevo_html
-    )
-    nuevo_html = re2.sub(
-        r"const tabCallbacks=\{.*?\};",
-        "const tabCallbacks={'ventas':()=>renderVentas(),'historico':()=>loadHistorico(),'earnings':()=>loadEarnings(),'analistas':()=>loadAnalistas()};",
-        nuevo_html
-    )
+</script>
+</body>''', 1)
+    # Actualizar array tabs
+    import re as _re
+    nuevo_html = _re.sub(r"const tabs=\[.*?\];", "const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','analistas'];", nuevo_html)
+    nuevo_html = _re.sub(r"const tabCallbacks=\{.*?\};", "const tabCallbacks={'ventas':()=>renderVentas(),'historico':()=>loadHistorico(),'earnings':()=>loadEarnings(),'analistas':()=>loadAnalistas()};", nuevo_html)
 
     nuevo_html = asegurar_historico(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
