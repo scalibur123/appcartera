@@ -99,6 +99,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   <button class="nav-btn" onclick="showTab('ventas',this);renderVentas()">Ventas</button>
   <button class="nav-btn" onclick="showTab('historico',this);loadHistorico()">Historico</button>
   <button class="nav-btn" onclick="showTab('earnings',this);loadEarnings()">Earnings</button>
+  <button class="nav-btn" onclick="showTab('analistas',this);loadAnalistas()">Analistas</button>
 </div>
 
 <div id="eurusd-display" style="text-align:center;padding:6px 0;font-size:11px;color:var(--muted)">Cambio EUR/USD: --</div><div id="resumen" class="section active">
@@ -417,8 +418,8 @@ function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.clas
 
 // Swipe lateral para cambiar pestanas
 (function(){
-  const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings'];
-  const tabCallbacks={'ventas':()=>renderVentas(),'historico':()=>loadHistorico(),'earnings':()=>loadEarnings()};
+  const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','analistas'];
+  const tabCallbacks={'ventas':()=>renderVentas(),'historico':()=>loadHistorico(),'earnings':()=>loadEarnings(),'analistas':()=>loadAnalistas()};
   let swipeStartX=0, swipeStartY=0;
   document.addEventListener('touchstart',function(e){
     swipeStartX=e.touches[0].clientX;
@@ -878,6 +879,86 @@ function hideDetalle() { document.getElementById('detalle-valor').style.display 
 </div>
 <script>var VENTAS_ANUAL=[{"ticker": "BESI", "fecha": "2026-01-05", "bruto": 3702.51, "neto": 2917.28}, {"ticker": "AIXA", "fecha": "2026-01-05", "bruto": 6248.14, "neto": 4923.04}, {"ticker": "SMHN", "fecha": "2026-01-07", "bruto": 9120.0, "neto": 7185.84}, {"ticker": "PCAR", "fecha": "2026-01-08", "bruto": 2098.59, "neto": 1653.52}, {"ticker": "DOCN", "fecha": "2026-01-12", "bruto": 1760.93, "neto": 1387.47}, {"ticker": "HOOK", "fecha": "2026-01-13", "bruto": -5518.29, "neto": -4347.98}, {"ticker": "BKR", "fecha": "2026-01-22", "bruto": 2381.46, "neto": 1876.4}, {"ticker": "ODFL", "fecha": "2026-02-04", "bruto": 2540.4, "neto": 2001.63}, {"ticker": "UA", "fecha": "2026-02-04", "bruto": 3704.05, "neto": 2918.5}, {"ticker": "INPST", "fecha": "2026-02-09", "bruto": 311.33, "neto": 245.3}, {"ticker": "LGIH", "fecha": "2026-02-11", "bruto": 2395.59, "neto": 1887.54}, {"ticker": "PHM", "fecha": "2026-02-12", "bruto": 3441.75, "neto": 2711.83}, {"ticker": "ALSN", "fecha": "2026-02-12", "bruto": 2741.47, "neto": 2160.06}, {"ticker": "ROVI", "fecha": "2026-02-25", "bruto": 3957.35, "neto": 3118.08}, {"ticker": "ANA", "fecha": "2026-02-27", "bruto": 7154.96, "neto": 5637.54}, {"ticker": "BMY", "fecha": "2026-02-27", "bruto": 3661.34, "neto": 2884.84}, {"ticker": "ENI", "fecha": "2026-03-09", "bruto": 4228.19, "neto": 3331.48}, {"ticker": "NEXT", "fecha": "2026-03-19", "bruto": 2726.92, "neto": 2148.59}, {"ticker": "VECO", "fecha": "2026-03-24", "bruto": 17.65, "neto": 13.9}, {"ticker": "REP", "fecha": "2026-03-31", "bruto": 5412.41, "neto": 4264.55}, {"ticker": "APLS", "fecha": "2026-03-31", "bruto": 1878.21, "neto": 1479.88}, {"ticker": "STMPA", "fecha": "2026-04-07", "bruto": 2228.0, "neto": 1755.49}, {"ticker": "LUNR", "fecha": "2026-04-08", "bruto": 6308.96, "neto": 4970.96}, {"ticker": "ENI", "fecha": "2026-04-14", "bruto": 6258.5, "neto": 4931.2}, {"ticker": "CL", "fecha": "2026-04-14", "bruto": 391.7, "neto": 308.63}, {"ticker": "VRT", "fecha": "2026-04-14", "bruto": 4498.32, "neto": 3544.32}, {"ticker": "MYSE", "fecha": "2026-04-16", "bruto": 980.34, "neto": 772.43}, {"ticker": "PLUG", "fecha": "2026-04-21", "bruto": 1956.39, "neto": 1541.48}, {"ticker": "FLR", "fecha": "2026-04-27", "bruto": 1000.73, "neto": 788.5}, {"ticker": "NOV", "fecha": "2026-05-05", "bruto": 399.49, "neto": 314.76}, {"ticker": "ST", "fecha": "2026-05-06", "bruto": 3206.49, "neto": 2526.46}, {"ticker": "TGTX", "fecha": "2026-05-06", "bruto": 2044.39, "neto": 1610.81}, {"ticker": "AMD", "fecha": "2026-05-06", "bruto": 3030.51, "neto": 2387.8}, {"ticker": "IREN", "fecha": "2026-05-08", "bruto": 1259.5, "neto": 992.39}, {"ticker": "IRDM", "fecha": "2026-05-11", "bruto": 1777.66, "neto": 1400.65}, {"ticker": "ABCL", "fecha": "2026-05-11", "bruto": 3709.16, "neto": 2922.52}, {"ticker": "RAL", "fecha": "2026-05-12", "bruto": 301.03, "neto": 237.19}, {"ticker": "MTX", "fecha": "2026-05-13", "bruto": 554.01, "neto": 436.52}];</script>
 <div id="ventas" class="section"><div style="padding:16px" id="ventas-content">Cargando...</div></div>
+
+<div id="analistas" class="section">
+  <div style="padding:16px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:4px">PRECIO OBJETIVO · CONSENSO ANALISTAS</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Valores donde el precio actual supera el objetivo medio de analistas (Finnhub). Actualizado cada día laborable.</div>
+    <div id="analistas-list">Cargando...</div>
+  </div>
+</div>
+
+<script>
+window.loadAnalistas = async function() {
+  const el = document.getElementById('analistas-list');
+  el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:30px">Cargando...</div>';
+  try {
+    const data = await fetch('/price-targets').then(r => r.json());
+    if (!data.length) { el.innerHTML = '<p style="color:var(--muted)">Sin datos de analistas aún. El servidor los cargará en los próximos minutos.</p>'; return; }
+
+    const conDatos = data.filter(d => d.target_mean > 0);
+    const porEncima = conDatos.filter(d => d.por_encima).sort((a,b) => a.upside - b.upside);
+    const resto = conDatos.filter(d => !d.por_encima).sort((a,b) => a.upside - b.upside);
+
+    function fmtE(v) {
+      if (!v && v !== 0) return '—';
+      return v.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+    }
+    function fmtPct(v) {
+      if (v == null) return '—';
+      const s = v >= 0 ? '+' : '';
+      return s + v.toFixed(1) + '%';
+    }
+
+    let html = '';
+
+    if (porEncima.length > 0) {
+      html += '<div style="margin-bottom:20px">';
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:10px;margin-bottom:10px">';
+      html += '<span style="font-size:16px">⚠️</span><div><div style="font-size:13px;font-weight:700;color:var(--red)">Por encima del objetivo de analistas</div>';
+      html += '<div style="font-size:11px;color:var(--muted)">' + porEncima.length + ' valor' + (porEncima.length>1?'es':'') + ' — considera toma de beneficios</div></div></div>';
+      porEncima.forEach(d => {
+        const upsideColor = d.upside < 0 ? 'var(--red)' : 'var(--green)';
+        html += `<div onclick="showDetalle('${d.ticker}')" style="padding:12px;border-bottom:1px solid var(--border);cursor:pointer;background:rgba(239,68,68,0.04);border-radius:8px;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+            <div>
+              <span style="font-weight:700;font-size:15px">${d.ticker}</span>
+              <span style="font-size:11px;color:var(--muted);margin-left:6px">${d.nombre||''}</span>
+              <span style="font-size:10px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:1px 6px;margin-left:4px">${d.banco}</span>
+            </div>
+            <span style="color:var(--red);font-weight:700;font-size:14px">${fmtPct(d.upside)}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:11px">
+            <div><div style="color:var(--muted)">Precio actual</div><div style="font-weight:600">${fmtE(d.precio_actual)}</div></div>
+            <div><div style="color:var(--muted)">Obj. medio</div><div style="font-weight:600;color:var(--amber)">${fmtE(d.target_mean)}</div></div>
+            <div><div style="color:var(--muted)">${d.analysts} analistas</div><div style="color:var(--muted)">L:${fmtE(d.target_low)} H:${fmtE(d.target_high)}</div></div>
+          </div>
+        </div>`;
+      });
+      html += '</div>';
+    }
+
+    if (resto.length > 0) {
+      html += '<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:10px;margin-top:4px">RESTO DE CARTERA CON DATOS</div>';
+      resto.forEach(d => {
+        html += `<div onclick="showDetalle('${d.ticker}')" style="padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:4px">
+          <div>
+            <span style="font-weight:600;font-size:14px">${d.ticker}</span>
+            <span style="font-size:11px;color:var(--muted);margin-left:6px">${d.nombre||''}</span>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${d.analysts} analistas · Obj: ${fmtE(d.target_mean)}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="color:var(--green);font-weight:600;font-size:13px">${fmtPct(d.upside)}</div>
+            <div style="font-size:11px;color:var(--muted)">${fmtE(d.precio_actual)}</div>
+          </div>
+        </div>`;
+      });
+    }
+
+    el.innerHTML = html || '<p style="color:var(--muted)">Sin datos suficientes.</p>';
+  } catch(e) { el.innerHTML = 'Error cargando datos de analistas'; }
+};
+</script>
 </body>
 </html>
 <script>

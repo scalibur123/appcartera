@@ -291,6 +291,16 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (pathname === '/price-targets' && req.method === 'GET') {
+      const { supabase } = require('./supabase-client');
+      supabase.from('price_targets').select('*').order('upside').then(({ data, error }) => {
+        if (error) { res.writeHead(500); res.end(JSON.stringify([])); return; }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data || []));
+      });
+      return;
+    }
+
     if (pathname === '/names' && symbols) return handleNames(req, res, symbols);
     if (pathname === '/' && symbols) return handleSymbols(req, res, symbols);
     if (pathname === '/' || pathname === '/index.html') return handleIndex(req, res);
@@ -432,3 +442,89 @@ setInterval(actualizarEarnings, 24*60*60*1000);
 setInterval(() => {
   https.get('https://appcartera.onrender.com', () => {}).on('error', () => {});
 }, 14 * 60 * 1000);
+
+// ============== PRICE TARGETS FINNHUB ==============
+
+function fetchFinnhubTarget(symbol) {
+  const cleanSymbol = symbol.replace(/\.[A-Z]+$/, '');
+  return new Promise((resolve) => {
+    const apikey = process.env.FINNHUB_KEY || 'd84nlnpr01qutij9ijr0d84nlnpr01qutij9ijrg';
+    const url = `https://finnhub.io/api/v1/stock/price-target?symbol=${encodeURIComponent(cleanSymbol)}&token=${apikey}`;
+    const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 8000 }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try {
+          const r = JSON.parse(data);
+          if (!r || !r.targetMean || r.targetMean === 0) return resolve(null);
+          resolve({
+            targetMean: r.targetMean,
+            targetHigh: r.targetHigh,
+            targetLow: r.targetLow,
+            analysts: r.numberOfAnalysts || 0
+          });
+        } catch { resolve(null); }
+      });
+    });
+    req.on('error', () => resolve(null));
+    req.on('timeout', () => { req.destroy(); resolve(null); });
+  });
+}
+
+async function actualizarPriceTargets() {
+  try {
+    const { supabase } = require('./supabase-client');
+    const fs = require('fs'), path = require('path');
+    const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+    const m = html.match(/const C=(\[.*?\]);/s);
+    if (!m) return console.log('price-targets: no se encontro const C');
+    const C = JSON.parse(m[1]);
+    let priceCache = {};
+    try { priceCache = JSON.parse(fs.readFileSync(path.join(__dirname, 'price-cache.json'), 'utf8')); } catch(e) {}
+    const euEntry = priceCache['EURUSD=X'];
+    const eurUsd = euEntry ? euEntry.price : 1;
+
+    let actualizados = 0, sinDatos = 0;
+    for (const item of C) {
+      await new Promise(r => setTimeout(r, 1100));
+      const target = await fetchFinnhubTarget(item.symbol);
+      if (!target) { sinDatos++; continue; }
+      const precioActual = priceCache[item.symbol] ? priceCache[item.symbol].price : null;
+      if (!precioActual) { sinDatos++; continue; }
+      const targetEur = item.moneda === 'USD' ? target.targetMean / eurUsd : target.targetMean;
+      const precioEur = item.moneda === 'USD' ? precioActual / eurUsd : precioActual;
+      const upside = targetEur > 0 ? ((targetEur - precioEur) / targetEur) * 100 : 0;
+      await supabase.from('price_targets').upsert({
+        ticker: item.tckr,
+        symbol: item.symbol,
+        banco: item.banco,
+        nombre: item.nombre,
+        moneda: item.moneda,
+        precio_actual: Math.round(precioEur * 100) / 100,
+        target_mean: Math.round(targetEur * 100) / 100,
+        target_high: Math.round((item.moneda === 'USD' ? target.targetHigh / eurUsd : target.targetHigh) * 100) / 100,
+        target_low: Math.round((item.moneda === 'USD' ? target.targetLow / eurUsd : target.targetLow) * 100) / 100,
+        analysts: target.analysts,
+        upside: Math.round(upside * 100) / 100,
+        por_encima: precioEur >= targetEur,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'ticker,banco' });
+      actualizados++;
+    }
+    console.log(`Price targets: ${actualizados} actualizados, ${sinDatos} sin datos`);
+  } catch (e) {
+    console.error('Error actualizarPriceTargets:', e.message);
+  }
+}
+
+// Actualizar price targets cada dia laborable a las 20:30 UTC (22:30 España)
+setInterval(() => {
+  const ahora = new Date();
+  const dia = ahora.getDay();
+  if (dia >= 1 && dia <= 5 && ahora.getUTCHours() === 20 && ahora.getUTCMinutes() >= 30 && ahora.getUTCMinutes() < 31) {
+    actualizarPriceTargets();
+  }
+}, 60000);
+
+// Primera ejecucion al arrancar (60s de delay para que price-cache.json exista)
+setTimeout(actualizarPriceTargets, 60000);
