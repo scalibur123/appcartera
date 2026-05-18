@@ -764,6 +764,11 @@ window.loadAnalistas = function() {
     nuevo_html = _re.sub(r"const tabCallbacks=\{.*?\};", "const tabCallbacks={'ventas':()=>renderVentas(),'historico':()=>loadHistorico(),'earnings':()=>loadEarnings(),'analistas':()=>loadAnalistas()};", nuevo_html)
 
     nuevo_html = asegurar_historico(nuevo_html)
+
+    # Asegurar meta no-cache (para que iOS PWA no cachee versiones antiguas)
+    if 'Cache-Control" content="no-cache' not in nuevo_html:
+        nuevo_html = nuevo_html.replace('<head>', '<head>\n<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n<meta http-equiv="Pragma" content="no-cache">\n<meta http-equiv="Expires" content="0">')
+
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
     print(f"✅ index.html actualizado. Backup: {backup.name}")
 

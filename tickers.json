@@ -5,7 +5,7 @@
     "moneda": "USD",
     "titulos": 800.0,
     "coste_eur": 4922.2951,
-    "precio_excel": 5.4,
+    "precio_excel": 5.37,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "ACHC": {
@@ -14,7 +14,7 @@
     "moneda": "USD",
     "titulos": 203.0,
     "coste_eur": 4246.175,
-    "precio_excel": 25.87,
+    "precio_excel": 25.31,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "ANA": {
@@ -41,7 +41,7 @@
     "moneda": "EUR",
     "titulos": 59.0,
     "coste_eur": 9145,
-    "precio_excel": 148.5,
+    "precio_excel": 147.9,
     "fuente_resolucion": "override"
   },
   "ADT": {
@@ -50,7 +50,7 @@
     "moneda": "USD",
     "titulos": 1300.0,
     "coste_eur": 9200.9411,
-    "precio_excel": 6.91,
+    "precio_excel": 6.975,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "AMD": {
@@ -59,7 +59,7 @@
     "moneda": "USD",
     "titulos": 23.0,
     "coste_eur": 3529.6439,
-    "precio_excel": 416.09,
+    "precio_excel": 420.99,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "AED": {
@@ -77,7 +77,7 @@
     "moneda": "USD",
     "titulos": 74.0,
     "coste_eur": 7598.4044,
-    "precio_excel": 112.18,
+    "precio_excel": 112.095,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "AKZA": {
@@ -104,7 +104,7 @@
     "moneda": "USD",
     "titulos": 200.0,
     "coste_eur": 8064.446,
-    "precio_excel": 38.76,
+    "precio_excel": 38.535,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "ALO": {
@@ -131,7 +131,7 @@
     "moneda": "USD",
     "titulos": 170.0,
     "coste_eur": 4718.1195,
-    "precio_excel": 31.52,
+    "precio_excel": 31.01,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "AMP": {
@@ -158,7 +158,7 @@
     "moneda": "USD",
     "titulos": 25.0,
     "coste_eur": 10905.2636,
-    "precio_excel": 490.605,
+    "precio_excel": 492.38,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "ABUS": {
@@ -203,7 +203,7 @@
     "moneda": "USD",
     "titulos": 987.0,
     "coste_eur": 12530.5721,
-    "precio_excel": 6.625,
+    "precio_excel": 6.56,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "A3M": {
@@ -230,7 +230,7 @@
     "moneda": "USD",
     "titulos": 115.0,
     "coste_eur": 5296.4055,
-    "precio_excel": 65.86,
+    "precio_excel": 66.205,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "BLCO": {
@@ -239,7 +239,7 @@
     "moneda": "USD",
     "titulos": 248.0,
     "coste_eur": 4741.8103,
-    "precio_excel": 16.09,
+    "precio_excel": 16.1,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "BAX": {
@@ -248,7 +248,7 @@
     "moneda": "USD",
     "titulos": 180.0,
     "coste_eur": 7221.3603,
-    "precio_excel": 17.745,
+    "precio_excel": 17.795,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "BAYN": {
@@ -266,7 +266,7 @@
     "moneda": "EUR",
     "titulos": 120.0,
     "coste_eur": 10049.4,
-    "precio_excel": 74.78,
+    "precio_excel": 74.72,
     "fuente_resolucion": "override"
   },
   "BEI": {
@@ -284,7 +284,7 @@
     "moneda": "USD",
     "titulos": 133.0,
     "coste_eur": 6962.9604,
-    "precio_excel": 33.11,
+    "precio_excel": 33.31,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "BCRX": {
@@ -293,7 +293,7 @@
     "moneda": "USD",
     "titulos": 487.0,
     "coste_eur": 3612.4091,
-    "precio_excel": 8.95,
+    "precio_excel": 8.97,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "BTDR": {
@@ -302,7 +302,7 @@
     "moneda": "USD",
     "titulos": 772.0,
     "coste_eur": 6612.7469,
-    "precio_excel": 12.63,
+    "precio_excel": 13.15,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "BHVN": {
@@ -311,7 +311,7 @@
     "moneda": "USD",
     "titulos": 150.0,
     "coste_eur": 7907.2006,
-    "precio_excel": 8.64,
+    "precio_excel": 8.49,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "BNR": {
@@ -329,7 +329,7 @@
     "moneda": "USD",
     "titulos": 235.0,
     "coste_eur": 7671.9362,
-    "precio_excel": 8.67,
+    "precio_excel": 8.74,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "CABK": {
@@ -347,7 +347,7 @@
     "moneda": "USD",
     "titulos": 400.0,
     "coste_eur": 8683.6792,
-    "precio_excel": 27.47,
+    "precio_excel": 27.62,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "CALM": {
@@ -356,7 +356,7 @@
     "moneda": "USD",
     "titulos": 120.0,
     "coste_eur": 8943.325,
-    "precio_excel": 77.605,
+    "precio_excel": 77.61,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "CLNX": {
@@ -374,7 +374,7 @@
     "moneda": "USD",
     "titulos": 900.0,
     "coste_eur": 9298.4954,
-    "precio_excel": 4.575,
+    "precio_excel": 4.56,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "CRNC": {
@@ -383,7 +383,7 @@
     "moneda": "USD",
     "titulos": 1087.0,
     "coste_eur": 10016.5209,
-    "precio_excel": 9.85,
+    "precio_excel": 9.52,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "CHPT": {
@@ -392,7 +392,7 @@
     "moneda": "USD",
     "titulos": 100.0,
     "coste_eur": 3807.1178,
-    "precio_excel": 6.38,
+    "precio_excel": 6.39,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "CVX": {
@@ -401,7 +401,7 @@
     "moneda": "USD",
     "titulos": 81.0,
     "coste_eur": 11358.481,
-    "precio_excel": 195.1,
+    "precio_excel": 196.13,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "CIE": {
@@ -419,7 +419,7 @@
     "moneda": "USD",
     "titulos": 350.0,
     "coste_eur": 10354.5922,
-    "precio_excel": 60.19,
+    "precio_excel": 59.22,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "COIN": {
@@ -428,7 +428,7 @@
     "moneda": "USD",
     "titulos": 23.0,
     "coste_eur": 4130.6921,
-    "precio_excel": 187.44,
+    "precio_excel": 189.44,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "CNDT": {
@@ -437,7 +437,7 @@
     "moneda": "USD",
     "titulos": 3927.0,
     "coste_eur": 11685.211,
-    "precio_excel": 1.485,
+    "precio_excel": 1.55,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "CON": {
@@ -455,7 +455,7 @@
     "moneda": "EUR",
     "titulos": 120.0,
     "coste_eur": 3572.1,
-    "precio_excel": 33.9,
+    "precio_excel": 35.6,
     "fuente_resolucion": "override"
   },
   "ACA": {
@@ -473,7 +473,7 @@
     "moneda": "USD",
     "titulos": 456.0,
     "coste_eur": 4078.1503,
-    "precio_excel": 10.52,
+    "precio_excel": 9.95,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "DTG": {
@@ -482,7 +482,7 @@
     "moneda": "EUR",
     "titulos": 320.0,
     "coste_eur": 11295,
-    "precio_excel": 39.6,
+    "precio_excel": 39.66,
     "fuente_resolucion": "override"
   },
   "DHR": {
@@ -491,7 +491,7 @@
     "moneda": "USD",
     "titulos": 52.0,
     "coste_eur": 11915.672,
-    "precio_excel": 163.72,
+    "precio_excel": 163.89,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "DDOG": {
@@ -500,7 +500,7 @@
     "moneda": "USD",
     "titulos": 78.0,
     "coste_eur": 10774.5924,
-    "precio_excel": 207.99,
+    "precio_excel": 208.82,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "LHA": {
@@ -509,7 +509,7 @@
     "moneda": "EUR",
     "titulos": 1200.0,
     "coste_eur": 9783,
-    "precio_excel": 7.704,
+    "precio_excel": 7.724,
     "fuente_resolucion": "override"
   },
   "DB1": {
@@ -518,7 +518,7 @@
     "moneda": "EUR",
     "titulos": 45.0,
     "coste_eur": 10590,
-    "precio_excel": 255.1,
+    "precio_excel": 257.3,
     "fuente_resolucion": "override"
   },
   "DOCU": {
@@ -527,7 +527,7 @@
     "moneda": "USD",
     "titulos": 156.0,
     "coste_eur": 10986.0978,
-    "precio_excel": 48.965,
+    "precio_excel": 49.02,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "EDP": {
@@ -545,7 +545,7 @@
     "moneda": "USD",
     "titulos": 4500.0,
     "coste_eur": 8997.21,
-    "precio_excel": 2.54,
+    "precio_excel": 2.53,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "ENG": {
@@ -635,7 +635,7 @@
     "moneda": "USD",
     "titulos": 125.0,
     "coste_eur": 7919.1733,
-    "precio_excel": 21.19,
+    "precio_excel": 21.13,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "FTV": {
@@ -671,7 +671,7 @@
     "moneda": "USD",
     "titulos": 133.32999999999998,
     "coste_eur": 3314.0405,
-    "precio_excel": 9.44,
+    "precio_excel": 9.37,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "GLXY": {
@@ -680,7 +680,7 @@
     "moneda": "USD",
     "titulos": 300.0,
     "coste_eur": 7404.9876,
-    "precio_excel": 27.59,
+    "precio_excel": 27.87,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "GEHC": {
@@ -689,7 +689,7 @@
     "moneda": "USD",
     "titulos": 89.0,
     "coste_eur": 7331.2607,
-    "precio_excel": 61.69,
+    "precio_excel": 61.51,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "GNTX": {
@@ -698,7 +698,7 @@
     "moneda": "USD",
     "titulos": 440.0,
     "coste_eur": 9121.9009,
-    "precio_excel": 22.9,
+    "precio_excel": 22.68,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "GEST": {
@@ -716,7 +716,7 @@
     "moneda": "USD",
     "titulos": 280.0,
     "coste_eur": 6306.429,
-    "precio_excel": 28.98,
+    "precio_excel": 29.03,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "DOM": {
@@ -734,7 +734,7 @@
     "moneda": "USD",
     "titulos": 260.0,
     "coste_eur": 14304.3597,
-    "precio_excel": 67.38,
+    "precio_excel": 67.84,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "HAVAS": {
@@ -770,7 +770,7 @@
     "moneda": "USD",
     "titulos": 400.0,
     "coste_eur": 11831.862,
-    "precio_excel": 29.79,
+    "precio_excel": 29.83,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "BOSS": {
@@ -842,7 +842,7 @@
     "moneda": "USD",
     "titulos": 13.0,
     "coste_eur": 8361.1095,
-    "precio_excel": 403.74,
+    "precio_excel": 403.16,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "ISRG": {
@@ -851,7 +851,7 @@
     "moneda": "USD",
     "titulos": 20.0,
     "coste_eur": 9343.9667,
-    "precio_excel": 432.51,
+    "precio_excel": 439.92,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "IOVA": {
@@ -860,7 +860,7 @@
     "moneda": "USD",
     "titulos": 491.0,
     "coste_eur": 5677.8538,
-    "precio_excel": 3.495,
+    "precio_excel": 3.39,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "IRDM": {
@@ -869,7 +869,7 @@
     "moneda": "USD",
     "titulos": 262.0,
     "coste_eur": 7607.6422,
-    "precio_excel": 42.83,
+    "precio_excel": 43.4,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "JKHY": {
@@ -878,7 +878,7 @@
     "moneda": "USD",
     "titulos": 77.0,
     "coste_eur": 11313.8967,
-    "precio_excel": 139.32,
+    "precio_excel": 139.11,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "JEN": {
@@ -887,7 +887,7 @@
     "moneda": "EUR",
     "titulos": 418.0,
     "coste_eur": 9846.36,
-    "precio_excel": 43.2,
+    "precio_excel": 42.9,
     "fuente_resolucion": "override"
   },
   "JOBY": {
@@ -896,7 +896,7 @@
     "moneda": "USD",
     "titulos": 806.06922712,
     "coste_eur": 7230.9198,
-    "precio_excel": 10.105,
+    "precio_excel": 10.345,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "KVUE": {
@@ -905,7 +905,7 @@
     "moneda": "USD",
     "titulos": 300.0,
     "coste_eur": 5835.6265,
-    "precio_excel": 17.175,
+    "precio_excel": 17.19,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "KLAR": {
@@ -914,7 +914,7 @@
     "moneda": "USD",
     "titulos": 493.0,
     "coste_eur": 8641.4548,
-    "precio_excel": 15.555,
+    "precio_excel": 15.54,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "LI": {
@@ -941,7 +941,7 @@
     "moneda": "USD",
     "titulos": 1130.0,
     "coste_eur": 6235.905,
-    "precio_excel": 4.875,
+    "precio_excel": 4.84,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "LEG": {
@@ -959,7 +959,7 @@
     "moneda": "USD",
     "titulos": 800.0,
     "coste_eur": 5296.2151,
-    "precio_excel": 11.62,
+    "precio_excel": 11.59,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "LBTYA": {
@@ -968,7 +968,7 @@
     "moneda": "USD",
     "titulos": 515.0,
     "coste_eur": 4691.1299,
-    "precio_excel": 11.8912,
+    "precio_excel": 12.05,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "LDA": {
@@ -995,7 +995,7 @@
     "moneda": "USD",
     "titulos": 366.0,
     "coste_eur": 5349.0561,
-    "precio_excel": 11.82,
+    "precio_excel": 12.18,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "MAS": {
@@ -1004,7 +1004,7 @@
     "moneda": "USD",
     "titulos": 120.0,
     "coste_eur": 9285.4139,
-    "precio_excel": 65.81,
+    "precio_excel": 65.53,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "MKC": {
@@ -1013,7 +1013,7 @@
     "moneda": "USD",
     "titulos": 125.0,
     "coste_eur": 9492.4637,
-    "precio_excel": 46.915,
+    "precio_excel": 46.7,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "MDT": {
@@ -1022,7 +1022,7 @@
     "moneda": "USD",
     "titulos": 100.0,
     "coste_eur": 8207.6768,
-    "precio_excel": 76.815,
+    "precio_excel": 77.31,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "MFEB": {
@@ -1040,7 +1040,7 @@
     "moneda": "USD",
     "titulos": 23.0,
     "coste_eur": 9677.4736,
-    "precio_excel": 418.7,
+    "precio_excel": 423.54,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "MSTR": {
@@ -1049,7 +1049,7 @@
     "moneda": "USD",
     "titulos": 49.83,
     "coste_eur": 7104.548,
-    "precio_excel": 163.7,
+    "precio_excel": 166.63,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "MRNA": {
@@ -1058,7 +1058,7 @@
     "moneda": "USD",
     "titulos": 69.0,
     "coste_eur": 6863.1669,
-    "precio_excel": 48.37,
+    "precio_excel": 48.11,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "MONC": {
@@ -1076,7 +1076,7 @@
     "moneda": "USD",
     "titulos": 20.0,
     "coste_eur": 3034.6071,
-    "precio_excel": 184.07,
+    "precio_excel": 184.88,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "NTGY": {
@@ -1094,7 +1094,7 @@
     "moneda": "USD",
     "titulos": 450.0,
     "coste_eur": 2271.871,
-    "precio_excel": 2.635,
+    "precio_excel": 1.6,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "NEXI": {
@@ -1130,7 +1130,7 @@
     "moneda": "USD",
     "titulos": 520.0,
     "coste_eur": 9571.0808,
-    "precio_excel": 13.43,
+    "precio_excel": 13.42,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "OC": {
@@ -1139,7 +1139,7 @@
     "moneda": "USD",
     "titulos": 94.0,
     "coste_eur": 10224.4894,
-    "precio_excel": 113.75,
+    "precio_excel": 112.2,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "ORY": {
@@ -1157,7 +1157,7 @@
     "moneda": "USD",
     "titulos": 130.0,
     "coste_eur": 9286.0688,
-    "precio_excel": 85.98,
+    "precio_excel": 87.04,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "PCRX": {
@@ -1166,7 +1166,7 @@
     "moneda": "USD",
     "titulos": 490.0,
     "coste_eur": 11093.9169,
-    "precio_excel": 22.62,
+    "precio_excel": 22.44,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "PGY": {
@@ -1175,7 +1175,7 @@
     "moneda": "USD",
     "titulos": 300.0,
     "coste_eur": 6078.0447,
-    "precio_excel": 12.845,
+    "precio_excel": 12.87,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "PGEN": {
@@ -1184,7 +1184,7 @@
     "moneda": "USD",
     "titulos": 1100.0,
     "coste_eur": 3257.8057,
-    "precio_excel": 4.195,
+    "precio_excel": 4.07,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "PHM": {
@@ -1202,7 +1202,7 @@
     "moneda": "USD",
     "titulos": 25.0,
     "coste_eur": 9611.8799,
-    "precio_excel": 179.02,
+    "precio_excel": 181.39,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "PAH3": {
@@ -1220,7 +1220,7 @@
     "moneda": "USD",
     "titulos": 3378.0,
     "coste_eur": 4365.8067,
-    "precio_excel": 0.5001,
+    "precio_excel": 0.4972,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "PUIG": {
@@ -1247,7 +1247,7 @@
     "moneda": "USD",
     "titulos": 296.56,
     "coste_eur": 4238.5014,
-    "precio_excel": 16.1,
+    "precio_excel": 16.62,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "RGEN": {
@@ -1256,7 +1256,7 @@
     "moneda": "USD",
     "titulos": 38.13,
     "coste_eur": 4238.8121,
-    "precio_excel": 105.46,
+    "precio_excel": 104.2,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "RIOT": {
@@ -1265,7 +1265,7 @@
     "moneda": "USD",
     "titulos": 530.0,
     "coste_eur": 7893.5103,
-    "precio_excel": 22.92,
+    "precio_excel": 23.18,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "SCYR": {
@@ -1310,7 +1310,7 @@
     "moneda": "USD",
     "titulos": 387.0,
     "coste_eur": 8654.0913,
-    "precio_excel": 12.155,
+    "precio_excel": 12.05,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "S": {
@@ -1319,7 +1319,7 @@
     "moneda": "USD",
     "titulos": 325.0,
     "coste_eur": 8955.1566,
-    "precio_excel": 17.5,
+    "precio_excel": 17.535,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "SHL": {
@@ -1328,7 +1328,7 @@
     "moneda": "EUR",
     "titulos": 180.0,
     "coste_eur": 9112.2,
-    "precio_excel": 33.72,
+    "precio_excel": 34.04,
     "fuente_resolucion": "override"
   },
   "LIGHT": {
@@ -1364,7 +1364,7 @@
     "moneda": "USD",
     "titulos": 4278.0,
     "coste_eur": 7759.186,
-    "precio_excel": 1.3844,
+    "precio_excel": 1.39,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "SNOW": {
@@ -1373,7 +1373,7 @@
     "moneda": "USD",
     "titulos": 45.0,
     "coste_eur": 7026.2036,
-    "precio_excel": 161.99,
+    "precio_excel": 164.26,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "SW": {
@@ -1400,7 +1400,7 @@
     "moneda": "USD",
     "titulos": 135.0,
     "coste_eur": 7521.9816,
-    "precio_excel": 73.09,
+    "precio_excel": 74.06,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "SPT": {
@@ -1409,7 +1409,7 @@
     "moneda": "USD",
     "titulos": 229.0,
     "coste_eur": 7470.2213,
-    "precio_excel": 6.47,
+    "precio_excel": 6.515,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "SFM": {
@@ -1418,7 +1418,7 @@
     "moneda": "USD",
     "titulos": 125.0,
     "coste_eur": 7915.9377,
-    "precio_excel": 88.7,
+    "precio_excel": 88.39,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "SQRL": {
@@ -1472,7 +1472,7 @@
     "moneda": "USD",
     "titulos": 300.0,
     "coste_eur": 7174.629,
-    "precio_excel": 6.38,
+    "precio_excel": 6.345,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "TEF": {
@@ -1499,7 +1499,7 @@
     "moneda": "USD",
     "titulos": 96.0,
     "coste_eur": 9061.3512,
-    "precio_excel": 60.58,
+    "precio_excel": 60.94,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "HNST": {
@@ -1508,7 +1508,7 @@
     "moneda": "USD",
     "titulos": 2519.0,
     "coste_eur": 9485.6201,
-    "precio_excel": 3.245,
+    "precio_excel": 3.27,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "GT": {
@@ -1517,7 +1517,7 @@
     "moneda": "USD",
     "titulos": 1222.0,
     "coste_eur": 9159.1572,
-    "precio_excel": 5.65,
+    "precio_excel": 5.61,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "DJT": {
@@ -1526,7 +1526,7 @@
     "moneda": "USD",
     "titulos": 118.0,
     "coste_eur": 3764.4068,
-    "precio_excel": 8.23,
+    "precio_excel": 8.27,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "TMUS": {
@@ -1535,7 +1535,7 @@
     "moneda": "USD",
     "titulos": 50.0,
     "coste_eur": 8497.494,
-    "precio_excel": 190.33,
+    "precio_excel": 190.65,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "TUB": {
@@ -1562,7 +1562,7 @@
     "moneda": "EUR",
     "titulos": 1500.0,
     "coste_eur": 11583,
-    "precio_excel": 6.438,
+    "precio_excel": 6.442,
     "fuente_resolucion": "override"
   },
   "UBER": {
@@ -1571,7 +1571,7 @@
     "moneda": "USD",
     "titulos": 115.0,
     "coste_eur": 7602.7455,
-    "precio_excel": 75.13,
+    "precio_excel": 75.075,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "RARE": {
@@ -1580,7 +1580,7 @@
     "moneda": "USD",
     "titulos": 125.0,
     "coste_eur": 6383.9506,
-    "precio_excel": 24.44,
+    "precio_excel": 24.19,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "UPM": {
@@ -1598,7 +1598,7 @@
     "moneda": "USD",
     "titulos": 702.0,
     "coste_eur": 9533.699,
-    "precio_excel": 9.64,
+    "precio_excel": 9.7,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "VRLA": {
@@ -1616,7 +1616,7 @@
     "moneda": "USD",
     "titulos": 32.0,
     "coste_eur": 3895.0247,
-    "precio_excel": 337.9,
+    "precio_excel": 339.7,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "VERI": {
@@ -1625,7 +1625,7 @@
     "moneda": "USD",
     "titulos": 200.0,
     "coste_eur": 694.34,
-    "precio_excel": 1.95,
+    "precio_excel": 2,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "DG": {
@@ -1661,7 +1661,7 @@
     "moneda": "USD",
     "titulos": 100.0,
     "coste_eur": 2787.946,
-    "precio_excel": 36.09,
+    "precio_excel": 38.43,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "WCH": {
@@ -1679,7 +1679,7 @@
     "moneda": "USD",
     "titulos": 1910.0,
     "coste_eur": 12822.5024,
-    "precio_excel": 6.06,
+    "precio_excel": 6.01,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "WEAV": {
@@ -1688,7 +1688,7 @@
     "moneda": "USD",
     "titulos": 2000.0,
     "coste_eur": 13073.8725,
-    "precio_excel": 5.435,
+    "precio_excel": 5.44,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "WDAY": {
@@ -1697,7 +1697,7 @@
     "moneda": "USD",
     "titulos": 32.0,
     "coste_eur": 7151.7776,
-    "precio_excel": 127.47,
+    "precio_excel": 128.88,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "WLN": {
@@ -1715,7 +1715,7 @@
     "moneda": "EUR",
     "titulos": 507.0,
     "coste_eur": 17217.76,
-    "precio_excel": 19.65,
+    "precio_excel": 19.62,
     "fuente_resolucion": "override"
   },
   "ZBRA": {
@@ -1724,7 +1724,7 @@
     "moneda": "USD",
     "titulos": 50.0,
     "coste_eur": 11222.2725,
-    "precio_excel": 259.7,
+    "precio_excel": 260.06,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "Z": {
@@ -1733,7 +1733,7 @@
     "moneda": "USD",
     "titulos": 100.0,
     "coste_eur": 3937.8184,
-    "precio_excel": 38.55,
+    "precio_excel": 37.17,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "ZS": {
@@ -1742,7 +1742,7 @@
     "moneda": "USD",
     "titulos": 80.0,
     "coste_eur": 10145.2166,
-    "precio_excel": 173.35,
+    "precio_excel": 174.69,
     "fuente_resolucion": "fallback_usd_directo"
   }
 }
