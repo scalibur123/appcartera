@@ -500,6 +500,71 @@ def leer_ventas():
     return ventas
 
 
+
+def asegurar_resumen_snapshots(html):
+    """Garantiza que HOY/SEMANA/MES/ANUAL usa /snapshots + VENTAS_ANUAL."""
+    if 'snapAntesDe' in html:
+        return html
+    MARCA_INI = '// HOY se pinta en el bloque de variaciones-diarias'
+    MARCA_FIN = ".catch(e=>console.error('Error variaciones-diarias:',e));"
+    if MARCA_INI not in html or MARCA_FIN not in html:
+        return html
+    nuevo = (
+        "const fmtR=(v)=>{const s=v<0;const abs=Math.abs(v);const parts=abs.toFixed(2).split('.');"
+        "const int=parts[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g,'.');return(s?'-':'+')+int+','+parts[1]+' \u20ac';};"
+        "\n  const colorR=(v)=>v>=0?'var(--green)':'var(--red)';\n  const IRPF=0.20925;\n\n"
+        "  function pintarBloque(idB,idN,val){\n"
+        "    const valN=val*(1-IRPF);\n"
+        "    const elB=document.getElementById(idB);\n"
+        "    const elN=document.getElementById(idN);\n"
+        "    if(elB) elB.innerHTML='<span style=\"color:'+colorR(val)+';font-size:20px;font-weight:500\">'+fmtR(val)+'</span>';\n"
+        "    if(elN) elN.innerHTML='<span style=\"color:'+colorR(valN)+';font-size:20px;font-weight:500\">'+fmtR(valN)+'</span>';\n"
+        "  }\n\n"
+        "  function calcValorAhora(){\n"
+        "    let v=0;\n"
+        "    for(const i of C){const p=prices[i.symbol];if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;v+=i.titulos*pe;}}\n"
+        "    return v;\n  }\n\n"
+        "  function ventasPeriodo(desde){\n"
+        "    if(!window.VENTAS_ANUAL)return 0;\n"
+        "    return VENTAS_ANUAL.filter(v=>v.fecha>=desde).reduce((s,v)=>s+v.bruto,0);\n"
+        "  }\n\n"
+        "  function calcVarHoyMercado(){\n"
+        "    let v=0;\n"
+        "    for(const i of C){\n"
+        "      const p=prices[i.symbol];\n"
+        "      if(!p||p.pct==null)continue;\n"
+        "      const precioAyer=p.price/(1+p.pct/100);\n"
+        "      const varPrecio=p.price-precioAyer;\n"
+        "      const varEur=i.moneda==='USD'&&eurUsd?varPrecio*i.titulos/eurUsd:varPrecio*i.titulos;\n"
+        "      v+=varEur;\n    }\n    return v;\n  }\n\n"
+        "  fetch('/snapshots').then(r=>r.json()).then(snaps=>{\n"
+        "    if(!snaps||!snaps.length){console.warn('Sin snapshots');return;}\n"
+        "    const ahora=new Date();\n"
+        "    const hoy=ahora.toISOString().slice(0,10);\n"
+        "    const lunesStr=(()=>{const d=new Date(ahora);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10);})();\n"
+        "    const primerMes=hoy.slice(0,8)+'01';\n"
+        "    const primerAnio=hoy.slice(0,4)+'-01-01';\n"
+        "    function snapAntesDe(fechaRef){\n"
+        "      const c=snaps.filter(s=>s.fecha<fechaRef).sort((a,b)=>b.fecha.localeCompare(a.fecha));\n"
+        "      return c[0]||null;\n    }\n"
+        "    const valorAhora=calcValorAhora();\n"
+        "    const varHoyMercado=calcVarHoyMercado();\n"
+        "    const ventasHoy=(window.VENTAS_ANUAL||[]).filter(v=>v.fecha===hoy).reduce((s,v)=>s+v.bruto,0);\n"
+        "    pintarBloque('hoy-b','hoy-n',varHoyMercado+ventasHoy);\n"
+        "    const sbs=snapAntesDe(lunesStr);\n"
+        "    const sbm=snapAntesDe(primerMes);\n"
+        "    const sba=snapAntesDe(primerAnio);\n"
+        "    if(sbs) pintarBloque('sem-b','sem-n',(valorAhora-sbs.valor_total)+ventasPeriodo(lunesStr));\n"
+        "    if(sbm) pintarBloque('mes-b','mes-n',(valorAhora-sbm.valor_total)+ventasPeriodo(primerMes));\n"
+        "    if(sba) pintarBloque('anual-b','anual-n',(valorAhora-sba.valor_total)+ventasPeriodo(primerAnio));\n"
+        "  }).catch(e=>{console.error('Error snapshots:',e);pintarBloque('hoy-b','hoy-n',calcVarHoyMercado());});"
+    )
+    ini = html.index(MARCA_INI)
+    fin = html.index(MARCA_FIN) + len(MARCA_FIN)
+    html = html[:ini] + nuevo + html[fin:]
+    print('OK asegurar_resumen_snapshots aplicado')
+    return html
+
 def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None, ventas_data=None):
     if not INDEX_HTML.exists():
         print(f"❌ index.html no encontrado: {INDEX_HTML}")
@@ -763,6 +828,7 @@ window.loadAnalistas = function() {
     nuevo_html = _re.sub(r"const tabs=\[.*?\];", "const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','analistas'];", nuevo_html)
     nuevo_html = _re.sub(r"const tabCallbacks=\{.*?\};", "const tabCallbacks={'ventas':()=>renderVentas(),'historico':()=>loadHistorico(),'earnings':()=>loadEarnings(),'analistas':()=>loadAnalistas()};", nuevo_html)
 
+    nuevo_html = asegurar_resumen_snapshots(nuevo_html)
     nuevo_html = asegurar_historico(nuevo_html)
 
     # Asegurar meta no-cache (para que iOS PWA no cachee versiones antiguas)
