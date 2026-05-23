@@ -565,6 +565,55 @@ def asegurar_resumen_snapshots(html):
     print('OK asegurar_resumen_snapshots aplicado')
     return html
 
+
+def asegurar_mercado_abierto(html):
+    """Garantiza que calcVarHoyMercado solo usa pct de mercados abiertos ahora."""
+    if 'mercadoAbierto' in html:
+        return html
+    ANTIGUO = (
+        "  function calcVarHoyMercado(){\n"
+        "    let v=0;\n"
+        "    for(const i of C){\n"
+        "      const p=prices[i.symbol];\n"
+        "      if(!p||p.pct==null)continue;\n"
+        "      const precioAyer=p.price/(1+p.pct/100);\n"
+        "      const varPrecio=p.price-precioAyer;\n"
+        "      const varEur=i.moneda===\'USD\'&&eurUsd?varPrecio*i.titulos/eurUsd:varPrecio*i.titulos;\n"
+        "      v+=varEur;\n"
+        "    }\n"
+        "    return v;\n"
+        "  }"
+    )
+    NUEVO = (
+        "  function mercadoAbierto(moneda){\n"
+        "    const ahora=new Date();\n"
+        "    const dia=ahora.getUTCDay();\n"
+        "    if(dia===0||dia===6)return false;\n"
+        "    const h=ahora.getUTCHours();\n"
+        "    const m=ahora.getUTCMinutes();\n"
+        "    const mins=h*60+m;\n"
+        "    if(moneda===\'USD\') return mins>=810&&mins<1200;\n"
+        "    return mins>=420&&mins<930;\n"
+        "  }\n"
+        "  function calcVarHoyMercado(){\n"
+        "    let v=0;\n"
+        "    for(const i of C){\n"
+        "      const p=prices[i.symbol];\n"
+        "      if(!p||p.pct==null)continue;\n"
+        "      if(!mercadoAbierto(i.moneda))continue;\n"
+        "      const precioAyer=p.price/(1+p.pct/100);\n"
+        "      const varPrecio=p.price-precioAyer;\n"
+        "      const varEur=i.moneda===\'USD\'&&eurUsd?varPrecio*i.titulos/eurUsd:varPrecio*i.titulos;\n"
+        "      v+=varEur;\n"
+        "    }\n"
+        "    return v;\n"
+        "  }"
+    )
+    if ANTIGUO in html:
+        html = html.replace(ANTIGUO, NUEVO, 1)
+        print('OK asegurar_mercado_abierto aplicado')
+    return html
+
 def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None, ventas_data=None):
     if not INDEX_HTML.exists():
         print(f"❌ index.html no encontrado: {INDEX_HTML}")
@@ -828,6 +877,7 @@ window.loadAnalistas = function() {
     nuevo_html = _re.sub(r"const tabs=\[.*?\];", "const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','analistas'];", nuevo_html)
     nuevo_html = _re.sub(r"const tabCallbacks=\{.*?\};", "const tabCallbacks={'ventas':()=>renderVentas(),'historico':()=>loadHistorico(),'earnings':()=>loadEarnings(),'analistas':()=>loadAnalistas()};", nuevo_html)
 
+    nuevo_html = asegurar_mercado_abierto(nuevo_html)
     nuevo_html = asegurar_resumen_snapshots(nuevo_html)
     nuevo_html = asegurar_historico(nuevo_html)
 

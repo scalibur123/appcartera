@@ -352,11 +352,22 @@ function updateResumen(){
     return VENTAS_ANUAL.filter(v=>v.fecha>=desde).reduce((s,v)=>s+v.bruto,0);
   }
 
+  function mercadoAbierto(moneda){
+    const ahora=new Date();
+    const dia=ahora.getUTCDay();
+    if(dia===0||dia===6)return false;
+    const h=ahora.getUTCHours();
+    const m=ahora.getUTCMinutes();
+    const mins=h*60+m;
+    if(moneda==='USD') return mins>=810&&mins<1200;  // 13:30-20:00 UTC
+    return mins>=420&&mins<930;  // 07:00-15:30 UTC (EUR y resto)
+  }
   function calcVarHoyMercado(){
     let v=0;
     for(const i of C){
       const p=prices[i.symbol];
       if(!p||p.pct==null)continue;
+      if(!mercadoAbierto(i.moneda))continue;
       const precioAyer=p.price/(1+p.pct/100);
       const varPrecio=p.price-precioAyer;
       const varEur=i.moneda==='USD'&&eurUsd?varPrecio*i.titulos/eurUsd:varPrecio*i.titulos;
