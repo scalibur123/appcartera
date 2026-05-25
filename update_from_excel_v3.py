@@ -249,6 +249,10 @@ def leer_excel_con_mic():
     if mic_externo:
         print(f"📄 Cargados {len(mic_externo)} mapeos MIC desde {MIC_NAMES_TXT.name}")
 
+    # Segunda apertura sin data_only para leer columna B aunque no esté cacheada
+    wb_formulas = openpyxl.load_workbook(EXCEL, data_only=False, keep_vba=False)
+    ws_formulas = wb_formulas[HOJA]
+
     posiciones = {}
     orden = []
     sin_mic = []
@@ -263,7 +267,7 @@ def leer_excel_con_mic():
         moneda = ws[f"G{row}"].value
         precio_excel = ws[f"E{row}"].value
 
-        # Intentar extraer MIC: B -> AO -> mic_nombres.txt
+        # Intentar extraer MIC: B (cacheado) -> B (fórmula) -> AO -> mic_nombres.txt
         mic = None
         nombre_completo = None
 
@@ -275,6 +279,15 @@ def leer_excel_con_mic():
                     mic = m.group(1)
                     nombre_completo = v.strip()
                     break
+
+        # Si no se encontró MIC con data_only, intentar leer B directamente de la fórmula
+        if not mic:
+            v_formula = ws_formulas[f"B{row}"].value
+            if v_formula and isinstance(v_formula, str) and "#" not in v_formula:
+                m = REGEX_MIC.search(v_formula)
+                if m:
+                    mic = m.group(1)
+                    nombre_completo = v_formula.strip()
 
         if not mic and ticker in mic_externo:
             mic = mic_externo[ticker]
