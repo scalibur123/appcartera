@@ -216,13 +216,13 @@
     "fuente_resolucion": "override"
   },
   "ATO": {
-    "yahoo": "ATO.MC",
+    "yahoo": "ATO.PA",
     "mic": null,
     "moneda": "EUR",
     "titulos": 300.0,
     "coste_eur": 13305,
     "precio_excel": 45.22,
-    "fuente_resolucion": "fallback_madrid"
+    "fuente_resolucion": "override"
   },
   "ADX": {
     "yahoo": "ADX.MC",
