@@ -103,6 +103,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   <button class="nav-btn" onclick="showTab('historico',this);loadHistorico()">Historico</button>
   <button class="nav-btn" onclick="showTab('earnings',this);loadEarnings()">Earnings</button>
   <button class="nav-btn" onclick="showTab('analistas',this);loadAnalistas()">Analistas</button>
+  <button class="nav-btn" onclick="showTab('bancos',this);renderBancos()">Bancos</button>
 </div>
 
 <div id="eurusd-display" style="text-align:center;padding:6px 0;font-size:11px;color:var(--muted)">Cambio EUR/USD: --</div><div id="resumen" class="section active">
@@ -885,7 +886,7 @@ function hideDetalle() { document.getElementById('detalle-valor').style.display 
     <div id="analistas-list">Cargando...</div>
   </div>
 </div>
-<script>var VENTAS_ANUAL=[{"ticker": "BESI", "fecha": "2026-01-05", "bruto": 3702.51, "neto": 2909.18}, {"ticker": "AIXA", "fecha": "2026-01-05", "bruto": 6248.14, "neto": 4909.36}, {"ticker": "SMHN", "fecha": "2026-01-07", "bruto": 9120.0, "neto": 7165.87}, {"ticker": "PCAR", "fecha": "2026-01-08", "bruto": 2098.59, "neto": 1648.93}, {"ticker": "DOCN", "fecha": "2026-01-12", "bruto": 1760.93, "neto": 1383.62}, {"ticker": "HOOK", "fecha": "2026-01-13", "bruto": -5518.29, "neto": -4335.9}, {"ticker": "BKR", "fecha": "2026-01-22", "bruto": 2381.46, "neto": 1871.19}, {"ticker": "ODFL", "fecha": "2026-02-04", "bruto": 2540.4, "neto": 1996.07}, {"ticker": "UA", "fecha": "2026-02-04", "bruto": 3704.05, "neto": 2910.39}, {"ticker": "INPST", "fecha": "2026-02-09", "bruto": 311.33, "neto": 244.62}, {"ticker": "LGIH", "fecha": "2026-02-11", "bruto": 2395.59, "neto": 1882.29}, {"ticker": "PHM", "fecha": "2026-02-12", "bruto": 3441.75, "neto": 2704.29}, {"ticker": "ALSN", "fecha": "2026-02-12", "bruto": 2741.47, "neto": 2154.06}, {"ticker": "ROVI", "fecha": "2026-02-25", "bruto": 3957.35, "neto": 3109.42}, {"ticker": "ANA", "fecha": "2026-02-27", "bruto": 7154.96, "neto": 5621.88}, {"ticker": "BMY", "fecha": "2026-02-27", "bruto": 3661.34, "neto": 2876.83}, {"ticker": "ENI", "fecha": "2026-03-09", "bruto": 4228.19, "neto": 3322.22}, {"ticker": "NEXT", "fecha": "2026-03-19", "bruto": 2726.92, "neto": 2142.62}, {"ticker": "VECO", "fecha": "2026-03-24", "bruto": 17.65, "neto": 13.87}, {"ticker": "REP", "fecha": "2026-03-31", "bruto": 5412.41, "neto": 4252.7}, {"ticker": "APLS", "fecha": "2026-03-31", "bruto": 1878.21, "neto": 1475.77}, {"ticker": "STMPA", "fecha": "2026-04-07", "bruto": 2228.0, "neto": 1750.61}, {"ticker": "LUNR", "fecha": "2026-04-08", "bruto": 6308.96, "neto": 4957.15}, {"ticker": "ENI", "fecha": "2026-04-14", "bruto": 6258.5, "neto": 4917.5}, {"ticker": "CL", "fecha": "2026-04-14", "bruto": 391.7, "neto": 307.77}, {"ticker": "VRT", "fecha": "2026-04-14", "bruto": 4498.32, "neto": 3534.47}, {"ticker": "MYSE", "fecha": "2026-04-16", "bruto": 980.34, "neto": 770.28}, {"ticker": "PLUG", "fecha": "2026-04-21", "bruto": 1956.39, "neto": 1537.2}, {"ticker": "FLR", "fecha": "2026-04-27", "bruto": 1000.73, "neto": 786.31}, {"ticker": "NOV", "fecha": "2026-05-05", "bruto": 399.49, "neto": 313.89}, {"ticker": "ST", "fecha": "2026-05-06", "bruto": 3206.49, "neto": 2519.44}, {"ticker": "TGTX", "fecha": "2026-05-06", "bruto": 2044.39, "neto": 1606.34}, {"ticker": "AMD", "fecha": "2026-05-06", "bruto": 3030.51, "neto": 2381.17}, {"ticker": "IREN", "fecha": "2026-05-08", "bruto": 1259.5, "neto": 989.63}, {"ticker": "IRDM", "fecha": "2026-05-11", "bruto": 1777.66, "neto": 1396.76}, {"ticker": "ABCL", "fecha": "2026-05-11", "bruto": 3709.16, "neto": 2914.4}, {"ticker": "RAL", "fecha": "2026-05-12", "bruto": 301.03, "neto": 236.53}, {"ticker": "MTX", "fecha": "2026-05-13", "bruto": 554.01, "neto": 435.31}, {"ticker": "CA", "fecha": "2026-05-18", "bruto": 1652.04, "neto": 1298.06}, {"ticker": "VOYG", "fecha": "2026-05-22", "bruto": 910.36, "neto": 715.3}, {"ticker": "EDIT", "fecha": "2026-05-27", "bruto": 4754.36, "neto": 3735.65}, {"ticker": "RIOT", "fecha": "2026-05-28", "bruto": 4456.97, "neto": 3501.99}, {"ticker": "RIOT", "fecha": "2026-05-28", "bruto": 518.17, "neto": 407.15}, {"ticker": "OKTA", "fecha": "2026-05-29", "bruto": 3332.09, "neto": 2618.13}, {"ticker": "CLF", "fecha": "2026-06-02", "bruto": 2417.63, "neto": 1899.61}, {"ticker": "AOSL", "fecha": "2026-06-02", "bruto": 1005.36, "neto": 789.94}];</script>
+<script>var VENTAS_ANUAL=[{"ticker": "BESI", "fecha": "2026-01-05", "bruto": 3702.51, "neto": 2909.18, "banco": "-", "moneda": "EUR"}, {"ticker": "AIXA", "fecha": "2026-01-05", "bruto": 6248.14, "neto": 4909.36, "banco": "-", "moneda": "EUR"}, {"ticker": "SMHN", "fecha": "2026-01-07", "bruto": 9120.0, "neto": 7165.87, "banco": "-", "moneda": "EUR"}, {"ticker": "PCAR", "fecha": "2026-01-08", "bruto": 2098.59, "neto": 1648.93, "banco": "-", "moneda": "USD"}, {"ticker": "DOCN", "fecha": "2026-01-12", "bruto": 1760.93, "neto": 1383.62, "banco": "-", "moneda": "USD"}, {"ticker": "HOOK", "fecha": "2026-01-13", "bruto": -5518.29, "neto": -4335.9, "banco": "-", "moneda": "USD"}, {"ticker": "BKR", "fecha": "2026-01-22", "bruto": 2381.46, "neto": 1871.19, "banco": "REVOLUT", "moneda": "USD"}, {"ticker": "ODFL", "fecha": "2026-02-04", "bruto": 2540.4, "neto": 1996.07, "banco": "-", "moneda": "USD"}, {"ticker": "UA", "fecha": "2026-02-04", "bruto": 3704.05, "neto": 2910.39, "banco": "-", "moneda": "USD"}, {"ticker": "INPST", "fecha": "2026-02-09", "bruto": 311.33, "neto": 244.62, "banco": "R4", "moneda": "EUR"}, {"ticker": "LGIH", "fecha": "2026-02-11", "bruto": 2395.59, "neto": 1882.29, "banco": "-", "moneda": "USD"}, {"ticker": "PHM", "fecha": "2026-02-12", "bruto": 3441.75, "neto": 2704.29, "banco": "R4/ING", "moneda": "USD"}, {"ticker": "ALSN", "fecha": "2026-02-12", "bruto": 2741.47, "neto": 2154.06, "banco": "-", "moneda": "USD"}, {"ticker": "ROVI", "fecha": "2026-02-25", "bruto": 3957.35, "neto": 3109.42, "banco": "R4", "moneda": "EUR"}, {"ticker": "ANA", "fecha": "2026-02-27", "bruto": 7154.96, "neto": 5621.88, "banco": "ING", "moneda": "EUR"}, {"ticker": "BMY", "fecha": "2026-02-27", "bruto": 3661.34, "neto": 2876.83, "banco": "-", "moneda": "USD"}, {"ticker": "ENI", "fecha": "2026-03-09", "bruto": 4228.19, "neto": 3322.22, "banco": "-", "moneda": "EUR"}, {"ticker": "NEXT", "fecha": "2026-03-19", "bruto": 2726.92, "neto": 2142.62, "banco": "-", "moneda": "USD"}, {"ticker": "VECO", "fecha": "2026-03-24", "bruto": 17.65, "neto": 13.87, "banco": "-", "moneda": "USD"}, {"ticker": "REP", "fecha": "2026-03-31", "bruto": 5412.41, "neto": 4252.7, "banco": "MEDIOLANUM", "moneda": "EUR"}, {"ticker": "APLS", "fecha": "2026-03-31", "bruto": 1878.21, "neto": 1475.77, "banco": "-", "moneda": "USD"}, {"ticker": "STMPA", "fecha": "2026-04-07", "bruto": 2228.0, "neto": 1750.61, "banco": "-", "moneda": "EUR"}, {"ticker": "LUNR", "fecha": "2026-04-08", "bruto": 6308.96, "neto": 4957.15, "banco": "-", "moneda": "USD"}, {"ticker": "ENI", "fecha": "2026-04-14", "bruto": 6258.5, "neto": 4917.5, "banco": "-", "moneda": "EUR"}, {"ticker": "CL", "fecha": "2026-04-14", "bruto": 391.7, "neto": 307.77, "banco": "-", "moneda": "USD"}, {"ticker": "VRT", "fecha": "2026-04-14", "bruto": 4498.32, "neto": 3534.47, "banco": "R4", "moneda": "USD"}, {"ticker": "MYSE", "fecha": "2026-04-16", "bruto": 980.34, "neto": 770.28, "banco": "-", "moneda": "USD"}, {"ticker": "PLUG", "fecha": "2026-04-21", "bruto": 1956.39, "neto": 1537.2, "banco": "-", "moneda": "USD"}, {"ticker": "FLR", "fecha": "2026-04-27", "bruto": 1000.73, "neto": 786.31, "banco": "-", "moneda": "USD"}, {"ticker": "NOV", "fecha": "2026-05-05", "bruto": 399.49, "neto": 313.89, "banco": "-", "moneda": "USD"}, {"ticker": "ST", "fecha": "2026-05-06", "bruto": 3206.49, "neto": 2519.44, "banco": "-", "moneda": "USD"}, {"ticker": "TGTX", "fecha": "2026-05-06", "bruto": 2044.39, "neto": 1606.34, "banco": "-", "moneda": "USD"}, {"ticker": "AMD", "fecha": "2026-05-06", "bruto": 3030.51, "neto": 2381.17, "banco": "R4", "moneda": "USD"}, {"ticker": "IREN", "fecha": "2026-05-08", "bruto": 1259.5, "neto": 989.63, "banco": "-", "moneda": "USD"}, {"ticker": "IRDM", "fecha": "2026-05-11", "bruto": 1777.66, "neto": 1396.76, "banco": "R4", "moneda": "USD"}, {"ticker": "ABCL", "fecha": "2026-05-11", "bruto": 3709.16, "neto": 2914.4, "banco": "-", "moneda": "USD"}, {"ticker": "RAL", "fecha": "2026-05-12", "bruto": 301.03, "neto": 236.53, "banco": "-", "moneda": "USD"}, {"ticker": "MTX", "fecha": "2026-05-13", "bruto": 554.01, "neto": 435.31, "banco": "-", "moneda": "USD"}, {"ticker": "CA", "fecha": "2026-05-18", "bruto": 1652.04, "neto": 1298.06, "banco": "-", "moneda": "EUR"}, {"ticker": "VOYG", "fecha": "2026-05-22", "bruto": 910.36, "neto": 715.3, "banco": "-", "moneda": "USD"}, {"ticker": "EDIT", "fecha": "2026-05-27", "bruto": 4754.36, "neto": 3735.65, "banco": "-", "moneda": "USD"}, {"ticker": "RIOT", "fecha": "2026-05-28", "bruto": 4456.97, "neto": 3501.99, "banco": "-", "moneda": "USD"}, {"ticker": "RIOT", "fecha": "2026-05-28", "bruto": 518.17, "neto": 407.15, "banco": "-", "moneda": "USD"}, {"ticker": "OKTA", "fecha": "2026-05-29", "bruto": 3332.09, "neto": 2618.13, "banco": "-", "moneda": "USD"}, {"ticker": "CLF", "fecha": "2026-06-02", "bruto": 2417.63, "neto": 1899.61, "banco": "-", "moneda": "USD"}, {"ticker": "AOSL", "fecha": "2026-06-02", "bruto": 1005.36, "neto": 789.94, "banco": "-", "moneda": "USD"}];</script>
 <div id="ventas" class="section"><div style="padding:16px" id="ventas-content">Cargando...</div></div>
 <script>
 window.loadAnalistas = function() {
@@ -1918,5 +1919,104 @@ window.renderVentas = function() {
   el.innerHTML = html;
 };
 </script>
+<div id="bancos" class="section">
+  <div style="padding:16px" id="bancos-content">Cargando...</div>
+</div>
+
+<script>
+// Saldos iniciales a 2026-06-03
+var BANCOS_SALDOS_INICIALES = {
+  'R4':          { eur: 16422, usd: 24565 },
+  'ING':         { eur: 63827, usd: 0 },
+  'IBKR':        { eur: 0,     usd: 19963 },
+  'MYINV':       { eur: 103931, usd: 0 },
+  'MEDIOLANUM':  { eur: 1064,  usd: 0 },
+  'REVOLUT':     { eur: 300,   usd: 6936 },
+};
+var BANCOS_FECHA_INICIO = '2026-06-03';
+
+window.renderBancos = function() {
+  var el = document.getElementById('bancos-content');
+
+  // Calcular saldos actuales
+  var saldos = {};
+  for (var b in BANCOS_SALDOS_INICIALES) {
+    saldos[b] = { eur: BANCOS_SALDOS_INICIALES[b].eur, usd: BANCOS_SALDOS_INICIALES[b].usd };
+  }
+
+  // Restar compras desde fecha inicio (de const C -> compras)
+  C.forEach(function(item) {
+    var banco = item.banco;
+    var moneda = item.moneda;
+    if (!saldos[banco]) saldos[banco] = { eur: 0, usd: 0 };
+    (item.compras || []).forEach(function(c) {
+      // Convertir fecha compra a YYYY-MM-DD
+      var partes = c.fecha.split('/');
+      var fechaComp = partes.length === 3 ? partes[2]+'-'+partes[1]+'-'+partes[0] : c.fecha;
+      if (fechaComp >= BANCOS_FECHA_INICIO) {
+        var bcomp = c.banco || banco;
+        if (!saldos[bcomp]) saldos[bcomp] = { eur: 0, usd: 0 };
+        if (moneda === 'USD') saldos[bcomp].usd -= c.coste;
+        else saldos[bcomp].eur -= c.coste;
+      }
+    });
+  });
+
+  // Sumar ventas desde fecha inicio
+  (window.VENTAS_ANUAL || []).forEach(function(v) {
+    if (v.fecha >= BANCOS_FECHA_INICIO && v.banco) {
+      var b = v.banco;
+      if (!saldos[b]) saldos[b] = { eur: 0, usd: 0 };
+      if (v.moneda === 'USD') saldos[b].usd += v.bruto;
+      else saldos[b].eur += v.bruto;
+    }
+  });
+
+  // Formatear
+  function fmt(v, sym) {
+    var color = v >= 0 ? 'var(--green)' : 'var(--red)';
+    var num = Math.abs(v).toLocaleString('es-ES', {minimumFractionDigits:0, maximumFractionDigits:0});
+    return '<span style="color:'+color+';font-weight:600">'+num+' '+sym+'</span>';
+  }
+
+  var orden = ['R4','ING','IBKR','MYINV','MEDIOLANUM','REVOLUT'];
+  var nombres = {'R4':'R4','ING':'ING','IBKR':'IBKR','MYINV':'MyInvestor','MEDIOLANUM':'Mediolanum','REVOLUT':'Revolut'};
+
+  var html = '<h2 style="font-size:15px;color:var(--muted);margin-bottom:16px;font-weight:600">Liquidez disponible</h2>';
+  html += '<p style="font-size:11px;color:var(--muted);margin-bottom:16px">Saldo inicial: 3 jun 2026 · Se actualiza con compras y ventas del Excel</p>';
+
+  var totalEur = 0, totalUsd = 0;
+
+  orden.forEach(function(b) {
+    var s = saldos[b] || { eur: 0, usd: 0 };
+    totalEur += s.eur;
+    totalUsd += s.usd;
+    var tieneEur = BANCOS_SALDOS_INICIALES[b] && BANCOS_SALDOS_INICIALES[b].eur !== undefined;
+    var tieneUsd = BANCOS_SALDOS_INICIALES[b] && BANCOS_SALDOS_INICIALES[b].usd !== undefined && BANCOS_SALDOS_INICIALES[b].usd > 0;
+
+    html += '<div style="padding:14px 0;border-bottom:1px solid var(--border)">';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">'+(nombres[b]||b)+'</div>';
+    html += '<div style="display:flex;gap:24px">';
+    if (tieneEur || s.eur !== 0) {
+      html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">EUR</div>'+fmt(s.eur,'€')+'</div>';
+    }
+    if (tieneUsd || s.usd !== 0) {
+      html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">USD</div>'+fmt(s.usd,'$')+'</div>';
+    }
+    html += '</div></div>';
+  });
+
+  // Total
+  html += '<div style="padding:14px 0;margin-top:4px">';
+  html += '<div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">TOTAL</div>';
+  html += '<div style="display:flex;gap:24px">';
+  html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">EUR</div>'+fmt(totalEur,'€')+'</div>';
+  html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">USD</div>'+fmt(totalUsd,'$')+'</div>';
+  html += '</div></div>';
+
+  el.innerHTML = html;
+};
+</script>
+
 </body>
 </html>

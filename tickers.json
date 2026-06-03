@@ -114,7 +114,7 @@
     "titulos": 277.0,
     "coste_eur": 13979.02,
     "precio_excel": 54.46,
-    "fuente_resolucion": "auto_yahoo"
+    "fuente_resolucion": "override"
   },
   "AMRC": {
     "yahoo": "AMRC",

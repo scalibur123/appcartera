@@ -344,54 +344,8 @@ def leer_excel_con_mic():
     return [posiciones[t] for t in orden], sin_mic, mensual_data, compras_por_ticker
 
 
-SUFIJOS_EUR = [".PA", ".DE", ".AS", ".MI", ".BR", ".LS", ".MC", ".HE", ".ST", ".CO", ".OL", ".L", ".VI", ".SW"]
-
-def buscar_simbolo_yahoo_auto(ticker):
-    """
-    Consulta Yahoo Finance search para encontrar el sufijo correcto de un ticker europeo.
-    Devuelve el simbolo completo (ej. "SGO.PA") o None si no encuentra nada.
-    Guarda el resultado en tickers_override.json automaticamente.
-    """
-    import urllib.request
-    import urllib.parse
-    url = f"https://query1.finance.yahoo.com/v1/finance/search?q={urllib.parse.quote(ticker)}&quotesCount=5&newsCount=0"
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=8) as resp:
-            data = json.loads(resp.read().decode())
-        quotes = data.get("quotes", [])
-        for q in quotes:
-            sym = q.get("symbol", "")
-            # Buscar coincidencia exacta del ticker con sufijo europeo
-            for sfx in SUFIJOS_EUR:
-                if sym.upper() == ticker.upper() + sfx:
-                    print(f"   🔍 Auto-resuelto: {ticker} → {sym} (Yahoo search)")
-                    _guardar_override_auto(ticker, sym)
-                    return sym
-    except Exception as e:
-        print(f"   ⚠️  Yahoo search fallido para {ticker}: {e}")
-    return None
-
-
-def _guardar_override_auto(ticker, simbolo):
-    """Guarda el simbolo resuelto en tickers_override.json para futuras ejecuciones."""
-    try:
-        if OVERRIDE_JSON.exists():
-            with open(OVERRIDE_JSON, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        else:
-            data = {}
-        if ticker not in data:
-            data[ticker] = simbolo
-            with open(OVERRIDE_JSON, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            print(f"   💾 Guardado en tickers_override.json: {ticker} → {simbolo}")
-    except Exception as e:
-        print(f"   ⚠️  No se pudo guardar override: {e}")
-
-
 def resolver_simbolo_yahoo(p, overrides):
-    """Resuelve simbolo Yahoo en cascada: override > mic > auto-busqueda Yahoo > moneda > tal cual."""
+    """Resuelve simbolo Yahoo en cascada: override > mic > moneda > tal cual."""
     ticker = p["tckr"]
 
     # 1. Override manual
@@ -412,17 +366,11 @@ def resolver_simbolo_yahoo(p, overrides):
     if mic:
         return ticker, f"mic_desconocido_{mic}"
 
-    # 5. Moneda USD -> sin sufijo (Nasdaq/NYSE)
+    # 5. Heuristica por moneda
     if p.get("moneda") == "USD":
         return ticker, "fallback_usd_directo"
-
-    # 6. Moneda EUR sin MIC -> buscar en Yahoo automaticamente
     if p.get("moneda") == "EUR":
-        sym_auto = buscar_simbolo_yahoo_auto(ticker)
-        if sym_auto:
-            return sym_auto, "auto_yahoo"
-        # Si no encuentra nada, dejar sin sufijo (mejor que .MC incorrecto)
-        return ticker, "fallback_sin_sufijo"
+        return ticker + ".MC", "fallback_madrid"
 
     return ticker, "sin_resolver"
 
@@ -539,31 +487,145 @@ def leer_ganancias_realizadas():
 
 
 def leer_ventas():
-    """Lee las ventas del año desde pestaña 2026, filas 258-380.
-    Col D=ticker, Col Q(17)=fecha venta, Col Y(25)=plusvalia bruta, Col Z(26)=plusvalia neta.
+    """Lee las ventas del año desde pestaña 2026, filas 258-401.
+    Col D=ticker, Col G=moneda, Col Q(17)=fecha venta, Col Y(25)=plusvalia bruta, Col Z(26)=plusvalia neta.
+    El banco se saca cruzando el ticker con la cartera (filas 5-258, col H).
     """
     wb = openpyxl.load_workbook(open(str(EXCEL), 'rb'), read_only=True, data_only=True)
     ws = wb['2026']
+    # Construir mapa ticker -> (banco, moneda) desde posiciones abiertas y cerradas (filas 5-258)
+    ticker_info = {}
+    for row in range(5, 258):
+        t = ws.cell(row=row, column=4).value
+        b = ws.cell(row=row, column=8).value
+        m = ws.cell(row=row, column=7).value
+        if t:
+            tk = str(t).strip()
+            if tk not in ticker_info:
+                ticker_info[tk] = {
+                    'banco': normalizar_banco(b),
+                    'moneda': str(m).strip() if m else 'EUR'
+                }
     ventas = []
-    for row in range(258, 381):
-        ticker  = ws.cell(row=row, column=4).value   # col D
-        fecha   = ws.cell(row=row, column=17).value  # col Q
-        bruto   = ws.cell(row=row, column=25).value  # col Y
-        neto    = ws.cell(row=row, column=26).value  # col Z
+    for row in range(258, 401):
+        ticker = ws.cell(row=row, column=4).value   # col D
+        fecha  = ws.cell(row=row, column=17).value  # col Q
+        bruto  = ws.cell(row=row, column=25).value  # col Y
+        neto   = ws.cell(row=row, column=26).value  # col Z
+        moneda = ws.cell(row=row, column=7).value   # col G
         if not ticker or not fecha or not bruto or not neto:
             continue
         if not isinstance(fecha, datetime):
             continue
+        ticker_str = str(ticker).strip()
+        info = ticker_info.get(ticker_str, {})
+        moneda_str = str(moneda).strip() if moneda else info.get('moneda', 'EUR')
         ventas.append({
-            'ticker': str(ticker).strip(),
+            'ticker': ticker_str,
             'fecha':  fecha.strftime('%Y-%m-%d'),
             'bruto':  round(float(bruto), 2),
             'neto':   round(float(neto), 2),
+            'banco':  info.get('banco', '-'),
+            'moneda': moneda_str,
         })
     ventas.sort(key=lambda x: x['fecha'])
     print(f"✅ {len(ventas)} ventas leidas del Excel")
     return ventas
 
+
+
+def asegurar_bancos(html):
+    """Garantiza que la pestaña Bancos existe en el HTML."""
+    if 'id="bancos"' in html:
+        return html
+    # Añadir botón nav
+    html = html.replace(
+        "<button class=\"nav-btn\" onclick=\"showTab('analistas',this);loadAnalistas()\">Analistas</button>",
+        "<button class=\"nav-btn\" onclick=\"showTab('analistas',this);loadAnalistas()\">Analistas</button>\n  <button class=\"nav-btn\" onclick=\"showTab('bancos',this);renderBancos()\">Bancos</button>"
+    )
+    # Añadir bancos al array de swipe
+    html = html.replace(
+        "const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','analistas'];",
+        "const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','analistas','bancos'];"
+    )
+    # Añadir callback
+    html = html.replace(
+        "'analistas':()=>loadAnalistas()}",
+        "'analistas':()=>loadAnalistas(),'bancos':()=>renderBancos()}"
+    )
+    # Añadir sección y script
+    bancos_html = '''<div id="bancos" class="section">
+  <div style="padding:16px" id="bancos-content">Cargando...</div>
+</div>
+<script>
+var BANCOS_SALDOS_INICIALES = {
+  'R4':         { eur: 16422, usd: 24565 },
+  'ING':        { eur: 63827, usd: 0 },
+  'IBKR':       { eur: 0,     usd: 19963 },
+  'MYINV':      { eur: 103931, usd: 0 },
+  'MEDIOLANUM': { eur: 1064,  usd: 0 },
+  'REVOLUT':    { eur: 300,   usd: 6936 },
+};
+var BANCOS_FECHA_INICIO = '2026-06-03';
+window.renderBancos = function() {
+  var el = document.getElementById('bancos-content');
+  var saldos = {};
+  for (var b in BANCOS_SALDOS_INICIALES) {
+    saldos[b] = { eur: BANCOS_SALDOS_INICIALES[b].eur, usd: BANCOS_SALDOS_INICIALES[b].usd };
+  }
+  C.forEach(function(item) {
+    var moneda = item.moneda;
+    (item.compras || []).forEach(function(c) {
+      var partes = c.fecha.split('/');
+      var fechaComp = partes.length === 3 ? partes[2]+'-'+partes[1]+'-'+partes[0] : c.fecha;
+      if (fechaComp >= BANCOS_FECHA_INICIO) {
+        var bcomp = (c.banco || item.banco || '').toUpperCase();
+        if (!saldos[bcomp]) saldos[bcomp] = { eur: 0, usd: 0 };
+        if (moneda === 'USD') saldos[bcomp].usd -= c.coste;
+        else saldos[bcomp].eur -= c.coste;
+      }
+    });
+  });
+  (window.VENTAS_ANUAL || []).forEach(function(v) {
+    if (v.fecha >= BANCOS_FECHA_INICIO && v.banco) {
+      var b = v.banco.toUpperCase();
+      if (!saldos[b]) saldos[b] = { eur: 0, usd: 0 };
+      if (v.moneda === 'USD') saldos[b].usd += v.bruto;
+      else saldos[b].eur += v.bruto;
+    }
+  });
+  function fmt(v, sym) {
+    var color = v >= 0 ? 'var(--green)' : 'var(--red)';
+    var num = Math.abs(v).toLocaleString('es-ES', {minimumFractionDigits:0, maximumFractionDigits:0});
+    return '<span style="color:'+color+';font-weight:600">'+num+' '+sym+'</span>';
+  }
+  var orden = ['R4','ING','IBKR','MYINV','MEDIOLANUM','REVOLUT'];
+  var nombres = {'R4':'R4','ING':'ING','IBKR':'IBKR','MYINV':'MyInvestor','MEDIOLANUM':'Mediolanum','REVOLUT':'Revolut'};
+  var html = '<h2 style="font-size:15px;color:var(--muted);margin-bottom:16px;font-weight:600">Liquidez disponible</h2>';
+  html += '<p style="font-size:11px;color:var(--muted);margin-bottom:16px">Saldo inicial: 3 jun 2026 · Se actualiza con compras y ventas del Excel</p>';
+  var totalEur = 0, totalUsd = 0;
+  orden.forEach(function(b) {
+    var s = saldos[b] || { eur: 0, usd: 0 };
+    var ini = BANCOS_SALDOS_INICIALES[b] || { eur: 0, usd: 0 };
+    totalEur += s.eur; totalUsd += s.usd;
+    html += '<div style="padding:14px 0;border-bottom:1px solid var(--border)">';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">'+(nombres[b]||b)+'</div>';
+    html += '<div style="display:flex;gap:24px">';
+    if (ini.eur > 0 || s.eur !== 0) html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">EUR</div>'+fmt(s.eur,'€')+'</div>';
+    if (ini.usd > 0 || s.usd !== 0) html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">USD</div>'+fmt(s.usd,'$')+'</div>';
+    html += '</div></div>';
+  });
+  html += '<div style="padding:14px 0;margin-top:4px"><div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">TOTAL</div>';
+  html += '<div style="display:flex;gap:24px">';
+  html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">EUR</div>'+fmt(totalEur,'€')+'</div>';
+  html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">USD</div>'+fmt(totalUsd,'$')+'</div>';
+  html += '</div></div>';
+  el.innerHTML = html;
+};
+</script>
+'''
+    html = html.replace('</body>', bancos_html + '</body>')
+    return html
 
 
 def asegurar_resumen_snapshots(html):
@@ -945,6 +1007,7 @@ window.loadAnalistas = function() {
     nuevo_html = asegurar_mercado_abierto(nuevo_html)
     nuevo_html = asegurar_resumen_snapshots(nuevo_html)
     nuevo_html = asegurar_historico(nuevo_html)
+    nuevo_html = asegurar_bancos(nuevo_html)
 
     # Asegurar meta no-cache (para que iOS PWA no cachee versiones antiguas)
     if 'Cache-Control" content="no-cache' not in nuevo_html:
