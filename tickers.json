@@ -239,7 +239,7 @@
     "moneda": "USD",
     "titulos": 248.0,
     "coste_eur": 4741.8103,
-    "precio_excel": 15.015,
+    "precio_excel": 14.98,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "BAX": {
@@ -248,7 +248,7 @@
     "moneda": "USD",
     "titulos": 180.0,
     "coste_eur": 7221.3603,
-    "precio_excel": 18.675,
+    "precio_excel": 18.68,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "BAYN": {
@@ -311,7 +311,7 @@
     "moneda": "USD",
     "titulos": 150.0,
     "coste_eur": 7907.2006,
-    "precio_excel": 10.12,
+    "precio_excel": 10.13,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "BNR": {
@@ -635,7 +635,7 @@
     "moneda": "USD",
     "titulos": 100.0,
     "coste_eur": 6153.4773,
-    "precio_excel": 60.17,
+    "precio_excel": 60.16,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "FRA": {
@@ -995,7 +995,7 @@
     "moneda": "USD",
     "titulos": 120.0,
     "coste_eur": 9285.4139,
-    "precio_excel": 69.02,
+    "precio_excel": 69,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "MKC": {
@@ -1004,7 +1004,7 @@
     "moneda": "USD",
     "titulos": 125.0,
     "coste_eur": 9492.4637,
-    "precio_excel": 46.175,
+    "precio_excel": 46.15,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "MDT": {
@@ -1139,7 +1139,7 @@
     "moneda": "USD",
     "titulos": 94.0,
     "coste_eur": 10224.4894,
-    "precio_excel": 120.39,
+    "precio_excel": 120.41,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "ORY": {
@@ -1269,13 +1269,13 @@
     "fuente_resolucion": "override"
   },
   "SGO": {
-    "yahoo": "SGO.MC",
+    "yahoo": "SGO.PA",
     "mic": null,
     "moneda": "EUR",
     "titulos": 200.0,
     "coste_eur": 15540.79,
     "precio_excel": 77.42,
-    "fuente_resolucion": "fallback_madrid"
+    "fuente_resolucion": "override"
   },
   "SAN": {
     "yahoo": "SAN.PA",
@@ -1391,7 +1391,7 @@
     "moneda": "USD",
     "titulos": 135.0,
     "coste_eur": 7521.9816,
-    "precio_excel": 84.82,
+    "precio_excel": 84.8,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "SPT": {
@@ -1679,7 +1679,7 @@
     "moneda": "USD",
     "titulos": 2000.0,
     "coste_eur": 13073.8725,
-    "precio_excel": 6.025,
+    "precio_excel": 6.03,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "WDAY": {
