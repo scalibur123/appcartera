@@ -108,13 +108,13 @@
     "fuente_resolucion": "override"
   },
   "AMS": {
-    "yahoo": "AMS.MC",
+    "yahoo": "AMS.SW",
     "mic": null,
     "moneda": "EUR",
     "titulos": 277.0,
     "coste_eur": 13979.02,
     "precio_excel": 54.46,
-    "fuente_resolucion": "fallback_madrid"
+    "fuente_resolucion": "auto_yahoo"
   },
   "AMRC": {
     "yahoo": "AMRC",

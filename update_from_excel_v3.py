@@ -344,8 +344,54 @@ def leer_excel_con_mic():
     return [posiciones[t] for t in orden], sin_mic, mensual_data, compras_por_ticker
 
 
+SUFIJOS_EUR = [".PA", ".DE", ".AS", ".MI", ".BR", ".LS", ".MC", ".HE", ".ST", ".CO", ".OL", ".L", ".VI", ".SW"]
+
+def buscar_simbolo_yahoo_auto(ticker):
+    """
+    Consulta Yahoo Finance search para encontrar el sufijo correcto de un ticker europeo.
+    Devuelve el simbolo completo (ej. "SGO.PA") o None si no encuentra nada.
+    Guarda el resultado en tickers_override.json automaticamente.
+    """
+    import urllib.request
+    import urllib.parse
+    url = f"https://query1.finance.yahoo.com/v1/finance/search?q={urllib.parse.quote(ticker)}&quotesCount=5&newsCount=0"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            data = json.loads(resp.read().decode())
+        quotes = data.get("quotes", [])
+        for q in quotes:
+            sym = q.get("symbol", "")
+            # Buscar coincidencia exacta del ticker con sufijo europeo
+            for sfx in SUFIJOS_EUR:
+                if sym.upper() == ticker.upper() + sfx:
+                    print(f"   🔍 Auto-resuelto: {ticker} → {sym} (Yahoo search)")
+                    _guardar_override_auto(ticker, sym)
+                    return sym
+    except Exception as e:
+        print(f"   ⚠️  Yahoo search fallido para {ticker}: {e}")
+    return None
+
+
+def _guardar_override_auto(ticker, simbolo):
+    """Guarda el simbolo resuelto en tickers_override.json para futuras ejecuciones."""
+    try:
+        if OVERRIDE_JSON.exists():
+            with open(OVERRIDE_JSON, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        else:
+            data = {}
+        if ticker not in data:
+            data[ticker] = simbolo
+            with open(OVERRIDE_JSON, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            print(f"   💾 Guardado en tickers_override.json: {ticker} → {simbolo}")
+    except Exception as e:
+        print(f"   ⚠️  No se pudo guardar override: {e}")
+
+
 def resolver_simbolo_yahoo(p, overrides):
-    """Resuelve simbolo Yahoo en cascada: override > mic > moneda > tal cual."""
+    """Resuelve simbolo Yahoo en cascada: override > mic > auto-busqueda Yahoo > moneda > tal cual."""
     ticker = p["tckr"]
 
     # 1. Override manual
@@ -366,11 +412,17 @@ def resolver_simbolo_yahoo(p, overrides):
     if mic:
         return ticker, f"mic_desconocido_{mic}"
 
-    # 5. Heuristica por moneda
+    # 5. Moneda USD -> sin sufijo (Nasdaq/NYSE)
     if p.get("moneda") == "USD":
         return ticker, "fallback_usd_directo"
+
+    # 6. Moneda EUR sin MIC -> buscar en Yahoo automaticamente
     if p.get("moneda") == "EUR":
-        return ticker + ".MC", "fallback_madrid"
+        sym_auto = buscar_simbolo_yahoo_auto(ticker)
+        if sym_auto:
+            return sym_auto, "auto_yahoo"
+        # Si no encuentra nada, dejar sin sufijo (mejor que .MC incorrecto)
+        return ticker, "fallback_sin_sufijo"
 
     return ticker, "sin_resolver"
 
