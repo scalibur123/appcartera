@@ -486,47 +486,52 @@ def leer_ganancias_realizadas():
     return r
 
 
+def leer_dividendos_bancos():
+    """Lee dividendos de pestaña 'dividendos 26': col A=fecha, col D=banco, col I=neto."""
+    wb = openpyxl.load_workbook(open(str(EXCEL), 'rb'), read_only=True, data_only=True)
+    ws = wb['dividendos 26']
+    dividendos = []
+    for row in ws.iter_rows(min_row=5, max_row=500, values_only=True):
+        fecha = row[0]
+        banco = row[3]   # col D
+        neto  = row[8]   # col I
+        if not fecha or not isinstance(fecha, datetime) or not neto or not banco:
+            continue
+        dividendos.append({
+            'fecha': fecha.strftime('%Y-%m-%d'),
+            'banco': normalizar_banco(banco),
+            'neto':  round(float(neto), 2),
+        })
+    print(f"✅ {len(dividendos)} dividendos leidos del Excel")
+    return dividendos
+
+
 def leer_ventas():
     """Lee las ventas del año desde pestaña 2026, filas 258-401.
-    Col D=ticker, Col G=moneda, Col Q(17)=fecha venta, Col Y(25)=plusvalia bruta, Col Z(26)=plusvalia neta.
-    El banco se saca cruzando el ticker con la cartera (filas 5-258, col H).
+    Col D=ticker, Col G=moneda, Col H=banco, Col Q(17)=fecha venta, Col Y(25)=plusvalia bruta, Col Z(26)=plusvalia neta.
+    El banco se lee directamente de col H de cada fila de venta.
     """
     wb = openpyxl.load_workbook(open(str(EXCEL), 'rb'), read_only=True, data_only=True)
     ws = wb['2026']
-    # Construir mapa ticker -> (banco, moneda) desde posiciones abiertas y cerradas (filas 5-258)
-    ticker_info = {}
-    for row in range(5, 258):
-        t = ws.cell(row=row, column=4).value
-        b = ws.cell(row=row, column=8).value
-        m = ws.cell(row=row, column=7).value
-        if t:
-            tk = str(t).strip()
-            if tk not in ticker_info:
-                ticker_info[tk] = {
-                    'banco': normalizar_banco(b),
-                    'moneda': str(m).strip() if m else 'EUR'
-                }
     ventas = []
     for row in range(258, 401):
         ticker = ws.cell(row=row, column=4).value   # col D
         fecha  = ws.cell(row=row, column=17).value  # col Q
         bruto  = ws.cell(row=row, column=25).value  # col Y
         neto   = ws.cell(row=row, column=26).value  # col Z
+        banco  = ws.cell(row=row, column=8).value   # col H
         moneda = ws.cell(row=row, column=7).value   # col G
         if not ticker or not fecha or not bruto or not neto:
             continue
         if not isinstance(fecha, datetime):
             continue
-        ticker_str = str(ticker).strip()
-        info = ticker_info.get(ticker_str, {})
-        moneda_str = str(moneda).strip() if moneda else info.get('moneda', 'EUR')
         ventas.append({
-            'ticker': ticker_str,
+            'ticker': str(ticker).strip(),
             'fecha':  fecha.strftime('%Y-%m-%d'),
             'bruto':  round(float(bruto), 2),
             'neto':   round(float(neto), 2),
-            'banco':  info.get('banco', '-'),
-            'moneda': moneda_str,
+            'banco':  normalizar_banco(banco),
+            'moneda': str(moneda).strip() if moneda else 'EUR',
         })
     ventas.sort(key=lambda x: x['fecha'])
     print(f"✅ {len(ventas)} ventas leidas del Excel")
@@ -592,6 +597,13 @@ window.renderBancos = function() {
       if (!saldos[b]) saldos[b] = { eur: 0, usd: 0 };
       if (v.moneda === 'USD') saldos[b].usd += v.bruto;
       else saldos[b].eur += v.bruto;
+    }
+  });
+  (window.DIVIDENDOS_BANCOS || []).forEach(function(d) {
+    if (d.fecha >= BANCOS_FECHA_INICIO && d.banco) {
+      var b = d.banco.toUpperCase();
+      if (!saldos[b]) saldos[b] = { eur: 0, usd: 0 };
+      saldos[b].eur += d.neto;
     }
   });
   function fmt(v, sym) {
@@ -741,7 +753,7 @@ def asegurar_mercado_abierto(html):
         print('OK asegurar_mercado_abierto aplicado')
     return html
 
-def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None, ventas_data=None):
+def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None, ventas_data=None, dividendos_data=None):
     if not INDEX_HTML.exists():
         print(f"❌ index.html no encontrado: {INDEX_HTML}")
         sys.exit(1)
@@ -867,6 +879,14 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
             lambda m: m.group(0)[:m.group(0).rfind('<span')] + fmtr(rendimiento_data["anual"]),
             nuevo_html, flags=re3.DOTALL, count=1
         )
+
+    # === DIVIDENDOS BANCOS ===
+    if dividendos_data is not None:
+        divs_js = f'var DIVIDENDOS_BANCOS={json.dumps(dividendos_data, ensure_ascii=False)};'
+        if 'var DIVIDENDOS_BANCOS=' in nuevo_html:
+            nuevo_html = re.sub(r'var DIVIDENDOS_BANCOS=\[.*?\];', divs_js, nuevo_html, flags=re.DOTALL)
+        else:
+            nuevo_html = nuevo_html.replace('</body>', f'<script>{divs_js}</script>\n</body>')
 
     # === PESTAÑA VENTAS ===
     if ventas_data is not None:
@@ -1065,6 +1085,7 @@ def main():
     ganancias_data = leer_ganancias_realizadas()
     rendimiento_data = leer_rendimiento_cartera()
     ventas_data = leer_ventas()
+    dividendos_data = leer_dividendos_bancos()
     print(f"✅ {len(posiciones)} tickers unicos cargados")
 
     overrides = cargar_overrides()
@@ -1104,7 +1125,7 @@ def main():
     print(f"\n✅ Guardado {TICKERS_JSON}")
 
     const_C = construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker)
-    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data, ventas_data=ventas_data)
+    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data, ventas_data=ventas_data, dividendos_data=dividendos_data)
 
     print("\n🎯 LISTO. Siguiente paso:")
     print("   python3 validate.py")
