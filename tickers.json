@@ -531,13 +531,13 @@
     "fuente_resolucion": "override"
   },
   "EL": {
-    "yahoo": "EL.MC",
+    "yahoo": "EL.PA",
     "mic": null,
     "moneda": "EUR",
     "titulos": 85.0,
     "coste_eur": 15672.84,
     "precio_excel": 163.15,
-    "fuente_resolucion": "fallback_madrid"
+    "fuente_resolucion": "override"
   },
   "EGLA": {
     "yahoo": "EGLA.MI",

@@ -412,6 +412,48 @@ def resolver_simbolo_yahoo(p, overrides):
     return ticker, "sin_resolver"
 
 
+def buscar_simbolo_yahoo_auto(ticker):
+    """
+    Busca el simbolo correcto en Yahoo Finance dado un ticker.
+    Usa el endpoint de busqueda de Yahoo. Devuelve el simbolo o None si no encuentra.
+    Guarda el resultado en tickers_override.json automaticamente para no volver a buscar.
+    """
+    import urllib.request, urllib.parse, json as _json, time
+    url = f"https://query1.finance.yahoo.com/v1/finance/search?q={urllib.parse.quote(ticker)}&quotesCount=5&newsCount=0"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=8) as r:
+            data = _json.loads(r.read().decode())
+        quotes = data.get("finance", {}).get("result", [{}])[0].get("quotes", [])
+        if not quotes:
+            return None
+        # Buscar coincidencia exacta de ticker primero
+        for q in quotes:
+            sym = q.get("symbol", "")
+            if sym.upper() == ticker.upper():
+                return sym
+        # Si no hay exacta, coger el primero que sea equity
+        for q in quotes:
+            if q.get("quoteType") in ("EQUITY", "ETF"):
+                return q.get("symbol")
+        return quotes[0].get("symbol")
+    except Exception as e:
+        print(f"   ⚠️  Error buscando {ticker} en Yahoo: {e}")
+        return None
+
+
+def guardar_override(ticker, symbol):
+    """Guarda un override en tickers_override.json."""
+    import json as _json
+    data = {}
+    if OVERRIDE_JSON.exists():
+        with open(OVERRIDE_JSON, "r", encoding="utf-8") as f:
+            data = _json.load(f)
+    data[ticker] = symbol
+    with open(OVERRIDE_JSON, "w", encoding="utf-8") as f:
+        _json.dump(data, f, indent=2, ensure_ascii=False)
+
+
 def construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker={}):
     items = []
     for p in posiciones:
@@ -844,6 +886,60 @@ def actualizar_earnings_local():
         count += 1
     print(f'✅ Earnings actualizados: {count} valores')
 
+def verificar_precios_yahoo(ticker_map):
+    """
+    Verifica en tiempo real que todos los simbolos Yahoo devuelven precio.
+    Llama al mismo endpoint que usa el servidor (v8/finance/chart).
+    Si alguno falla, lo muestra en rojo con la solución exacta.
+    """
+    import urllib.request, urllib.parse, json as _json, time
+
+    simbolos = [(tckr, info['yahoo']) for tckr, info in ticker_map.items()]
+    total = len(simbolos)
+    fallos = []
+
+    print(f"\n🔍 Verificando precios de {total} tickers en Yahoo Finance...")
+
+    BATCH = 10
+    for i in range(0, len(simbolos), BATCH):
+        batch = simbolos[i:i+BATCH]
+        for tckr, sym in batch:
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(sym)}?interval=1d&range=1d"
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=6) as r:
+                    data = _json.loads(r.read().decode())
+                result = data.get("chart", {}).get("result")
+                precio = result[0]["meta"].get("regularMarketPrice") if result else None
+                if not precio:
+                    fallos.append((tckr, sym))
+            except Exception:
+                fallos.append((tckr, sym))
+        time.sleep(0.3)  # respetar rate limit Yahoo
+
+    ok = total - len(fallos)
+    if not fallos:
+        print(f"✅ {ok}/{total} tickers con precio OK")
+    else:
+        print(f"\n{'='*50}")
+        print(f"⚠️  {ok}/{total} tickers con precio — {len(fallos)} SIN PRECIO:")
+        for tckr, sym in fallos:
+            moneda = ticker_map[tckr].get('moneda', '?')
+            fuente = ticker_map[tckr].get('fuente_resolucion', '?')
+            print(f"\n  ❌ {tckr} -> '{sym}' no devuelve precio en Yahoo")
+            if fuente == 'fallback_madrid':
+                print(f"     ⚡ ACCION: añade en tickers_override.json:")
+                print(f'     \033[91m"{tckr}": "SIMBOLO_CORRECTO"\033[0m')
+                print(f"     (busca el símbolo en finance.yahoo.com)")
+            elif fuente == 'fallback_usd_directo':
+                print(f"     ⚡ ACCION: añade en tickers_override.json:")
+                print(f'     \033[91m"{tckr}": "SIMBOLO_CORRECTO"\033[0m')
+            else:
+                print(f"     ⚡ ACCION: verifica el símbolo en finance.yahoo.com")
+        print(f"{'='*50}")
+        print(f"\033[91m⛔ ATENCION: estos tickers no se mostraran en la app hasta corregirlos\033[0m")
+
+
 def main():
     print(f"📂 Leyendo Excel: {EXCEL}")
     posiciones, sin_mic, mensual_data, compras_por_ticker, proximas_compras = leer_excel_con_mic()
@@ -857,8 +953,23 @@ def main():
     # Resolver simbolos
     ticker_map = {}
     stats = {}
+    nuevos_overrides = {}
+
     for p in posiciones:
         sym, fuente = resolver_simbolo_yahoo(p, overrides)
+
+        # Si no se pudo resolver -> buscar automaticamente en Yahoo Finance
+        if fuente == 'sin_resolver':
+            print(f"   🔍 Buscando {p['tckr']} en Yahoo Finance...")
+            sym_auto = buscar_simbolo_yahoo_auto(p['tckr'])
+            if sym_auto:
+                sym = sym_auto
+                fuente = 'auto_yahoo'
+                nuevos_overrides[p['tckr']] = sym_auto
+                print(f"   ✅ {p['tckr']} -> {sym_auto} (guardado en overrides)")
+            else:
+                print(f"   ❌ {p['tckr']} no encontrado en Yahoo — verifica manualmente")
+
         ticker_map[p["tckr"]] = {
             "yahoo": sym,
             "mic": p.get("mic"),
@@ -869,6 +980,12 @@ def main():
             "fuente_resolucion": fuente,
         }
         stats[fuente] = stats.get(fuente, 0) + 1
+
+    # Guardar nuevos overrides encontrados automaticamente
+    if nuevos_overrides:
+        for ticker, symbol in nuevos_overrides.items():
+            guardar_override(ticker, symbol)
+        print(f"\n✅ {len(nuevos_overrides)} nuevos overrides guardados automaticamente en tickers_override.json")
 
     print(f"\n📊 Resolucion de simbolos:")
     for fuente, n in sorted(stats.items(), key=lambda x: -x[1]):
@@ -889,6 +1006,12 @@ def main():
 
     const_C = construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker)
     actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data, proximas_compras=proximas_compras)
+
+    # ══════════════════════════════════════════════════
+    # VERIFICACION DE PRECIOS — avisa si algun ticker
+    # no devuelve precio desde Yahoo antes del push
+    # ══════════════════════════════════════════════════
+    verificar_precios_yahoo(ticker_map)
 
     print("\n🎯 LISTO. Siguiente paso:")
     print("   python3 validate.py")
