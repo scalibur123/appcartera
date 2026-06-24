@@ -2364,39 +2364,77 @@ window.renderVentas = function() {
 </script>
 <!--proximas-compras-start--><script>
 (function(){
-  var PROXIMAS=[{"tckr":"VCT","banco":"R4","p_cond":">67,9","p_max":68.0,"objetivo":94.9,"precio_act":66.3},{"tckr":"CXT","banco":"IBKR","p_cond":">47,81","p_max":47.82,"objetivo":72.56,"precio_act":45.27},{"tckr":"MTX","banco":null,"p_cond":">343,3","p_max":343.4,"objetivo":488.36,"precio_act":337.7},{"tckr":"HOOD","banco":null,"p_cond":">94,42","p_max":94.43,"objetivo":144.23,"precio_act":102.77}];
-  function renderProximas(){
+  var PROXIMAS=[{"tckr":"VCT","symbol":"VCT","banco":"R4","p_cond":">67,9","p_max":68.0,"objetivo":94.9},{"tckr":"CXT","symbol":"CXT","banco":"IBKR","p_cond":">47,81","p_max":47.82,"objetivo":72.56},{"tckr":"MTX","symbol":"MTX","banco":null,"p_cond":">343,3","p_max":343.4,"objetivo":488.36},{"tckr":"HOOD","symbol":"HOOD","banco":null,"p_cond":">94,42","p_max":94.43,"objetivo":144.23}];
+
+  function fmtPrecio(v){
+    if(v==null)return '-';
+    return v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  function buildCard(p, precioReal, pct){
+    var condicional=p.p_cond&&p.p_cond!==null;
+    var badgeCond=condicional
+      ?'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(255,165,0,0.15);color:#f5a623;margin-left:6px">COND</span>'
+      :'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(76,175,80,0.15);color:var(--green);margin-left:6px">DIRECTA</span>';
+    var bancoHtml=p.banco
+      ?'<span style="font-size:11px;color:var(--muted);margin-left:6px">'+p.banco+'</span>'
+      :'';
+    var condHtml=condicional
+      ?'<div style="margin-top:4px;font-size:12px;color:#f5a623">⚡ Condición: <b>'+p.p_cond+'</b></div>'
+      :'';
+    var pmaxHtml=p.p_max!=null
+      ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Precio máx: <b style="color:var(--fg)">'+fmtPrecio(p.p_max)+'</b></div>'
+      :'';
+    var objHtml=p.objetivo!=null
+      ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Objetivo: <b style="color:var(--green)">'+fmtPrecio(p.objetivo)+'</b></div>'
+      :'';
+    var pctStr='';
+    if(pct!=null){
+      var pctColor=pct>=0?'var(--green)':'var(--red)';
+      var pctSign=pct>=0?'+':'';
+      pctStr='<span style="font-size:12px;color:'+pctColor+';margin-left:8px">'+pctSign+pct.toFixed(2)+'%</span>';
+    }
+    var precioHtml=precioReal!=null
+      ?'<div style="margin-top:5px;font-size:14px;color:var(--muted)">Precio actual: <b style="color:var(--fg);font-size:16px">'+fmtPrecio(precioReal)+'</b>'+pctStr+'</div>'
+      :'<div style="margin-top:5px;font-size:12px;color:var(--muted)">Precio actual: <i>cargando...</i></div>';
+    return '<div style="padding:14px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px">'
+      +'<span style="font-size:16px;font-weight:700;color:var(--fg)">'+p.tckr+'</span>'
+      +bancoHtml+badgeCond+'</div>'
+      +condHtml+precioHtml+pmaxHtml+objHtml
+      +'</div>';
+  }
+
+  async function renderProximas(){
     var el=document.getElementById('proximas-list');
     if(!el)return;
-    if(!PROXIMAS||PROXIMAS.length===0){el.innerHTML='<p style="color:var(--muted);font-size:14px">Sin próximas compras registradas.</p>';return;}
-    el.innerHTML=PROXIMAS.map(function(p){
-      var condicional=p.p_cond&&p.p_cond!==null;
-      var badgeCond=condicional
-        ?'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(255,165,0,0.15);color:#f5a623;margin-left:6px">COND</span>'
-        :'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(76,175,80,0.15);color:var(--green);margin-left:6px">DIRECTA</span>';
-      var bancoHtml=p.banco
-        ?'<span style="font-size:11px;color:var(--muted);margin-left:6px">'+p.banco+'</span>'
-        :'';
-      var condHtml=condicional
-        ?'<div style="margin-top:4px;font-size:12px;color:#f5a623">⚡ Condición: <b>'+p.p_cond+'</b></div>'
-        :'';
-      var pmaxHtml=p.p_max!=null
-        ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Precio máx: <b style="color:var(--fg)">'+p.p_max.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'</b></div>'
-        :'';
-      var objHtml=p.objetivo!=null
-        ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Objetivo: <b style="color:var(--green)">'+p.objetivo.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'</b></div>'
-        :'';
-      var pactHtml=p.precio_act!=null
-        ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Precio actual: <b style="color:var(--fg)">'+p.precio_act.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'</b></div>'
-        :'';
-      return '<div style="padding:14px 0;border-bottom:1px solid var(--border)">'
-        +'<div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px">'
-        +'<span style="font-size:16px;font-weight:700;color:var(--fg)">'+p.tckr+'</span>'
-        +bancoHtml+badgeCond+'</div>'
-        +condHtml+pmaxHtml+pactHtml+objHtml
-        +'</div>';
-    }).join('');
+    if(!PROXIMAS||PROXIMAS.length===0){
+      el.innerHTML='<p style="color:var(--muted);font-size:14px">Sin próximas compras registradas.</p>';
+      return;
+    }
+    // Mostrar skeleton mientras carga
+    el.innerHTML=PROXIMAS.map(function(p){return buildCard(p,null,null);}).join('');
+    // Fetch precios reales al servidor (mismo endpoint que usa la cartera)
+    var symbols=PROXIMAS.map(function(p){return p.symbol;}).join(',');
+    try{
+      var r=await fetch('/?symbols='+encodeURIComponent(symbols));
+      var data=await r.json();
+      var priceMap={};
+      if(data&&data.quoteResponse&&data.quoteResponse.result){
+        data.quoteResponse.result.forEach(function(q){
+          priceMap[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent};
+        });
+      }
+      el.innerHTML=PROXIMAS.map(function(p){
+        var q=priceMap[p.symbol];
+        return buildCard(p, q?q.price:null, q?q.pct:null);
+      }).join('');
+    }catch(e){
+      // Si falla el fetch, mostrar sin precio
+      el.innerHTML=PROXIMAS.map(function(p){return buildCard(p,null,null);}).join('');
+    }
   }
+
   var _origShowTab=window.showTab;
   window.showTab=function(id,btn){
     _origShowTab&&_origShowTab(id,btn);

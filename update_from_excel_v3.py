@@ -151,26 +151,28 @@ def leer_proximas_compras(wb):
       X  = precio condicion (ej: ">67,9") — si hay condicion, la compra es condicional
       Y  = precio maximo de compra
       AC = objetivo personal
-      D  = precio actual (del Excel, para referencia)
+      B/AO = nombre completo con MIC para resolver simbolo Yahoo
+    El simbolo Yahoo se resuelve igual que para posiciones: MIC > override > moneda.
     """
     if 'DIANA' not in wb.sheetnames:
         return []
     ws = wb['DIANA']
+    overrides = cargar_overrides()
     proximas = []
-    # Buscar filas de proximas compras: entre fila 212 y 215 (ajustar si crece)
     for row in range(212, 216):
         ticker = ws.cell(row=row, column=2).value   # B
         if not ticker or not isinstance(ticker, str):
             continue
         ticker = ticker.strip()
         fecha_compra = ws.cell(row=row, column=23).value  # W - si tiene fecha = ya comprado
-        if fecha_compra:  # ya comprado, no es proxima compra
+        if fecha_compra:
             continue
+
         banco_raw = ws.cell(row=row, column=21).value   # U
-        p_cond_raw = ws.cell(row=row, column=24).value  # X - condicion
-        p_max_raw = ws.cell(row=row, column=25).value   # Y - precio maximo
-        objetivo_raw = ws.cell(row=row, column=29).value # AC - objetivo
-        precio_act_raw = ws.cell(row=row, column=4).value # D - precio actual Excel
+        p_cond_raw = ws.cell(row=row, column=24).value  # X
+        p_max_raw  = ws.cell(row=row, column=25).value  # Y
+        objetivo_raw = ws.cell(row=row, column=29).value # AC
+        moneda_raw = ws.cell(row=row, column=7).value   # G moneda
 
         def fmt_val(v):
             if v is None or v == '-' or (isinstance(v, str) and '#' in v):
@@ -179,22 +181,42 @@ def leer_proximas_compras(wb):
                 return round(float(v), 4)
             return str(v).strip()
 
-        banco = str(banco_raw).strip() if banco_raw and str(banco_raw).strip() not in ('-','') else None
-        p_cond = fmt_val(p_cond_raw)
-        p_max = fmt_val(p_max_raw)
+        banco   = str(banco_raw).strip() if banco_raw and str(banco_raw).strip() not in ('-','') else None
+        p_cond  = fmt_val(p_cond_raw)
+        p_max   = fmt_val(p_max_raw)
         objetivo = fmt_val(objetivo_raw)
-        precio_act = fmt_val(precio_act_raw)
+        moneda  = str(moneda_raw).strip() if moneda_raw else None
+
+        # Resolver simbolo Yahoo: igual que resolver_simbolo_yahoo pero leyendo MIC
+        # de las columnas B o AO de esta misma fila
+        mic = None
+        for col_letter in ['B', 'AO']:
+            col_idx = 2 if col_letter == 'B' else 41
+            v = ws.cell(row=row, column=col_idx).value
+            if v and isinstance(v, str) and '#' not in v:
+                m = REGEX_MIC.search(v)
+                if m:
+                    mic = m.group(1)
+                    break
+
+        pseudo_pos = {'tckr': ticker, 'mic': mic, 'moneda': moneda}
+        symbol, fuente = resolver_simbolo_yahoo(pseudo_pos, overrides)
+
+        if fuente == 'sin_resolver':
+            print(f"   ⚠️  {ticker}: símbolo Yahoo no resuelto. Añade '\"{ticker}\": \"SIMBOLO.XX\"' en tickers_override.json")
 
         proximas.append({
             'tckr': ticker,
+            'symbol': symbol,   # simbolo Yahoo para fetch de precio real
             'banco': banco,
-            'p_cond': p_cond,       # condicion (string como ">67,9" o None)
-            'p_max': p_max,          # precio maximo de compra
-            'objetivo': objetivo,    # objetivo personal
-            'precio_act': precio_act, # precio actual del Excel (referencia)
+            'p_cond': p_cond,
+            'p_max': p_max,
+            'objetivo': objetivo,
         })
 
     print(f'✅ {len(proximas)} proximas compras leidas de pestana DIANA')
+    for p in proximas:
+        print(f"   {p['tckr']} -> symbol={p['symbol']}, banco={p['banco']}, p_max={p['p_max']}, cond={p['p_cond']}")
     return proximas
 
 def leer_excel_con_mic():
@@ -460,38 +482,76 @@ def asegurar_proximas_compras(html, proximas_compras):
     render_fn = ("""
 (function(){
   var PROXIMAS=%%PROXIMAS_JSON%%;
-  function renderProximas(){
+
+  function fmtPrecio(v){
+    if(v==null)return '-';
+    return v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  function buildCard(p, precioReal, pct){
+    var condicional=p.p_cond&&p.p_cond!==null;
+    var badgeCond=condicional
+      ?'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(255,165,0,0.15);color:#f5a623;margin-left:6px">COND</span>'
+      :'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(76,175,80,0.15);color:var(--green);margin-left:6px">DIRECTA</span>';
+    var bancoHtml=p.banco
+      ?'<span style="font-size:11px;color:var(--muted);margin-left:6px">'+p.banco+'</span>'
+      :'';
+    var condHtml=condicional
+      ?'<div style="margin-top:4px;font-size:12px;color:#f5a623">⚡ Condición: <b>'+p.p_cond+'</b></div>'
+      :'';
+    var pmaxHtml=p.p_max!=null
+      ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Precio máx: <b style="color:var(--fg)">'+fmtPrecio(p.p_max)+'</b></div>'
+      :'';
+    var objHtml=p.objetivo!=null
+      ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Objetivo: <b style="color:var(--green)">'+fmtPrecio(p.objetivo)+'</b></div>'
+      :'';
+    var pctStr='';
+    if(pct!=null){
+      var pctColor=pct>=0?'var(--green)':'var(--red)';
+      var pctSign=pct>=0?'+':'';
+      pctStr='<span style="font-size:12px;color:'+pctColor+';margin-left:8px">'+pctSign+pct.toFixed(2)+'%</span>';
+    }
+    var precioHtml=precioReal!=null
+      ?'<div style="margin-top:5px;font-size:14px;color:var(--muted)">Precio actual: <b style="color:var(--fg);font-size:16px">'+fmtPrecio(precioReal)+'</b>'+pctStr+'</div>'
+      :'<div style="margin-top:5px;font-size:12px;color:var(--muted)">Precio actual: <i>cargando...</i></div>';
+    return '<div style="padding:14px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px">'
+      +'<span style="font-size:16px;font-weight:700;color:var(--fg)">'+p.tckr+'</span>'
+      +bancoHtml+badgeCond+'</div>'
+      +condHtml+precioHtml+pmaxHtml+objHtml
+      +'</div>';
+  }
+
+  async function renderProximas(){
     var el=document.getElementById('proximas-list');
     if(!el)return;
-    if(!PROXIMAS||PROXIMAS.length===0){el.innerHTML='<p style="color:var(--muted);font-size:14px">Sin próximas compras registradas.</p>';return;}
-    el.innerHTML=PROXIMAS.map(function(p){
-      var condicional=p.p_cond&&p.p_cond!==null;
-      var badgeCond=condicional
-        ?'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(255,165,0,0.15);color:#f5a623;margin-left:6px">COND</span>'
-        :'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(76,175,80,0.15);color:var(--green);margin-left:6px">DIRECTA</span>';
-      var bancoHtml=p.banco
-        ?'<span style="font-size:11px;color:var(--muted);margin-left:6px">'+p.banco+'</span>'
-        :'';
-      var condHtml=condicional
-        ?'<div style="margin-top:4px;font-size:12px;color:#f5a623">⚡ Condición: <b>'+p.p_cond+'</b></div>'
-        :'';
-      var pmaxHtml=p.p_max!=null
-        ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Precio máx: <b style="color:var(--fg)">'+p.p_max.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'</b></div>'
-        :'';
-      var objHtml=p.objetivo!=null
-        ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Objetivo: <b style="color:var(--green)">'+p.objetivo.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'</b></div>'
-        :'';
-      var pactHtml=p.precio_act!=null
-        ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Precio actual: <b style="color:var(--fg)">'+p.precio_act.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'</b></div>'
-        :'';
-      return '<div style="padding:14px 0;border-bottom:1px solid var(--border)">'
-        +'<div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px">'
-        +'<span style="font-size:16px;font-weight:700;color:var(--fg)">'+p.tckr+'</span>'
-        +bancoHtml+badgeCond+'</div>'
-        +condHtml+pmaxHtml+pactHtml+objHtml
-        +'</div>';
-    }).join('');
+    if(!PROXIMAS||PROXIMAS.length===0){
+      el.innerHTML='<p style="color:var(--muted);font-size:14px">Sin próximas compras registradas.</p>';
+      return;
+    }
+    // Mostrar skeleton mientras carga
+    el.innerHTML=PROXIMAS.map(function(p){return buildCard(p,null,null);}).join('');
+    // Fetch precios reales al servidor (mismo endpoint que usa la cartera)
+    var symbols=PROXIMAS.map(function(p){return p.symbol;}).join(',');
+    try{
+      var r=await fetch('/?symbols='+encodeURIComponent(symbols));
+      var data=await r.json();
+      var priceMap={};
+      if(data&&data.quoteResponse&&data.quoteResponse.result){
+        data.quoteResponse.result.forEach(function(q){
+          priceMap[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent};
+        });
+      }
+      el.innerHTML=PROXIMAS.map(function(p){
+        var q=priceMap[p.symbol];
+        return buildCard(p, q?q.price:null, q?q.pct:null);
+      }).join('');
+    }catch(e){
+      // Si falla el fetch, mostrar sin precio
+      el.innerHTML=PROXIMAS.map(function(p){return buildCard(p,null,null);}).join('');
+    }
   }
+
   var _origShowTab=window.showTab;
   window.showTab=function(id,btn){
     _origShowTab&&_origShowTab(id,btn);
