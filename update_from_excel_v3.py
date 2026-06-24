@@ -781,14 +781,10 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
         # Si los elementos no existen aún en el HTML, añadirlos tras sueldo-neto
         if 'prom-neto-conservador-val' not in nuevo_html:
             bloque_prom = (
-                '<div class="sueldo-row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">'
-                '<span class="sueldo-label">Prom. neto 14p 24/26</span>'
-                '<span class="sueldo-val" id="prom-neto-conservador-val">' + mensual_data['prom_neto_conservador'] + '</span>'
-                '</div>'
-                '<div class="sueldo-row">'
-                '<span class="sueldo-label">Prom. neto 12p 24/26</span>'
-                '<span class="sueldo-val" id="prom-neto-optimista-val">' + mensual_data['prom_neto_optimista'] + '</span>'
-                '</div>'
+                '<div class="plusv-row"><span class="plusv-label">Prom. neto 14p 24/26</span>'
+                '<span class="mensual-val green" id="prom-neto-conservador-val">' + mensual_data['prom_neto_conservador'] + '</span></div>'
+                '<div class="plusv-row"><span class="plusv-label">Prom. neto 12p 24/26</span>'
+                '<span class="mensual-val green" id="prom-neto-optimista-val">' + mensual_data['prom_neto_optimista'] + '</span></div>'
             )
             nuevo_html = re2.sub(
                 r'(id="sueldo-neto-val">[^<]*</span></div>)',
