@@ -126,23 +126,76 @@ def cargar_mic_externos():
 
 def leer_diana(wb, tickers_vivos):
     if 'DIANA' not in wb.sheetnames:
-        return {}, {}
+        return {}
     ws = wb['DIANA']
     objetivos = {}
-    objetivos_analistas = {}
     for row in range(12, 221):
         ticker = ws[f'B{row}'].value
         objetivo = ws[f'AC{row}'].value
-        obj_analistas = ws[f'AF{row}'].value
         if not ticker or not isinstance(ticker, str): continue
         ticker = ticker.strip()
         if ticker not in tickers_vivos: continue
-        if ticker not in objetivos:
-            if isinstance(objetivo, (int, float)):
-                objetivos[ticker] = round(float(objetivo), 4)
-            if isinstance(obj_analistas, (int, float)):
-                objetivos_analistas[ticker] = round(float(obj_analistas), 4)
-    return objetivos, objetivos_analistas
+        if ticker in objetivos: continue
+        if not isinstance(objetivo, (int, float)): continue
+        objetivos[ticker] = round(float(objetivo), 4)
+    return objetivos
+
+
+def leer_proximas_compras(wb):
+    """
+    Lee las proximas compras de la pestana DIANA, filas 212-215.
+    Se identifican porque la col W (fecha compra) esta vacia.
+    Columnas relevantes:
+      B  = ticker
+      U  = banco (puede estar vacio)
+      X  = precio condicion (ej: ">67,9") — si hay condicion, la compra es condicional
+      Y  = precio maximo de compra
+      AC = objetivo personal
+      D  = precio actual (del Excel, para referencia)
+    """
+    if 'DIANA' not in wb.sheetnames:
+        return []
+    ws = wb['DIANA']
+    proximas = []
+    # Buscar filas de proximas compras: entre fila 212 y 215 (ajustar si crece)
+    for row in range(212, 216):
+        ticker = ws.cell(row=row, column=2).value   # B
+        if not ticker or not isinstance(ticker, str):
+            continue
+        ticker = ticker.strip()
+        fecha_compra = ws.cell(row=row, column=23).value  # W - si tiene fecha = ya comprado
+        if fecha_compra:  # ya comprado, no es proxima compra
+            continue
+        banco_raw = ws.cell(row=row, column=21).value   # U
+        p_cond_raw = ws.cell(row=row, column=24).value  # X - condicion
+        p_max_raw = ws.cell(row=row, column=25).value   # Y - precio maximo
+        objetivo_raw = ws.cell(row=row, column=29).value # AC - objetivo
+        precio_act_raw = ws.cell(row=row, column=4).value # D - precio actual Excel
+
+        def fmt_val(v):
+            if v is None or v == '-' or (isinstance(v, str) and '#' in v):
+                return None
+            if isinstance(v, (int, float)):
+                return round(float(v), 4)
+            return str(v).strip()
+
+        banco = str(banco_raw).strip() if banco_raw and str(banco_raw).strip() not in ('-','') else None
+        p_cond = fmt_val(p_cond_raw)
+        p_max = fmt_val(p_max_raw)
+        objetivo = fmt_val(objetivo_raw)
+        precio_act = fmt_val(precio_act_raw)
+
+        proximas.append({
+            'tckr': ticker,
+            'banco': banco,
+            'p_cond': p_cond,       # condicion (string como ">67,9" o None)
+            'p_max': p_max,          # precio maximo de compra
+            'objetivo': objetivo,    # objetivo personal
+            'precio_act': precio_act, # precio actual del Excel (referencia)
+        })
+
+    print(f'✅ {len(proximas)} proximas compras leidas de pestana DIANA')
+    return proximas
 
 def leer_excel_con_mic():
     """
@@ -223,8 +276,7 @@ def leer_excel_con_mic():
                     'fecha': fecha_str,
                     'titulos': titulos_i,
                     'precio': precio_compra,
-                    'coste': round(coste_i, 2),
-                    'banco': normalizar_banco(ws.cell(row=row, column=8).value),
+                    'coste': round(coste_i, 2)
                 })
 
         def fmt_eur(v):
@@ -249,10 +301,6 @@ def leer_excel_con_mic():
     if mic_externo:
         print(f"📄 Cargados {len(mic_externo)} mapeos MIC desde {MIC_NAMES_TXT.name}")
 
-    # Segunda apertura sin data_only para leer columna B aunque no esté cacheada
-    wb_formulas = openpyxl.load_workbook(EXCEL, data_only=False, keep_vba=False)
-    ws_formulas = wb_formulas[HOJA]
-
     posiciones = {}
     orden = []
     sin_mic = []
@@ -267,7 +315,7 @@ def leer_excel_con_mic():
         moneda = ws[f"G{row}"].value
         precio_excel = ws[f"E{row}"].value
 
-        # Intentar extraer MIC: B (cacheado) -> B (fórmula) -> AO -> mic_nombres.txt
+        # Intentar extraer MIC: B -> AO -> mic_nombres.txt
         mic = None
         nombre_completo = None
 
@@ -279,15 +327,6 @@ def leer_excel_con_mic():
                     mic = m.group(1)
                     nombre_completo = v.strip()
                     break
-
-        # Si no se encontró MIC con data_only, intentar leer B directamente de la fórmula
-        if not mic:
-            v_formula = ws_formulas[f"B{row}"].value
-            if v_formula and isinstance(v_formula, str) and "#" not in v_formula:
-                m = REGEX_MIC.search(v_formula)
-                if m:
-                    mic = m.group(1)
-                    nombre_completo = v_formula.strip()
 
         if not mic and ticker in mic_externo:
             mic = mic_externo[ticker]
@@ -301,7 +340,7 @@ def leer_excel_con_mic():
                 "moneda": moneda,
                 "precio_excel": precio_excel,
                 "mic": mic,
-                "bancos": set([normalizar_banco(ws[f"H{row}"].value)]),
+                "banco": normalizar_banco(ws[f"H{row}"].value),
                 "objetivo": None,
             }
             orden.append(ticker)
@@ -310,8 +349,6 @@ def leer_excel_con_mic():
 
         posiciones[ticker]["titulos"] += titulos
         posiciones[ticker]["coste_eur"] += coste_eur
-        # Acumular todos los bancos distintos
-        posiciones[ticker]["bancos"].add(normalizar_banco(ws[f"H{row}"].value))
         # Si en una fila posterior aparece el MIC, actualizar
         if mic and not posiciones[ticker]["mic"]:
             posiciones[ticker]["mic"] = mic
@@ -319,21 +356,16 @@ def leer_excel_con_mic():
             if ticker in sin_mic:
                 sin_mic.remove(ticker)
 
-    # Convertir set de bancos a string ordenado
-    for t in posiciones:
-        bancos = posiciones[t].pop("bancos")
-        posiciones[t]["banco"] = "/".join(sorted(b for b in bancos if b and b != '-'))
-
     # Leer objetivos de pestana DIANA
     tickers_vivos = set(posiciones.keys())
-    objetivos, objetivos_analistas = leer_diana(wb, tickers_vivos)
+    objetivos = leer_diana(wb, tickers_vivos)
     for t, obj in objetivos.items():
         if t in posiciones:
             posiciones[t]['objetivo'] = obj
-    for t, obj in objetivos_analistas.items():
-        if t in posiciones:
-            posiciones[t]['objetivo_analistas'] = obj
-    print(f'OK {len(objetivos)} objetivos y {len(objetivos_analistas)} objetivos analistas leidos de pestana DIANA')
+    print(f'OK {len(objetivos)} objetivos leidos de pestana DIANA')
+
+    # Leer proximas compras de pestana DIANA
+    proximas_compras = leer_proximas_compras(wb)
 
     # DEBUG
     fubo = posiciones.get('FUBO')
@@ -341,7 +373,7 @@ def leer_excel_con_mic():
     if fubo: print(f'DEBUG FUBO en posiciones: objetivo={fubo.get("objetivo")}, banco={fubo.get("banco")}')
     if abeo: print(f'DEBUG ABEO en posiciones: objetivo={abeo.get("objetivo")}, banco={abeo.get("banco")}')
 
-    return [posiciones[t] for t in orden], sin_mic, mensual_data, compras_por_ticker
+    return [posiciones[t] for t in orden], sin_mic, mensual_data, compras_por_ticker, proximas_compras
 
 
 def resolver_simbolo_yahoo(p, overrides):
@@ -397,12 +429,123 @@ def construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker={}):
             "moneda": p["moneda"],
             "banco": p.get("banco", "-"),
             "objetivo": p.get("objetivo"),
-            "objetivo_analistas": p.get("objetivo_analistas"),
             "symbol": sym,
             "compras": compras_por_ticker.get(tckr, []),
         }
         items.append(json.dumps(item_json, ensure_ascii=False, separators=(",", ":")))
     return "const C=[" + ",".join(items) + "];"
+
+
+def asegurar_proximas_compras(html, proximas_compras):
+    """
+    Inyecta o reemplaza la pestana 'proximas' en index.html con los datos
+    de proximas compras leidos del Excel (DIANA filas 212-215).
+    Si la pestana no existe la crea. Si ya existe la reemplaza.
+    """
+    import json as _json
+    proximas_json = _json.dumps(proximas_compras, ensure_ascii=False, separators=(',', ':'))
+
+    # ---- Boton de navegacion ----
+    btn = '<button class="nav-btn" onclick="showTab(\'proximas\',this)">Próximas</button>'
+
+    # ---- Seccion HTML de la pestana ----
+    section = '''<div id="proximas" class="section">
+  <div style="padding:16px">
+    <h2 style="margin-bottom:12px;font-size:14px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Próximas compras</h2>
+    <div id="proximas-list"></div>
+  </div>
+</div>'''
+
+    # ---- Funcion JS de renderizado ----
+    render_fn = ("""
+(function(){
+  var PROXIMAS=%%PROXIMAS_JSON%%;
+  function renderProximas(){
+    var el=document.getElementById('proximas-list');
+    if(!el)return;
+    if(!PROXIMAS||PROXIMAS.length===0){el.innerHTML='<p style="color:var(--muted);font-size:14px">Sin próximas compras registradas.</p>';return;}
+    el.innerHTML=PROXIMAS.map(function(p){
+      var condicional=p.p_cond&&p.p_cond!==null;
+      var badgeCond=condicional
+        ?'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(255,165,0,0.15);color:#f5a623;margin-left:6px">COND</span>'
+        :'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(76,175,80,0.15);color:var(--green);margin-left:6px">DIRECTA</span>';
+      var bancoHtml=p.banco
+        ?'<span style="font-size:11px;color:var(--muted);margin-left:6px">'+p.banco+'</span>'
+        :'';
+      var condHtml=condicional
+        ?'<div style="margin-top:4px;font-size:12px;color:#f5a623">⚡ Condición: <b>'+p.p_cond+'</b></div>'
+        :'';
+      var pmaxHtml=p.p_max!=null
+        ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Precio máx: <b style="color:var(--fg)">'+p.p_max.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'</b></div>'
+        :'';
+      var objHtml=p.objetivo!=null
+        ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Objetivo: <b style="color:var(--green)">'+p.objetivo.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'</b></div>'
+        :'';
+      var pactHtml=p.precio_act!=null
+        ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Precio actual: <b style="color:var(--fg)">'+p.precio_act.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'</b></div>'
+        :'';
+      return '<div style="padding:14px 0;border-bottom:1px solid var(--border)">'
+        +'<div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px">'
+        +'<span style="font-size:16px;font-weight:700;color:var(--fg)">'+p.tckr+'</span>'
+        +bancoHtml+badgeCond+'</div>'
+        +condHtml+pmaxHtml+pactHtml+objHtml
+        +'</div>';
+    }).join('');
+  }
+  var _origShowTab=window.showTab;
+  window.showTab=function(id,btn){
+    _origShowTab&&_origShowTab(id,btn);
+    if(id==='proximas')renderProximas();
+  };
+})();
+""").replace('%%PROXIMAS_JSON%%', proximas_json)
+
+    # Insertar boton de nav si no existe (antes del boton de Analistas o al final de nav)
+    if "onclick=\"showTab('proximas'" not in html:
+        if "<button class=\"nav-btn\" onclick=\"showTab('analistas'" in html:
+            html = html.replace(
+                "<button class=\"nav-btn\" onclick=\"showTab('analistas'",
+                btn + '\n  <button class="nav-btn" onclick="showTab(\'analistas\'',
+                1
+            )
+        else:
+            html = html.replace('</nav>', '  ' + btn + '\n</nav>', 1)
+
+    # Insertar seccion HTML si no existe (antes de analistas o antes de </body>)
+    if 'id="proximas"' not in html:
+        if '<div id="analistas"' in html:
+            html = html.replace('<div id="analistas"', section + '\n<div id="analistas"', 1)
+        else:
+            html = html.replace('</body>', section + '\n</body>', 1)
+
+    # Inyectar/reemplazar el bloque JS (marcado con comentario para poder reemplazarlo)
+    marker_start = '<!--proximas-compras-start-->'
+    marker_end = '<!--proximas-compras-end-->'
+    js_block = marker_start + '<script>' + render_fn + '</script>' + marker_end
+
+    if marker_start in html:
+        import re as _re
+        html = _re.sub(
+            re.escape(marker_start) + r'.*?' + re.escape(marker_end),
+            js_block,
+            html,
+            flags=re.DOTALL
+        )
+    else:
+        html = html.replace('</body>', js_block + '\n</body>', 1)
+
+    # Actualizar array de tabs para swipe si no tiene 'proximas'
+    import re as _re2
+    def add_proximas_to_tabs(m):
+        tabs_str = m.group(0)
+        if 'proximas' in tabs_str:
+            return tabs_str
+        if "'analistas'" in tabs_str:
+            return tabs_str.replace("'analistas'", "'proximas','analistas'")
+        return tabs_str.replace(']', ",'proximas']")
+    html = _re2.sub(r"const tabs=\[[^\]]+\]", add_proximas_to_tabs, html)
+
+    return html
 
 
 def asegurar_historico(html):
@@ -447,11 +590,12 @@ def leer_rendimiento_cartera():
              'Julio':7,'Agosto':8,'Septiembre':9,'Octubre':10,'Noviembre':11,'Diciembre':12}
     mes_hoy = datetime.now().month
     total_mes = 0
-    total_anual = ws['F57'].value or 0
+    total_anual = 0
     for row in ws.iter_rows(min_row=4, max_row=60, values_only=True):
         if row[3] is not None and isinstance(row[5], (int,float)) and row[5] != 0:
             if meses.get(row[3], 0) == mes_hoy:
                 total_mes = row[5]
+            total_anual += row[5]
     ws_irpf = wb['IRPF']
     tipo_irpf = ws_irpf.cell(35, 6).value or 0.20925
     return {'mes': total_mes, 'mes_n': total_mes*(1-tipo_irpf), 'anual': total_anual, 'anual_n': total_anual*(1-tipo_irpf)}
@@ -485,275 +629,7 @@ def leer_ganancias_realizadas():
 
     return r
 
-
-def leer_dividendos_bancos():
-    """Lee dividendos de pestaña 'dividendos 26': col A=fecha, col D=banco, col I=neto."""
-    wb = openpyxl.load_workbook(open(str(EXCEL), 'rb'), read_only=True, data_only=True)
-    ws = wb['dividendos 26']
-    dividendos = []
-    for row in ws.iter_rows(min_row=5, max_row=500, values_only=True):
-        fecha = row[0]
-        banco = row[3]   # col D
-        neto  = row[8]   # col I
-        if not fecha or not isinstance(fecha, datetime) or not neto or not banco:
-            continue
-        dividendos.append({
-            'fecha': fecha.strftime('%Y-%m-%d'),
-            'banco': normalizar_banco(banco),
-            'neto':  round(float(neto), 2),
-        })
-    print(f"✅ {len(dividendos)} dividendos leidos del Excel")
-    return dividendos
-
-
-def leer_ventas():
-    """Lee las ventas del año desde pestaña 2026, filas 258-401.
-    Col D=ticker, Col G=moneda, Col H=banco, Col Q(17)=fecha venta, Col Y(25)=plusvalia bruta, Col Z(26)=plusvalia neta.
-    El banco se lee directamente de col H de cada fila de venta.
-    """
-    wb = openpyxl.load_workbook(open(str(EXCEL), 'rb'), read_only=True, data_only=True)
-    ws = wb['2026']
-    ventas = []
-    for row in range(258, 401):
-        ticker = ws.cell(row=row, column=4).value   # col D
-        fecha  = ws.cell(row=row, column=17).value  # col Q
-        bruto  = ws.cell(row=row, column=25).value  # col Y
-        neto   = ws.cell(row=row, column=26).value  # col Z
-        banco  = ws.cell(row=row, column=8).value   # col H
-        moneda = ws.cell(row=row, column=7).value   # col G
-        if not ticker or not fecha or not bruto or not neto:
-            continue
-        if not isinstance(fecha, datetime):
-            continue
-        ventas.append({
-            'ticker': str(ticker).strip(),
-            'fecha':  fecha.strftime('%Y-%m-%d'),
-            'bruto':  round(float(bruto), 2),
-            'neto':   round(float(neto), 2),
-            'banco':  normalizar_banco(banco),
-            'moneda': str(moneda).strip() if moneda else 'EUR',
-        })
-    ventas.sort(key=lambda x: x['fecha'])
-    print(f"✅ {len(ventas)} ventas leidas del Excel")
-    return ventas
-
-
-
-def asegurar_bancos(html):
-    """Garantiza que la pestaña Bancos existe en el HTML."""
-    if 'id="bancos"' in html:
-        return html
-    # Añadir botón nav
-    html = html.replace(
-        "<button class=\"nav-btn\" onclick=\"showTab('analistas',this);loadAnalistas()\">Analistas</button>",
-        "<button class=\"nav-btn\" onclick=\"showTab('analistas',this);loadAnalistas()\">Analistas</button>\n  <button class=\"nav-btn\" onclick=\"showTab('bancos',this);renderBancos()\">Bancos</button>"
-    )
-    # Añadir bancos al array de swipe
-    html = html.replace(
-        "const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','analistas'];",
-        "const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','analistas','bancos'];"
-    )
-    # Añadir callback
-    html = html.replace(
-        "'analistas':()=>loadAnalistas()}",
-        "'analistas':()=>loadAnalistas(),'bancos':()=>renderBancos()}"
-    )
-    # Añadir sección y script
-    bancos_html = '''<div id="bancos" class="section">
-  <div style="padding:16px" id="bancos-content">Cargando...</div>
-</div>
-<script>
-var BANCOS_SALDOS_INICIALES = {
-  'R4':         { eur: 16422, usd: 24565 },
-  'ING':        { eur: 63827, usd: 0 },
-  'IBKR':       { eur: 0,     usd: 19963 },
-  'MYINV':      { eur: 103931, usd: 0 },
-  'MEDIOLANUM': { eur: 1064,  usd: 0 },
-  'REVOLUT':    { eur: 300,   usd: 6936 },
-};
-var BANCOS_FECHA_INICIO = '2026-06-03';
-window.renderBancos = function() {
-  var el = document.getElementById('bancos-content');
-  var saldos = {};
-  for (var b in BANCOS_SALDOS_INICIALES) {
-    saldos[b] = { eur: BANCOS_SALDOS_INICIALES[b].eur, usd: BANCOS_SALDOS_INICIALES[b].usd };
-  }
-  C.forEach(function(item) {
-    var moneda = item.moneda;
-    (item.compras || []).forEach(function(c) {
-      var partes = c.fecha.split('/');
-      var fechaComp = partes.length === 3 ? partes[2]+'-'+partes[1]+'-'+partes[0] : c.fecha;
-      if (fechaComp >= BANCOS_FECHA_INICIO) {
-        var bcomp = (c.banco || item.banco || '').toUpperCase();
-        if (!saldos[bcomp]) saldos[bcomp] = { eur: 0, usd: 0 };
-        if (moneda === 'USD') saldos[bcomp].usd -= c.coste;
-        else saldos[bcomp].eur -= c.coste;
-      }
-    });
-  });
-  (window.VENTAS_ANUAL || []).forEach(function(v) {
-    if (v.fecha >= BANCOS_FECHA_INICIO && v.banco) {
-      var b = v.banco.toUpperCase();
-      if (!saldos[b]) saldos[b] = { eur: 0, usd: 0 };
-      if (v.moneda === 'USD') saldos[b].usd += v.bruto;
-      else saldos[b].eur += v.bruto;
-    }
-  });
-  (window.DIVIDENDOS_BANCOS || []).forEach(function(d) {
-    if (d.fecha >= BANCOS_FECHA_INICIO && d.banco) {
-      var b = d.banco.toUpperCase();
-      if (!saldos[b]) saldos[b] = { eur: 0, usd: 0 };
-      saldos[b].eur += d.neto;
-    }
-  });
-  function fmt(v, sym) {
-    var color = v >= 0 ? 'var(--green)' : 'var(--red)';
-    var num = Math.abs(v).toLocaleString('es-ES', {minimumFractionDigits:0, maximumFractionDigits:0});
-    return '<span style="color:'+color+';font-weight:600">'+num+' '+sym+'</span>';
-  }
-  var orden = ['R4','ING','IBKR','MYINV','MEDIOLANUM','REVOLUT'];
-  var nombres = {'R4':'R4','ING':'ING','IBKR':'IBKR','MYINV':'MyInvestor','MEDIOLANUM':'Mediolanum','REVOLUT':'Revolut'};
-  var html = '<h2 style="font-size:15px;color:var(--muted);margin-bottom:16px;font-weight:600">Liquidez disponible</h2>';
-  html += '<p style="font-size:11px;color:var(--muted);margin-bottom:16px">Saldo inicial: 3 jun 2026 · Se actualiza con compras y ventas del Excel</p>';
-  var totalEur = 0, totalUsd = 0;
-  orden.forEach(function(b) {
-    var s = saldos[b] || { eur: 0, usd: 0 };
-    var ini = BANCOS_SALDOS_INICIALES[b] || { eur: 0, usd: 0 };
-    totalEur += s.eur; totalUsd += s.usd;
-    html += '<div style="padding:14px 0;border-bottom:1px solid var(--border)">';
-    html += '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">'+(nombres[b]||b)+'</div>';
-    html += '<div style="display:flex;gap:24px">';
-    if (ini.eur > 0 || s.eur !== 0) html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">EUR</div>'+fmt(s.eur,'€')+'</div>';
-    if (ini.usd > 0 || s.usd !== 0) html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">USD</div>'+fmt(s.usd,'$')+'</div>';
-    html += '</div></div>';
-  });
-  html += '<div style="padding:14px 0;margin-top:4px"><div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">TOTAL</div>';
-  html += '<div style="display:flex;gap:24px">';
-  html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">EUR</div>'+fmt(totalEur,'€')+'</div>';
-  html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">USD</div>'+fmt(totalUsd,'$')+'</div>';
-  html += '</div></div>';
-  el.innerHTML = html;
-};
-</script>
-'''
-    html = html.replace('</body>', bancos_html + '</body>')
-    return html
-
-
-def asegurar_resumen_snapshots(html):
-    """Garantiza que HOY/SEMANA/MES/ANUAL usa /snapshots + VENTAS_ANUAL."""
-    if 'snapAntesDe' in html:
-        return html
-    MARCA_INI = '// HOY se pinta en el bloque de variaciones-diarias'
-    MARCA_FIN = ".catch(e=>console.error('Error variaciones-diarias:',e));"
-    if MARCA_INI not in html or MARCA_FIN not in html:
-        return html
-    nuevo = (
-        "const fmtR=(v)=>{const s=v<0;const abs=Math.abs(v);const parts=abs.toFixed(2).split('.');"
-        "const int=parts[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g,'.');return(s?'-':'+')+int+','+parts[1]+' \u20ac';};"
-        "\n  const colorR=(v)=>v>=0?'var(--green)':'var(--red)';\n  const IRPF=0.20925;\n\n"
-        "  function pintarBloque(idB,idN,val){\n"
-        "    const valN=val*(1-IRPF);\n"
-        "    const elB=document.getElementById(idB);\n"
-        "    const elN=document.getElementById(idN);\n"
-        "    if(elB) elB.innerHTML='<span style=\"color:'+colorR(val)+';font-size:20px;font-weight:500\">'+fmtR(val)+'</span>';\n"
-        "    if(elN) elN.innerHTML='<span style=\"color:'+colorR(valN)+';font-size:20px;font-weight:500\">'+fmtR(valN)+'</span>';\n"
-        "  }\n\n"
-        "  function calcValorAhora(){\n"
-        "    let v=0;\n"
-        "    for(const i of C){const p=prices[i.symbol];if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;v+=i.titulos*pe;}}\n"
-        "    return v;\n  }\n\n"
-        "  function ventasPeriodo(desde){\n"
-        "    if(!window.VENTAS_ANUAL)return 0;\n"
-        "    return VENTAS_ANUAL.filter(v=>v.fecha>=desde).reduce((s,v)=>s+v.bruto,0);\n"
-        "  }\n\n"
-        "  function calcVarHoyMercado(){\n"
-        "    let v=0;\n"
-        "    for(const i of C){\n"
-        "      const p=prices[i.symbol];\n"
-        "      if(!p||p.pct==null)continue;\n"
-        "      const precioAyer=p.price/(1+p.pct/100);\n"
-        "      const varPrecio=p.price-precioAyer;\n"
-        "      const varEur=i.moneda==='USD'&&eurUsd?varPrecio*i.titulos/eurUsd:varPrecio*i.titulos;\n"
-        "      v+=varEur;\n    }\n    return v;\n  }\n\n"
-        "  fetch('/snapshots').then(r=>r.json()).then(snaps=>{\n"
-        "    if(!snaps||!snaps.length){console.warn('Sin snapshots');return;}\n"
-        "    const ahora=new Date();\n"
-        "    const hoy=ahora.toISOString().slice(0,10);\n"
-        "    const lunesStr=(()=>{const d=new Date(ahora);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10);})();\n"
-        "    const primerMes=hoy.slice(0,8)+'01';\n"
-        "    const primerAnio=hoy.slice(0,4)+'-01-01';\n"
-        "    function snapAntesDe(fechaRef){\n"
-        "      const c=snaps.filter(s=>s.fecha<fechaRef).sort((a,b)=>b.fecha.localeCompare(a.fecha));\n"
-        "      return c[0]||null;\n    }\n"
-        "    const valorAhora=calcValorAhora();\n"
-        "    const varHoyMercado=calcVarHoyMercado();\n"
-        "    const ventasHoy=(window.VENTAS_ANUAL||[]).filter(v=>v.fecha===hoy).reduce((s,v)=>s+v.bruto,0);\n"
-        "    pintarBloque('hoy-b','hoy-n',varHoyMercado+ventasHoy);\n"
-        "    const sbs=snapAntesDe(lunesStr);\n"
-        "    const sbm=snapAntesDe(primerMes);\n"
-        "    const sba=snapAntesDe(primerAnio);\n"
-        "    if(sbs) pintarBloque('sem-b','sem-n',(valorAhora-sbs.valor_total)+ventasPeriodo(lunesStr));\n"
-        "    if(sbm) pintarBloque('mes-b','mes-n',(valorAhora-sbm.valor_total)+ventasPeriodo(primerMes));\n"
-        "    if(sba) pintarBloque('anual-b','anual-n',(valorAhora-sba.valor_total)+ventasPeriodo(primerAnio));\n"
-        "  }).catch(e=>{console.error('Error snapshots:',e);pintarBloque('hoy-b','hoy-n',calcVarHoyMercado());});"
-    )
-    ini = html.index(MARCA_INI)
-    fin = html.index(MARCA_FIN) + len(MARCA_FIN)
-    html = html[:ini] + nuevo + html[fin:]
-    print('OK asegurar_resumen_snapshots aplicado')
-    return html
-
-
-def asegurar_mercado_abierto(html):
-    """Garantiza que calcVarHoyMercado solo usa pct de mercados abiertos ahora."""
-    if 'mercadoAbierto' in html:
-        return html
-    ANTIGUO = (
-        "  function calcVarHoyMercado(){\n"
-        "    let v=0;\n"
-        "    for(const i of C){\n"
-        "      const p=prices[i.symbol];\n"
-        "      if(!p||p.pct==null)continue;\n"
-        "      const precioAyer=p.price/(1+p.pct/100);\n"
-        "      const varPrecio=p.price-precioAyer;\n"
-        "      const varEur=i.moneda===\'USD\'&&eurUsd?varPrecio*i.titulos/eurUsd:varPrecio*i.titulos;\n"
-        "      v+=varEur;\n"
-        "    }\n"
-        "    return v;\n"
-        "  }"
-    )
-    NUEVO = (
-        "  function mercadoAbierto(moneda){\n"
-        "    const ahora=new Date();\n"
-        "    const dia=ahora.getUTCDay();\n"
-        "    if(dia===0||dia===6)return false;\n"
-        "    const h=ahora.getUTCHours();\n"
-        "    const m=ahora.getUTCMinutes();\n"
-        "    const mins=h*60+m;\n"
-        "    if(moneda===\'USD\') return mins>=810&&mins<1200;\n"
-        "    return mins>=420&&mins<930;\n"
-        "  }\n"
-        "  function calcVarHoyMercado(){\n"
-        "    let v=0;\n"
-        "    for(const i of C){\n"
-        "      const p=prices[i.symbol];\n"
-        "      if(!p||p.pct==null)continue;\n"
-        "      if(!mercadoAbierto(i.moneda))continue;\n"
-        "      const precioAyer=p.price/(1+p.pct/100);\n"
-        "      const varPrecio=p.price-precioAyer;\n"
-        "      const varEur=i.moneda===\'USD\'&&eurUsd?varPrecio*i.titulos/eurUsd:varPrecio*i.titulos;\n"
-        "      v+=varEur;\n"
-        "    }\n"
-        "    return v;\n"
-        "  }"
-    )
-    if ANTIGUO in html:
-        html = html.replace(ANTIGUO, NUEVO, 1)
-        print('OK asegurar_mercado_abierto aplicado')
-    return html
-
-def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None, ventas_data=None, dividendos_data=None):
+def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None, proximas_compras=None):
     if not INDEX_HTML.exists():
         print(f"❌ index.html no encontrado: {INDEX_HTML}")
         sys.exit(1)
@@ -852,7 +728,6 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
                 nuevo_html = nuevo_html.replace(card_con_marker + card_con_marker, card_con_marker)
         else:
             nuevo_html = nuevo_html.replace('<p class="note">', card_con_marker + '\n  <p class="note">')
-
     if rendimiento_data:
         # Inyectar como variables JS
         js_vars = f'<script>var RENDIMIENTO_MES={rendimiento_data["mes"]};var RENDIMIENTO_MES_N={rendimiento_data["mes_n"]};var RENDIMIENTO_ANUAL={rendimiento_data["anual"]};var RENDIMIENTO_ANUAL_N={rendimiento_data["anual_n"]};</script>'
@@ -861,7 +736,6 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
             nuevo_html = re4.sub(r'<script>var RENDIMIENTO_MES=.*?;</script>', js_vars, nuevo_html)
         else:
             nuevo_html = nuevo_html.replace('</body>', js_vars + '</body>')
-
     if False and rendimiento_data:
         def fmtr(v):
             color = "var(--green)" if v >= 0 else "var(--red)"
@@ -879,160 +753,8 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
             lambda m: m.group(0)[:m.group(0).rfind('<span')] + fmtr(rendimiento_data["anual"]),
             nuevo_html, flags=re3.DOTALL, count=1
         )
-
-    # === DIVIDENDOS BANCOS ===
-    if dividendos_data is not None:
-        divs_js = f'var DIVIDENDOS_BANCOS={json.dumps(dividendos_data, ensure_ascii=False)};'
-        if 'var DIVIDENDOS_BANCOS=' in nuevo_html:
-            nuevo_html = re.sub(r'var DIVIDENDOS_BANCOS=\[.*?\];', divs_js, nuevo_html, flags=re.DOTALL)
-        else:
-            nuevo_html = nuevo_html.replace('</body>', f'<script>{divs_js}</script>\n</body>')
-
-    # === PESTAÑA VENTAS ===
-    if ventas_data is not None:
-        ventas_js = f'var VENTAS_ANUAL={json.dumps(ventas_data, ensure_ascii=False)};'
-        # Inyectar o actualizar variable JS
-        if 'var VENTAS_ANUAL=' in nuevo_html:
-            nuevo_html = re.sub(r'var VENTAS_ANUAL=\[.*?\];', ventas_js, nuevo_html, flags=re.DOTALL)
-        else:
-            nuevo_html = nuevo_html.replace('</body>', f'<script>{ventas_js}</script>\n</body>')
-
-        # Añadir boton en nav si no existe
-        if "showTab('ventas'" not in nuevo_html:
-            nuevo_html = nuevo_html.replace(
-                "<button class=\"nav-btn\" onclick=\"showTab('mensual',this)\">Mensual</button>",
-                "<button class=\"nav-btn\" onclick=\"showTab('mensual',this)\">Mensual</button>\n  <button class=\"nav-btn\" onclick=\"showTab('ventas',this);renderVentas()\">Ventas</button>"
-            )
-
-        # Añadir seccion HTML si no existe
-        if 'id="ventas"' not in nuevo_html:
-            ventas_section = '<div id="ventas" class="section"><div style="padding:16px" id="ventas-content">Cargando...</div></div>'
-            nuevo_html = nuevo_html.replace('</body>', ventas_section + '\n</body>')
-
-        # Añadir funcion JS si no existe
-        if 'function renderVentas' not in nuevo_html:
-            ventas_fn = """
-window.renderVentas = function() {
-  const el = document.getElementById('ventas-content');
-  if (!window.VENTAS_ANUAL || !VENTAS_ANUAL.length) {
-    el.innerHTML = '<p style="color:var(--muted)">Sin ventas registradas.</p>';
-    return;
-  }
-  const nombresMes = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const meses = {};
-  VENTAS_ANUAL.forEach(v => {
-    const d = new Date(v.fecha);
-    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-    if (!meses[key]) meses[key] = { nombre: nombresMes[d.getMonth()], ventas: [], bruto: 0, neto: 0 };
-    meses[key].ventas.push(v);
-    meses[key].bruto += v.bruto;
-    meses[key].neto  += v.neto;
-  });
-  function fmt(v) {
-    const color = v >= 0 ? 'var(--green)' : 'var(--red)';
-    const signo = v >= 0 ? '+' : '';
-    const num = Math.abs(v).toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2});
-    return '<span style="color:' + color + '">' + signo + num + ' \u20ac</span>';
-  }
-  function fmtFecha(iso) {
-    const d = new Date(iso);
-    return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
-  }
-  let html = '';
-  // Total anual arriba
-  const totalB = VENTAS_ANUAL.reduce((s,v) => s+v.bruto, 0);
-  const totalN = VENTAS_ANUAL.reduce((s,v) => s+v.neto, 0);
-  html += '<div style="padding:10px 0 16px;border-bottom:2px solid var(--border);margin-bottom:16px">';
-  html += '<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">TOTAL ANUAL</div>';
-  html += '<div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--muted)">Bruto</span>' + fmt(totalB) + '</div>';
-  html += '<div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--muted)">Neto</span>' + fmt(totalN) + '</div>';
-  html += '</div>';
-  // Por meses (mas reciente primero)
-  Object.keys(meses).sort().reverse().forEach(key => {
-    const m = meses[key];
-    html += '<div style="margin-bottom:20px">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:6px">';
-    html += '<span style="font-weight:700;font-size:15px;color:var(--text)">' + m.nombre + '</span>';
-    html += '<span style="font-size:12px;color:var(--muted)">' + fmt(m.bruto) + ' / ' + fmt(m.neto) + '</span>';
-    html += '</div>';
-    // Ventas del mes (mas reciente primero)
-    m.ventas.slice().reverse().forEach(v => {
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 4px;border-bottom:1px solid var(--border)">';
-      html += '<div><span style="font-weight:600;font-size:14px">' + v.ticker + '</span>';
-      html += '<span style="font-size:11px;color:var(--muted);margin-left:8px">' + fmtFecha(v.fecha) + '</span></div>';
-      html += '<div style="text-align:right;font-size:13px">' + fmt(v.bruto) + '<br><span style="font-size:11px;color:var(--muted)">neto ' + fmt(v.neto) + '</span></div>';
-      html += '</div>';
-    });
-    html += '</div>';
-  });
-  el.innerHTML = html;
-};
-"""
-            nuevo_html = nuevo_html.replace('</script>\n</body>', ventas_fn + '</script>\n</body>')
-
-
-    # Asegurar pestaña Analistas
-    if "showTab('analistas'" not in nuevo_html:
-        nuevo_html = nuevo_html.replace(
-            "<button class=\"nav-btn\" onclick=\"showTab('earnings',this);loadEarnings()\">Earnings</button>",
-            "<button class=\"nav-btn\" onclick=\"showTab('earnings',this);loadEarnings()\">Earnings</button>\n  <button class=\"nav-btn\" onclick=\"showTab('analistas',this);loadAnalistas()\">Analistas</button>"
-        )
-    if 'id="analistas"' not in nuevo_html:
-        nuevo_html = nuevo_html.replace('</body>',
-            '''<div id="analistas" class="section"><div style="padding:16px"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:4px">PRECIO OBJETIVO · CONSENSO ANALISTAS</div><div style="font-size:11px;color:var(--muted);margin-bottom:14px">Objetivos de consenso introducidos manualmente desde Investing.com.</div><div id="analistas-list">Cargando...</div></div></div>
-</body>''', 1)
-    if 'loadAnalistas' not in nuevo_html:
-        nuevo_html = nuevo_html.replace('</body>', '''<script>
-window.loadAnalistas = function() {
-  var el = document.getElementById('analistas-list');
-  el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:30px">Calculando...</div>';
-  var precios = prices || {};
-  if (!Object.keys(precios).length) { el.innerHTML = '<p style="color:var(--muted)">Esperando precios...</p>'; return; }
-  var eurUsd = precios['EURUSD=X'] ? precios['EURUSD=X'].price : 1;
-  function fmtE(v) { if (!v && v !== 0) return '—'; return v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
-  function fmtPct(v) { if (v==null) return '—'; return (v>=0?'+':'')+v.toFixed(1)+'%'; }
-  var conDatos = C.filter(function(item){return item.objetivo_analistas&&item.objetivo_analistas>0;}).map(function(item){
-    var p=precios[item.symbol]; var pr=p?p.price:null;
-    var pe=pr?(item.moneda==='USD'?pr/eurUsd:pr):null;
-    var te=item.objetivo_analistas;
-    var up=(pe&&te)?((te-pe)/te)*100:null;
-    return {tckr:item.tckr,nombre:item.nombre,banco:item.banco,precioEur:pe,targetEur:te,upside:up,porEncima:pe&&te?pe>=te:false};
-  }).filter(function(d){return d.precioEur;});
-  if (!conDatos.length) { el.innerHTML = '<p style="color:var(--muted)">Sin datos. Ejecuta actualizar.</p>'; return; }
-  var porEncima=conDatos.filter(function(d){return d.porEncima;}).sort(function(a,b){return a.upside-b.upside;});
-  var resto=conDatos.filter(function(d){return !d.porEncima;}).sort(function(a,b){return a.upside-b.upside;});
-  var html='';
-  if (porEncima.length>0) {
-    html+='<div style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:10px;margin-bottom:10px"><span style="font-size:16px">⚠️</span><div><div style="font-size:13px;font-weight:700;color:var(--red)">Por encima del objetivo de analistas</div><div style="font-size:11px;color:var(--muted)">'+porEncima.length+' valor'+(porEncima.length>1?'es':'')+' — considera toma de beneficios</div></div></div>';
-    porEncima.forEach(function(d){
-      html+='<div onclick="showDetalle(\''+d.tckr+'\')" style="padding:12px;border-bottom:1px solid var(--border);cursor:pointer;background:rgba(239,68,68,0.04);border-radius:8px;margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><div><span style="font-weight:700;font-size:15px">'+d.tckr+'</span><span style="font-size:11px;color:var(--muted);margin-left:6px">'+(d.nombre||'')+'</span><span style="font-size:10px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:1px 6px;margin-left:4px">'+d.banco+'</span></div><span style="color:var(--red);font-weight:700;font-size:14px">'+fmtPct(d.upside)+'</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px"><div><div style="color:var(--muted)">Precio actual</div><div style="font-weight:600">'+fmtE(d.precioEur)+'</div></div><div><div style="color:var(--muted)">Obj. analistas</div><div style="font-weight:600;color:var(--amber)">'+fmtE(d.targetEur)+'</div></div></div></div>';
-    });
-    html+='</div>';
-  }
-  if (resto.length>0) {
-    html+='<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:10px">RESTO DE CARTERA ('+resto.length+' valores)</div>';
-    resto.forEach(function(d){
-      html+='<div onclick="showDetalle(\''+d.tckr+'\')" style="padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:4px"><div><span style="font-weight:600;font-size:14px">'+d.tckr+'</span><span style="font-size:11px;color:var(--muted);margin-left:6px">'+(d.nombre||'')+'</span><div style="font-size:11px;color:var(--muted);margin-top:2px">Obj: '+fmtE(d.targetEur)+'</div></div><div style="text-align:right"><div style="color:var(--green);font-weight:600;font-size:13px">'+fmtPct(d.upside)+'</div><div style="font-size:11px;color:var(--muted)">'+fmtE(d.precioEur)+'</div></div></div>';
-    });
-  }
-  el.innerHTML = html||'<p style="color:var(--muted)">Sin datos.</p>';
-};
-</script>
-</body>''', 1)
-    # Actualizar array tabs
-    import re as _re
-    nuevo_html = _re.sub(r"const tabs=\[.*?\];", "const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','analistas'];", nuevo_html)
-    nuevo_html = _re.sub(r"const tabCallbacks=\{.*?\};", "const tabCallbacks={'ventas':()=>renderVentas(),'historico':()=>loadHistorico(),'earnings':()=>loadEarnings(),'analistas':()=>loadAnalistas()};", nuevo_html)
-
-    nuevo_html = asegurar_mercado_abierto(nuevo_html)
-    nuevo_html = asegurar_resumen_snapshots(nuevo_html)
+    nuevo_html = asegurar_proximas_compras(nuevo_html, proximas_compras or [])
     nuevo_html = asegurar_historico(nuevo_html)
-    nuevo_html = asegurar_bancos(nuevo_html)
-
-    # Asegurar meta no-cache (para que iOS PWA no cachee versiones antiguas)
-    if 'Cache-Control" content="no-cache' not in nuevo_html:
-        nuevo_html = nuevo_html.replace('<head>', '<head>\n<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n<meta http-equiv="Pragma" content="no-cache">\n<meta http-equiv="Expires" content="0">')
-
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
     print(f"✅ index.html actualizado. Backup: {backup.name}")
 
@@ -1081,11 +803,9 @@ def actualizar_earnings_local():
 
 def main():
     print(f"📂 Leyendo Excel: {EXCEL}")
-    posiciones, sin_mic, mensual_data, compras_por_ticker = leer_excel_con_mic()
+    posiciones, sin_mic, mensual_data, compras_por_ticker, proximas_compras = leer_excel_con_mic()
     ganancias_data = leer_ganancias_realizadas()
     rendimiento_data = leer_rendimiento_cartera()
-    ventas_data = leer_ventas()
-    dividendos_data = leer_dividendos_bancos()
     print(f"✅ {len(posiciones)} tickers unicos cargados")
 
     overrides = cargar_overrides()
@@ -1125,7 +845,7 @@ def main():
     print(f"\n✅ Guardado {TICKERS_JSON}")
 
     const_C = construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker)
-    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data, ventas_data=ventas_data, dividendos_data=dividendos_data)
+    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data, proximas_compras=proximas_compras)
 
     print("\n🎯 LISTO. Siguiente paso:")
     print("   python3 validate.py")
@@ -1138,3 +858,4 @@ def main():
 if __name__ == "__main__":
     main()
 # version updater - añadido automaticamente
+
