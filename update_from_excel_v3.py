@@ -240,6 +240,11 @@ def leer_excel_con_mic():
         sueldo_mensual_bruto = ws_m['N13'].value or 0
         neto_anual_nomina = neto_mensual * 14
 
+        # Promedios netos 2024/2026 desde pestaña Histórico
+        ws_hist = wb['Histórico']
+        prom_neto_conservador = ws_hist['F30'].value or 0  # 14 pagas
+        prom_neto_optimista   = ws_hist['J30'].value or 0  # 12 pagas
+
         def calcular_bruto_desde_neto(neto_anual):
             ss = 0.034
             tramos_e = [(12450,0.095),(7750,0.12),(15000,0.15),(24800,0.185),(120000,0.225),(9e9,0.235)]
@@ -294,6 +299,8 @@ def leer_excel_con_mic():
             'neto_nomina': fmt_eur(neto_anual_nomina),
             'sueldo_bruto': fmt_eur(sueldo_mensual_bruto),
             'sueldo_neto': fmt_eur(neto_mensual),
+            'prom_neto_conservador': fmt_eur(prom_neto_conservador),
+            'prom_neto_optimista': fmt_eur(prom_neto_optimista),
             'plusv_semana': round(plusv_semana, 2),
             'plusv_hoy': round(plusv_hoy, 2),
         }
@@ -760,6 +767,34 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
             f'\g<1>{mensual_data["sueldo_neto"]}\g<2>',
             nuevo_html
         )
+        # Inyectar promedios netos 14 pagas 24/26
+        nuevo_html = re2.sub(
+            r'(id="prom-neto-conservador-val">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["prom_neto_conservador"]}\g<2>',
+            nuevo_html
+        )
+        nuevo_html = re2.sub(
+            r'(id="prom-neto-optimista-val">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["prom_neto_optimista"]}\g<2>',
+            nuevo_html
+        )
+        # Si los elementos no existen aún en el HTML, añadirlos tras sueldo-neto
+        if 'prom-neto-conservador-val' not in nuevo_html:
+            bloque_prom = (
+                '<div class="sueldo-row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">'
+                '<span class="sueldo-label">Prom. neto 14p 24/26</span>'
+                '<span class="sueldo-val" id="prom-neto-conservador-val">' + mensual_data['prom_neto_conservador'] + '</span>'
+                '</div>'
+                '<div class="sueldo-row">'
+                '<span class="sueldo-label">Prom. neto 12p 24/26</span>'
+                '<span class="sueldo-val" id="prom-neto-optimista-val">' + mensual_data['prom_neto_optimista'] + '</span>'
+                '</div>'
+            )
+            nuevo_html = re2.sub(
+                r'(id="sueldo-neto-val">[^<]*</span></div>)',
+                r'\1' + bloque_prom,
+                nuevo_html
+            )
         # Inyectar PLUSV_SEMANA
         nuevo_html = re.sub(
             r'var PLUSV_SEMANA=[0-9.]+;',
