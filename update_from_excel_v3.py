@@ -143,81 +143,64 @@ def leer_diana(wb, tickers_vivos):
 
 def leer_proximas_compras(wb):
     """
-    Lee las proximas compras de la pestana DIANA, filas 212-215.
-    Se identifican porque la col W (fecha compra) esta vacia.
-    Columnas relevantes:
-      B  = ticker
-      U  = banco (puede estar vacio)
-      X  = precio condicion (ej: ">67,9") — si hay condicion, la compra es condicional
-      Y  = precio maximo de compra
-      AC = objetivo personal
-      B/AO = nombre completo con MIC para resolver simbolo Yahoo
-    El simbolo Yahoo se resuelve igual que para posiciones: MIC > override > moneda.
+    Lee las proximas compras de la pestana 'Compras'.
+    Fila 1 = cabecera. Filas 2+ = valores hasta encontrar fila vacia en col B.
+    Columnas (segun cabecera fila 1):
+      B  = simbolo Yahoo directamente (ej: VCT.PA, MTX.DE, HOOD)
+      R  = banco
+      U  = precio condicion (ej: ">67,9")
+      V  = precio maximo de compra
+      Y  = objetivo personal
+    El ticker se extrae del simbolo: quitar sufijo (.PA, .DE, etc.)
     """
-    if 'DIANA' not in wb.sheetnames:
+    hoja = 'Compras'
+    if hoja not in wb.sheetnames:
+        print(f'⚠️  Pestaña "{hoja}" no encontrada en el Excel')
         return []
-    ws = wb['DIANA']
-    overrides = cargar_overrides()
+    ws = wb[hoja]
     proximas = []
-    for row in range(212, 216):
-        ticker = ws.cell(row=row, column=2).value   # B
-        if not ticker or not isinstance(ticker, str):
-            continue
-        ticker = ticker.strip()
-        fecha_compra = ws.cell(row=row, column=23).value  # W - si tiene fecha = ya comprado
-        if fecha_compra:
-            continue
 
-        banco_raw = ws.cell(row=row, column=21).value   # U
-        p_cond_raw = ws.cell(row=row, column=24).value  # X
-        p_max_raw  = ws.cell(row=row, column=25).value  # Y
-        objetivo_raw = ws.cell(row=row, column=29).value # AC
-        moneda_raw = ws.cell(row=row, column=7).value   # G moneda
+    for row in range(2, 500):  # fila 2 en adelante, hasta vacío
+        symbol_raw = ws.cell(row=row, column=2).value   # B = simbolo Yahoo
+        if not symbol_raw or not isinstance(symbol_raw, str) or not symbol_raw.strip():
+            break  # primera fila vacía = fin de lista
+
+        symbol = symbol_raw.strip()
+
+        # Extraer ticker limpio (sin sufijo de mercado)
+        tckr = symbol.split('.')[0]
+
+        banco_raw  = ws.cell(row=row, column=18).value  # R = Banco
+        p_cond_raw = ws.cell(row=row, column=21).value  # U = P. condición
+        p_max_raw  = ws.cell(row=row, column=22).value  # V = Precio Max.
+        objetivo_raw = ws.cell(row=row, column=25).value # Y = Objetivo 1
 
         def fmt_val(v):
-            if v is None or v == '-' or (isinstance(v, str) and '#' in v):
+            if v is None or v == '-' or (isinstance(v, str) and ('#' in v or not v.strip())):
                 return None
             if isinstance(v, (int, float)):
                 return round(float(v), 4)
             return str(v).strip()
 
-        banco   = str(banco_raw).strip() if banco_raw and str(banco_raw).strip() not in ('-','') else None
+        banco   = str(banco_raw).strip() if banco_raw and str(banco_raw).strip() not in ('-', '') else None
         p_cond  = fmt_val(p_cond_raw)
         p_max   = fmt_val(p_max_raw)
         objetivo = fmt_val(objetivo_raw)
-        moneda  = str(moneda_raw).strip() if moneda_raw else None
-
-        # Resolver simbolo Yahoo: igual que resolver_simbolo_yahoo pero leyendo MIC
-        # de las columnas B o AO de esta misma fila
-        mic = None
-        for col_letter in ['B', 'AO']:
-            col_idx = 2 if col_letter == 'B' else 41
-            v = ws.cell(row=row, column=col_idx).value
-            if v and isinstance(v, str) and '#' not in v:
-                m = REGEX_MIC.search(v)
-                if m:
-                    mic = m.group(1)
-                    break
-
-        pseudo_pos = {'tckr': ticker, 'mic': mic, 'moneda': moneda}
-        symbol, fuente = resolver_simbolo_yahoo(pseudo_pos, overrides)
-
-        if fuente == 'sin_resolver':
-            print(f"   ⚠️  {ticker}: símbolo Yahoo no resuelto. Añade '\"{ticker}\": \"SIMBOLO.XX\"' en tickers_override.json")
 
         proximas.append({
-            'tckr': ticker,
-            'symbol': symbol,   # simbolo Yahoo para fetch de precio real
-            'banco': banco,
-            'p_cond': p_cond,
-            'p_max': p_max,
+            'tckr':    tckr,
+            'symbol':  symbol,
+            'banco':   banco,
+            'p_cond':  p_cond,
+            'p_max':   p_max,
             'objetivo': objetivo,
         })
 
-    print(f'✅ {len(proximas)} proximas compras leidas de pestana DIANA')
+    print(f'✅ {len(proximas)} proximas compras leidas de pestana Compras')
     for p in proximas:
-        print(f"   {p['tckr']} -> symbol={p['symbol']}, banco={p['banco']}, p_max={p['p_max']}, cond={p['p_cond']}")
+        print(f"   {p['tckr']} ({p['symbol']}) banco={p['banco']} p_max={p['p_max']} cond={p['p_cond']}")
     return proximas
+
 
 def leer_excel_con_mic():
     """
