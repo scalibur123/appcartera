@@ -721,7 +721,7 @@ def leer_ganancias_realizadas():
 
     return r
 
-def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None, proximas_compras=None):
+def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None, proximas_compras=None, ventas_data=None):
     if not INDEX_HTML.exists():
         print(f"❌ index.html no encontrado: {INDEX_HTML}")
         sys.exit(1)
@@ -869,6 +869,8 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
             lambda m: m.group(0)[:m.group(0).rfind('<span')] + fmtr(rendimiento_data["anual"]),
             nuevo_html, flags=re3.DOTALL, count=1
         )
+    if ventas_data is not None:
+        nuevo_html = inyectar_ventas_anual(nuevo_html, ventas_data)
     nuevo_html = asegurar_proximas_compras(nuevo_html, proximas_compras or [])
     nuevo_html = asegurar_historico(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
@@ -971,6 +973,93 @@ def verificar_precios_yahoo(ticker_map):
         print(f"\033[91m⛔ ATENCION: estos tickers no se mostraran en la app hasta corregirlos\033[0m")
 
 
+def leer_ventas_anual():
+    """Lee ventas del año actual del Excel (pestaña 2026, filas 262-400)."""
+    from datetime import datetime
+    wb2 = openpyxl.load_workbook(open(str(EXCEL), "rb"), read_only=True, data_only=True)
+    ws2 = wb2["2026"]
+    hoy = datetime.now()
+    ventas = []
+    for row in ws2.iter_rows(min_row=262, max_row=400, values_only=True):
+        ticker = row[3]   # col D
+        moneda = row[6]   # col G
+        banco  = row[7]   # col H
+        fecha  = row[16]  # col Q
+        bruto  = row[24]  # col Y
+        neto   = row[25]  # col Z
+        if not ticker or not fecha or bruto is None or neto is None:
+            continue
+        if not isinstance(fecha, datetime):
+            continue
+        if fecha.year != hoy.year:
+            continue
+        ventas.append({
+            "ticker": str(ticker).strip(),
+            "fecha":  fecha.strftime("%Y-%m-%d"),
+            "bruto":  round(float(bruto), 2),
+            "neto":   round(float(neto),  2),
+            "banco":  normalizar_banco(banco),
+            "moneda": str(moneda).strip() if moneda else "EUR",
+        })
+    print(f"\u2705 {len(ventas)} ventas leidas del Excel (VENTAS_ANUAL)")
+    return ventas
+
+
+def inyectar_ventas_anual(html, ventas):
+    """Reemplaza var VENTAS_ANUAL en index.html con marcadores robustos.
+    También elimina copias duplicadas de window.renderVentas."""
+    import re as _re
+    import json as _json
+
+    ventas_json = _json.dumps(ventas, ensure_ascii=False, separators=(",", ":"))
+    bloque = (
+        "<!--ventas-anual-start-->"
+        f"<script>var VENTAS_ANUAL={ventas_json};</script>"
+        "<!--ventas-anual-end-->"
+    )
+
+    # Sustituir si ya hay marcadores
+    if "<!--ventas-anual-start-->" in html:
+        html = _re.sub(
+            r"<!--ventas-anual-start-->.*?<!--ventas-anual-end-->",
+            bloque, html, flags=_re.DOTALL
+        )
+    # Sustituir el script sin marcadores (primera vez)
+    elif "<script>var VENTAS_ANUAL=[" in html:
+        html = _re.sub(
+            r"<script>var VENTAS_ANUAL=\[.*?\];</script>",
+            bloque, html, flags=_re.DOTALL
+        )
+    else:
+        html = html.replace("</body>", bloque + "\n</body>")
+
+    # ── Eliminar renderVentas duplicados: conservar solo el primero ────────
+    patron = r"window\.renderVentas\s*=\s*function\s*\(\)"
+    ocurrencias = [m.start() for m in _re.finditer(patron, html)]
+    if len(ocurrencias) > 1:
+        # Localizar fin de la primera definición contando llaves
+        inicio = ocurrencias[0]
+        depth = 0
+        fin = -1
+        for i in range(inicio, len(html)):
+            if html[i] == "{": depth += 1
+            elif html[i] == "}":
+                depth -= 1
+                if depth == 0: fin = i; break
+        if fin != -1:
+            primera = html[:fin + 1]
+            resto = html[fin + 1:]
+            resto_limpio = _re.sub(
+                r"window\.renderVentas\s*=\s*function\s*\(\)\s*\{.*?\}\s*;",
+                "", resto, flags=_re.DOTALL
+            )
+            html = primera + resto_limpio
+            n_eliminadas = len(ocurrencias) - 1
+            print(f"\u2705 renderVentas deduplicado: {n_eliminadas} copia(s) extra eliminada(s)")
+
+    return html
+
+
 def main():
     print(f"📂 Leyendo Excel: {EXCEL}")
     posiciones, sin_mic, mensual_data, compras_por_ticker, proximas_compras = leer_excel_con_mic()
@@ -1036,7 +1125,8 @@ def main():
     print(f"\n✅ Guardado {TICKERS_JSON}")
 
     const_C = construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker)
-    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data, proximas_compras=proximas_compras)
+    ventas_data = leer_ventas_anual()
+    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data, proximas_compras=proximas_compras, ventas_data=ventas_data)
 
     # ══════════════════════════════════════════════════
     # VERIFICACION DE PRECIOS — avisa si algun ticker
