@@ -170,6 +170,11 @@ def leer_proximas_compras(wb):
         # Extraer ticker limpio (sin sufijo de mercado)
         tckr = symbol.split('.')[0]
 
+        # Aplicar override si existe (resuelve tickers sin sufijo como AFX -> AFX.DE)
+        _overrides = cargar_overrides()
+        if tckr in _overrides:
+            symbol = _overrides[tckr]
+
         banco_raw    = ws.cell(row=row, column=21).value  # U = Banco
         p_cond_raw   = ws.cell(row=row, column=24).value  # X = P. condición
         p_max_raw    = ws.cell(row=row, column=25).value  # Y = Precio Max.
