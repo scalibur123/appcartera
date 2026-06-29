@@ -170,10 +170,10 @@ def leer_proximas_compras(wb):
         # Extraer ticker limpio (sin sufijo de mercado)
         tckr = symbol.split('.')[0]
 
-        banco_raw  = ws.cell(row=row, column=18).value  # R = Banco
-        p_cond_raw = ws.cell(row=row, column=21).value  # U = P. condición
-        p_max_raw  = ws.cell(row=row, column=22).value  # V = Precio Max.
-        objetivo_raw = ws.cell(row=row, column=25).value # Y = Objetivo 1
+        banco_raw    = ws.cell(row=row, column=21).value  # U = Banco
+        p_cond_raw   = ws.cell(row=row, column=24).value  # X = P. condición
+        p_max_raw    = ws.cell(row=row, column=25).value  # Y = Precio Max.
+        objetivo_raw = ws.cell(row=row, column=8).value   # H = Investing (objetivo)
 
         def fmt_val(v):
             if v is None or v == '-' or (isinstance(v, str) and ('#' in v or not v.strip())):
