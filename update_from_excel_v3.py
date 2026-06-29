@@ -160,8 +160,10 @@ def leer_proximas_compras(wb):
     ws = wb[hoja]
     proximas = []
 
+    _overrides = cargar_overrides()
+
     for row in range(2, 500):  # fila 2 en adelante, hasta vacío
-        symbol_raw = ws.cell(row=row, column=2).value   # B = simbolo Yahoo
+        symbol_raw = ws.cell(row=row, column=2).value   # B = ticker
         if not symbol_raw or not isinstance(symbol_raw, str) or not symbol_raw.strip():
             break  # primera fila vacía = fin de lista
 
@@ -170,10 +172,35 @@ def leer_proximas_compras(wb):
         # Extraer ticker limpio (sin sufijo de mercado)
         tckr = symbol.split('.')[0]
 
-        # Aplicar override si existe (resuelve tickers sin sufijo como AFX -> AFX.DE)
-        _overrides = cargar_overrides()
-        if tckr in _overrides:
-            symbol = _overrides[tckr]
+        # Resolver símbolo Yahoo en cascada:
+        # 1. Si ya tiene sufijo (.DE, .PA, etc.) -> usar tal cual
+        # 2. Override manual en tickers_override.json
+        # 3. Columna A: "Nombre (MIC:TICKER)" -> sufijo Yahoo via MIC_TO_YAHOO_SFX
+        # 4. Búsqueda automática en Yahoo Finance (último recurso)
+        if '.' not in symbol and '=' not in symbol:
+            if tckr in _overrides:
+                symbol = _overrides[tckr]
+            else:
+                nombre_raw = ws.cell(row=row, column=1).value  # A = nombre con MIC
+                mic_encontrado = False
+                if nombre_raw and isinstance(nombre_raw, str):
+                    m = REGEX_MIC.search(nombre_raw)
+                    if m:
+                        mic = m.group(1)
+                        if mic in MIC_TO_YAHOO_SFX:
+                            symbol = tckr + MIC_TO_YAHOO_SFX[mic]
+                            guardar_override(tckr, symbol)
+                            print(f"   ✅ {tckr} -> {symbol} (MIC:{mic} desde col A)")
+                            mic_encontrado = True
+                if not mic_encontrado:
+                    print(f"   🔍 {tckr} sin MIC en col A, buscando en Yahoo Finance...")
+                    sym_auto = buscar_simbolo_yahoo_auto(tckr)
+                    if sym_auto:
+                        symbol = sym_auto
+                        guardar_override(tckr, sym_auto)
+                        print(f"   ✅ {tckr} -> {sym_auto} (Yahoo, guardado en overrides)")
+                    else:
+                        print(f"   ⚠️  {tckr} no resuelto — quedará sin precio")
 
         banco_raw    = ws.cell(row=row, column=21).value  # U = Banco
         p_cond_raw   = ws.cell(row=row, column=24).value  # X = P. condición
