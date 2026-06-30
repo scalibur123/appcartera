@@ -552,7 +552,7 @@ def asegurar_proximas_compras(html, proximas_compras):
     return v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
   }
 
-  function buildCard(p, precioReal, pct){
+  function buildCard(p, precioReal, pct, rango){
     var condicional=p.p_cond&&p.p_cond!==null;
     var badgeCond=condicional
       ?'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(255,165,0,0.15);color:#f5a623;margin-left:6px">COND</span>'
@@ -578,11 +578,53 @@ def asegurar_proximas_compras(html, proximas_compras):
     var precioHtml=precioReal!=null
       ?'<div style="margin-top:5px;font-size:14px;color:var(--muted)">Precio actual: <b style="color:var(--fg);font-size:16px">'+fmtPrecio(precioReal)+'</b>'+pctStr+'</div>'
       :'<div style="margin-top:5px;font-size:12px;color:var(--muted)">Precio actual: <i>cargando...</i></div>';
+    var rangoHtml='';
+    if(rango&&precioReal!=null){
+      // --- Rango diario ---
+      var diaHtml='';
+      if(rango.dayHigh!=null&&rango.dayLow!=null&&rango.dayHigh>rango.dayLow){
+        var pctDia=((precioReal-rango.dayLow)/(rango.dayHigh-rango.dayLow))*100;
+        pctDia=Math.max(0,Math.min(100,pctDia));
+        var barDia=pctDia<=20?'var(--green)':pctDia>=80?'var(--red)':'var(--amber)';
+        var badgeDia='';
+        if(precioReal>=rango.dayHigh*0.999)badgeDia=' <span style="font-size:9px;font-weight:700;color:var(--red)">▲</span>';
+        else if(precioReal<=rango.dayLow*1.001)badgeDia=' <span style="font-size:9px;font-weight:700;color:var(--green)">▼</span>';
+        diaHtml='<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px">'
+          +'<span>Hoy: <b style="color:var(--fg)">'+fmtPrecio(rango.dayLow)+'</b></span>'
+          +'<span style="font-size:9px;color:var(--muted)">HOY</span>'
+          +'<span><b style="color:var(--fg)">'+fmtPrecio(rango.dayHigh)+'</b>'+badgeDia+'</span>'
+          +'</div>'
+          +'<div style="height:3px;border-radius:2px;background:var(--surface2);position:relative;margin-bottom:6px">'
+          +'<div style="position:absolute;left:0;top:0;height:3px;border-radius:2px;background:'+barDia+';width:'+pctDia.toFixed(1)+'%"></div>'
+          +'</div>';
+      }
+      // --- Rango 52 semanas ---
+      var s52Html='';
+      if(rango.high52!=null&&rango.low52!=null&&rango.high52>rango.low52){
+        var pct52=((precioReal-rango.low52)/(rango.high52-rango.low52))*100;
+        pct52=Math.max(0,Math.min(100,pct52));
+        var bar52=pct52<=20?'var(--green)':pct52>=80?'var(--red)':'var(--amber)';
+        var badge52='';
+        if(precioReal>=rango.high52*0.99)badge52=' <span style="font-size:9px;font-weight:700;color:var(--red)">▲MAX</span>';
+        else if(precioReal<=rango.low52*1.01)badge52=' <span style="font-size:9px;font-weight:700;color:var(--green)">▼MÍN</span>';
+        s52Html='<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px">'
+          +'<span>52s: <b style="color:var(--fg)">'+fmtPrecio(rango.low52)+'</b></span>'
+          +'<span style="font-size:9px;color:var(--muted)">52 SEM</span>'
+          +'<span><b style="color:var(--fg)">'+fmtPrecio(rango.high52)+'</b>'+badge52+'</span>'
+          +'</div>'
+          +'<div style="height:3px;border-radius:2px;background:var(--surface2);position:relative">'
+          +'<div style="position:absolute;left:0;top:0;height:3px;border-radius:2px;background:'+bar52+';width:'+pct52.toFixed(1)+'%"></div>'
+          +'</div>';
+      }
+      if(diaHtml||s52Html){
+        rangoHtml='<div style="margin-top:6px">'+diaHtml+s52Html+'</div>';
+      }
+    }
     return '<div style="padding:14px 0;border-bottom:1px solid var(--border)">'
       +'<div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px">'
       +'<span style="font-size:16px;font-weight:700;color:var(--fg)">'+p.tckr+'</span>'
       +bancoHtml+badgeCond+'</div>'
-      +condHtml+precioHtml+pmaxHtml+objHtml
+      +condHtml+precioHtml+rangoHtml+pmaxHtml+objHtml
       +'</div>';
   }
 
@@ -594,7 +636,7 @@ def asegurar_proximas_compras(html, proximas_compras):
       return;
     }
     // Mostrar skeleton mientras carga
-    el.innerHTML=PROXIMAS.map(function(p){return buildCard(p,null,null);}).join('');
+    el.innerHTML=PROXIMAS.map(function(p){return buildCard(p,null,null,null);}).join('');
     // Fetch precios reales al servidor (mismo endpoint que usa la cartera)
     var symbols=PROXIMAS.map(function(p){return p.symbol;}).join(',');
     try{
@@ -603,16 +645,16 @@ def asegurar_proximas_compras(html, proximas_compras):
       var priceMap={};
       if(data&&data.quoteResponse&&data.quoteResponse.result){
         data.quoteResponse.result.forEach(function(q){
-          priceMap[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent};
+          priceMap[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent,high52:q.fiftyTwoWeekHigh||null,low52:q.fiftyTwoWeekLow||null,dayHigh:q.regularMarketDayHigh||null,dayLow:q.regularMarketDayLow||null};
         });
       }
       el.innerHTML=PROXIMAS.map(function(p){
         var q=priceMap[p.symbol];
-        return buildCard(p, q?q.price:null, q?q.pct:null);
+        return buildCard(p, q?q.price:null, q?q.pct:null, q?{high52:q.high52,low52:q.low52,dayHigh:q.dayHigh,dayLow:q.dayLow}:null);
       }).join('');
     }catch(e){
       // Si falla el fetch, mostrar sin precio
-      el.innerHTML=PROXIMAS.map(function(p){return buildCard(p,null,null);}).join('');
+      el.innerHTML=PROXIMAS.map(function(p){return buildCard(p,null,null,null);}).join('');
     }
   }
 
