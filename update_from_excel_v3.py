@@ -753,7 +753,7 @@ def leer_ganancias_realizadas():
 
     return r
 
-def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None, proximas_compras=None, ventas_data=None):
+def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None, proximas_compras=None, ventas_data=None, bancos_data=None):
     if not INDEX_HTML.exists():
         print(f"❌ index.html no encontrado: {INDEX_HTML}")
         sys.exit(1)
@@ -903,6 +903,10 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
         )
     if ventas_data is not None:
         nuevo_html = inyectar_ventas_anual(nuevo_html, ventas_data)
+    if bancos_data is not None:
+        saldos, fecha_inicio = bancos_data
+        if saldos:
+            nuevo_html = inyectar_bancos(nuevo_html, saldos, fecha_inicio)
     nuevo_html = asegurar_proximas_compras(nuevo_html, proximas_compras or [])
     nuevo_html = asegurar_historico(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
@@ -1092,6 +1096,80 @@ def inyectar_ventas_anual(html, ventas):
     return html
 
 
+def leer_bancos_excel():
+    """
+    Lee la pestaña 'Bancos' del Excel y devuelve saldos iniciales y fecha de inicio.
+    Estructura esperada (fila 4 = cabecera, datos desde fila 5):
+      Col A = Nombre banco
+      Col B = Saldo Inicial EUR
+      Col C = Fecha de inicio (la más reciente entre todos los bancos)
+      Col G = Saldo Inicial USD (vacío si no aplica)
+    Claves normalizadas: ING, MYINV, R4, IBKR, REVOLUT, MEDIOLANUM
+    """
+    NOMBRE_A_CLAVE = {
+        'ing': 'ING', 'myinvestor': 'MYINV', 'myinv': 'MYINV',
+        'r4': 'R4', 'renta 4': 'R4',
+        'ibkr': 'IBKR', 'interactive brokers': 'IBKR',
+        'revolut': 'REVOLUT',
+        'mediolanum': 'MEDIOLANUM', 'medio': 'MEDIOLANUM',
+    }
+    try:
+        wb = openpyxl.load_workbook(open(str(EXCEL), 'rb'), read_only=True, data_only=True)
+        if 'Bancos' not in wb.sheetnames:
+            print('⚠️  Pestaña Bancos no encontrada en Excel')
+            return None, None
+        ws = wb['Bancos']
+        saldos = {}
+        fecha_inicio = None
+        for row in ws.iter_rows(min_row=5, max_row=20, values_only=True):
+            nombre = row[0]  # col A
+            if not nombre or not isinstance(nombre, str) or not nombre.strip():
+                continue
+            clave = NOMBRE_A_CLAVE.get(nombre.strip().lower())
+            if not clave:
+                continue
+            eur = row[1] if isinstance(row[1], (int, float)) else 0  # col B
+            usd = row[6] if isinstance(row[6], (int, float)) else 0  # col G
+            fecha = row[2] if row[2] else None  # col C = fecha inicio
+            saldos[clave] = {'eur': round(float(eur), 2), 'usd': round(float(usd), 2)}
+            if fecha and hasattr(fecha, 'strftime'):
+                f_str = fecha.strftime('%Y-%m-%d')
+                if fecha_inicio is None or f_str > fecha_inicio:
+                    fecha_inicio = f_str
+        if not fecha_inicio:
+            from datetime import date
+            fecha_inicio = date.today().strftime('%Y-%m-%d')
+        print(f'✅ Bancos leidos del Excel: {list(saldos.keys())} | Fecha inicio: {fecha_inicio}')
+        return saldos, fecha_inicio
+    except Exception as e:
+        print(f'⚠️  Error leyendo pestaña Bancos: {e}')
+        return None, None
+
+
+def inyectar_bancos(html, saldos, fecha_inicio):
+    """
+    Reemplaza BANCOS_SALDOS_INICIALES y BANCOS_FECHA_INICIO en index.html
+    con los valores leídos del Excel.
+    """
+    import re as _re, json as _json
+
+    saldos_js = _json.dumps(saldos, ensure_ascii=False)
+    # Reemplazar la variable JS de saldos
+    html = _re.sub(
+        r'var BANCOS_SALDOS_INICIALES\s*=\s*\{[^}]*(?:\{[^}]*\}[^}]*)*\};',
+        f'var BANCOS_SALDOS_INICIALES = {saldos_js};',
+        html, flags=_re.DOTALL
+    )
+    # Reemplazar la fecha de inicio
+    html = _re.sub(
+        r"var BANCOS_FECHA_INICIO\s*=\s*'[^']*';",
+        f"var BANCOS_FECHA_INICIO = '{fecha_inicio}';",
+        html
+    )
+    print(f'✅ Bancos inyectados en index.html | Fecha inicio: {fecha_inicio}')
+    return html
+
+
 def main():
     print(f"📂 Leyendo Excel: {EXCEL}")
     posiciones, sin_mic, mensual_data, compras_por_ticker, proximas_compras = leer_excel_con_mic()
@@ -1158,7 +1236,8 @@ def main():
 
     const_C = construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker)
     ventas_data = leer_ventas_anual()
-    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data, proximas_compras=proximas_compras, ventas_data=ventas_data)
+    bancos_data = leer_bancos_excel()
+    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data, proximas_compras=proximas_compras, ventas_data=ventas_data, bancos_data=bancos_data)
 
     # ══════════════════════════════════════════════════
     # VERIFICACION DE PRECIOS — avisa si algun ticker
