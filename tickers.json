@@ -1212,7 +1212,7 @@
     "titulos": 3378.0,
     "coste_eur": 4365.8067,
     "precio_excel": 0.4864,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "override"
   },
   "PUIG": {
     "yahoo": "PUIG.MC",
