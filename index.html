@@ -28,8 +28,8 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
 .progress-bar{height:2px}
 .progress-fill{height:2px;background:var(--amber);width:0%;transition:width .3s ease}
 .progress-fill.done{background:var(--green)}
-.nav{display:flex;padding:10px 18px;gap:6px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:10}
-.nav-btn{flex:1;padding:9px 4px;background:transparent;border:1px solid transparent;border-radius:10px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s}
+.nav{display:flex;flex-wrap:wrap;padding:8px 12px;gap:5px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:10}
+.nav-btn{flex:0 0 calc(20% - 5px);padding:7px 2px;background:transparent;border:1px solid transparent;border-radius:10px;color:var(--muted);font-size:11px;cursor:pointer;transition:all .2s;text-align:center}
 .nav-btn.active{background:var(--surface2);border-color:var(--border);color:var(--text);font-weight:500}
 .section{display:none;padding:14px 18px}
 .section.active{display:block}
