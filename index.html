@@ -1093,15 +1093,8 @@ window.renderVentas = function() {
 
 <script>
 // Saldos iniciales a 2026-06-03
-var BANCOS_SALDOS_INICIALES = {
-  'R4':          { eur: 16422, usd: 24565 },
-  'ING':         { eur: 63827, usd: 0 },
-  'IBKR':        { eur: 0,     usd: 19963 },
-  'MYINV':       { eur: 103931, usd: 0 },
-  'MEDIOLANUM':  { eur: 1064,  usd: 0 },
-  'REVOLUT':     { eur: 300,   usd: 6936 },
-};
-var BANCOS_FECHA_INICIO = '2026-06-03';
+var BANCOS_SALDOS_INICIALES = {"MYINV": {"eur": 88324.63, "usd": 0.0}, "R4": {"eur": 54980.64, "usd": 69016.47}, "IBKR": {"eur": 0.0, "usd": 21830.48}, "REVOLUT": {"eur": -18723.8, "usd": -19598.7}, "MEDIOLANUM": {"eur": 3585.86, "usd": 0.0}};
+var BANCOS_FECHA_INICIO = '2026-06-30';
 
 window.renderBancos = function() {
   var el = document.getElementById('bancos-content');
