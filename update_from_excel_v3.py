@@ -1112,6 +1112,7 @@ def leer_bancos_excel():
         'ibkr': 'IBKR', 'interactive brokers': 'IBKR',
         'revolut': 'REVOLUT',
         'mediolanum': 'MEDIOLANUM', 'medio': 'MEDIOLANUM',
+        'ing': 'ING',
     }
     try:
         wb = openpyxl.load_workbook(open(str(EXCEL), 'rb'), read_only=True, data_only=True)
@@ -1120,25 +1121,19 @@ def leer_bancos_excel():
             return None, None
         ws = wb['Bancos']
         saldos = {}
-        fecha_inicio = None
-        for row in ws.iter_rows(min_row=5, max_row=20, values_only=True):
+        # Datos desde fila 4 (fila 1=título, 2=subtítulo, 3=cabecera, 4+=datos)
+        for row in ws.iter_rows(min_row=4, max_row=20, values_only=True):
             nombre = row[0]  # col A
             if not nombre or not isinstance(nombre, str) or not nombre.strip():
                 continue
             clave = NOMBRE_A_CLAVE.get(nombre.strip().lower())
             if not clave:
                 continue
+            # '—' significa que esa moneda no aplica -> 0
             eur = row[1] if isinstance(row[1], (int, float)) else 0  # col B
             usd = row[6] if isinstance(row[6], (int, float)) else 0  # col G
-            fecha = row[2] if row[2] else None  # col C = fecha inicio
             saldos[clave] = {'eur': round(float(eur), 2), 'usd': round(float(usd), 2)}
-            if fecha and hasattr(fecha, 'strftime'):
-                f_str = fecha.strftime('%Y-%m-%d')
-                if fecha_inicio is None or f_str > fecha_inicio:
-                    fecha_inicio = f_str
-        if not fecha_inicio:
-            from datetime import date
-            fecha_inicio = date.today().strftime('%Y-%m-%d')
+        fecha_inicio = '2026-01-01'
         print(f'✅ Bancos leidos del Excel: {list(saldos.keys())} | Fecha inicio: {fecha_inicio}')
         return saldos, fecha_inicio
     except Exception as e:
