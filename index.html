@@ -891,7 +891,10 @@ function hideDetalle() { document.getElementById('detalle-valor').style.display 
   <div style="padding:16px">
     <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:4px">PRECIO OBJETIVO · CONSENSO ANALISTAS</div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Objetivos de consenso introducidos manualmente desde Investing.com. Se actualizan al ejecutar <b>actualizar</b>.</div>
-    <input id="analistas-search" type="text" placeholder="Buscar ticker..." oninput="filtrarAnalistas(this.value)" style="width:100%;box-sizing:border-box;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;margin-bottom:12px;outline:none">
+    <div style="position:relative;margin-bottom:12px">
+      <input id="analistas-search" type="text" placeholder="Buscar ticker..." autocomplete="off" autocorrect="off" autocapitalize="off" oninput="filtrarAnalistas(this.value);document.getElementById('analistas-clear').style.display=this.value?'block':'none'" style="width:100%;box-sizing:border-box;padding:8px 36px 8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;outline:none">
+      <button id="analistas-clear" onclick="var i=document.getElementById('analistas-search');i.value='';filtrarAnalistas('');this.style.display='none';i.focus()" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 6px;line-height:1">✕</button>
+    </div>
     <div id="analistas-list">Cargando...</div>
   </div>
 </div>
