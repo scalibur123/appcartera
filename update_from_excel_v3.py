@@ -125,20 +125,32 @@ def cargar_mic_externos():
 
 
 def leer_diana(wb, tickers_vivos):
+    """
+    Lee la pestaña DIANA:
+      Col B  = TCKR
+      Col AC = objetivo personal ('Objetivo div2')
+      Col AF = objetivo consenso analistas ('Investing2')
+    Devuelve dos dicts: objetivos (AC) y objetivos_analistas (AF).
+    """
     if 'DIANA' not in wb.sheetnames:
-        return {}
+        return {}, {}
     ws = wb['DIANA']
     objetivos = {}
+    objetivos_analistas = {}
     for row in range(12, 221):
         ticker = ws[f'B{row}'].value
         objetivo = ws[f'AC{row}'].value
+        objetivo_af = ws[f'AF{row}'].value
         if not ticker or not isinstance(ticker, str): continue
         ticker = ticker.strip()
         if ticker not in tickers_vivos: continue
-        if ticker in objetivos: continue
-        if not isinstance(objetivo, (int, float)): continue
-        objetivos[ticker] = round(float(objetivo), 4)
-    return objetivos
+        # Objetivo personal (AC) — solo la primera aparición del ticker
+        if ticker not in objetivos and isinstance(objetivo, (int, float)):
+            objetivos[ticker] = round(float(objetivo), 4)
+        # Objetivo analistas (AF) — solo la primera aparición del ticker
+        if ticker not in objetivos_analistas and isinstance(objetivo_af, (int, float)):
+            objetivos_analistas[ticker] = round(float(objetivo_af), 4)
+    return objetivos, objetivos_analistas
 
 
 def leer_proximas_compras(wb):
@@ -386,6 +398,7 @@ def leer_excel_con_mic():
                 "mic": mic,
                 "banco": normalizar_banco(ws[f"H{row}"].value),
                 "objetivo": None,
+                "objetivo_analistas": None,
             }
             orden.append(ticker)
             if not mic:
@@ -400,13 +413,16 @@ def leer_excel_con_mic():
             if ticker in sin_mic:
                 sin_mic.remove(ticker)
 
-    # Leer objetivos de pestana DIANA
+    # Leer objetivos de pestana DIANA (AC = personal, AF = analistas)
     tickers_vivos = set(posiciones.keys())
-    objetivos = leer_diana(wb, tickers_vivos)
+    objetivos, objetivos_analistas = leer_diana(wb, tickers_vivos)
     for t, obj in objetivos.items():
         if t in posiciones:
             posiciones[t]['objetivo'] = obj
-    print(f'OK {len(objetivos)} objetivos leidos de pestana DIANA')
+    for t, obj in objetivos_analistas.items():
+        if t in posiciones:
+            posiciones[t]['objetivo_analistas'] = obj
+    print(f'OK {len(objetivos)} objetivos personales y {len(objetivos_analistas)} objetivos analistas leidos de DIANA')
 
     # Leer proximas compras de pestana DIANA
     proximas_compras = leer_proximas_compras(wb)
@@ -515,6 +531,7 @@ def construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker={}):
             "moneda": p["moneda"],
             "banco": p.get("banco", "-"),
             "objetivo": p.get("objetivo"),
+            "objetivo_analistas": p.get("objetivo_analistas"),
             "symbol": sym,
             "compras": compras_por_ticker.get(tckr, []),
         }
