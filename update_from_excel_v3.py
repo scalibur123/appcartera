@@ -946,9 +946,8 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
     if ventas_data is not None:
         nuevo_html = inyectar_ventas_anual(nuevo_html, ventas_data)
     if bancos_data is not None:
-        saldos, fecha_inicio = bancos_data
-        if saldos:
-            nuevo_html = inyectar_bancos(nuevo_html, saldos, fecha_inicio)
+        if bancos_data.get('bancos'):
+            nuevo_html = inyectar_bancos(nuevo_html, bancos_data)
     nuevo_html = asegurar_proximas_compras(nuevo_html, proximas_compras or [])
     nuevo_html = asegurar_historico(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
@@ -1140,70 +1139,58 @@ def inyectar_ventas_anual(html, ventas):
 
 def leer_bancos_excel():
     """
-    Lee la pestaña 'Bancos' del Excel y devuelve saldos iniciales y fecha de inicio.
-    Estructura esperada (fila 4 = cabecera, datos desde fila 5):
-      Col A = Nombre banco
-      Col B = Saldo Inicial EUR
-      Col C = Fecha de inicio (la más reciente entre todos los bancos)
-      Col G = Saldo Inicial USD (vacío si no aplica)
-    Claves normalizadas: ING, MYINV, R4, IBKR, REVOLUT, MEDIOLANUM
+    Lee la pestaña 'Bancos' del Excel y devuelve los SALDOS FINALES tal cual,
+    sin recalcular nada. El Excel ya suma ventas, compras y dividendos.
+      Col A (idx 0)  = Nombre del banco (se usa tal cual, no se inventa nada)
+      Col F (idx 5)  = Saldo FINAL en € (si es '—' no aplica esa moneda)
+      Col L (idx 11) = Saldo FINAL en $ (si es '—' no aplica esa moneda)
+      Fila con nombre 'TOTAL' = fila de totales (se guarda aparte, no como banco).
+    Devuelve un dict: {"bancos": [{"nombre","eur","usd"}, ...], "total": {"eur","usd"}}
+    o None si la pestaña no existe.
     """
-    NOMBRE_A_CLAVE = {
-        'ing': 'ING', 'myinvestor': 'MYINV', 'myinv': 'MYINV',
-        'r4': 'R4', 'renta 4': 'R4',
-        'ibkr': 'IBKR', 'interactive brokers': 'IBKR',
-        'revolut': 'REVOLUT',
-        'mediolanum': 'MEDIOLANUM', 'medio': 'MEDIOLANUM',
-        'ing': 'ING',
-    }
     try:
         wb = openpyxl.load_workbook(open(str(EXCEL), 'rb'), read_only=True, data_only=True)
         if 'Bancos' not in wb.sheetnames:
             print('⚠️  Pestaña Bancos no encontrada en Excel')
-            return None, None
+            return None
         ws = wb['Bancos']
-        saldos = {}
-        # Datos desde fila 4 (fila 1=título, 2=subtítulo, 3=cabecera, 4+=datos)
-        for row in ws.iter_rows(min_row=4, max_row=20, values_only=True):
+        bancos = []
+        total = {'eur': None, 'usd': None}
+        # Datos desde fila 4 (1=título, 2=subtítulo, 3=cabecera, 4+=datos)
+        for row in ws.iter_rows(min_row=4, max_row=25, values_only=True):
             nombre = row[0]  # col A
             if not nombre or not isinstance(nombre, str) or not nombre.strip():
                 continue
-            clave = NOMBRE_A_CLAVE.get(nombre.strip().lower())
-            if not clave:
+            nombre = nombre.strip()
+            # '—' o texto -> None (esa moneda no aplica); número -> saldo real
+            eur = round(float(row[5]), 2)  if isinstance(row[5], (int, float)) else None  # col F
+            usd = round(float(row[11]), 2) if isinstance(row[11], (int, float)) else None  # col L
+            if nombre.upper() == 'TOTAL':
+                total = {'eur': eur, 'usd': usd}
                 continue
-            # '—' significa que esa moneda no aplica -> 0
-            eur = row[1] if isinstance(row[1], (int, float)) else 0  # col B
-            usd = row[6] if isinstance(row[6], (int, float)) else 0  # col G
-            saldos[clave] = {'eur': round(float(eur), 2), 'usd': round(float(usd), 2)}
-        fecha_inicio = '2026-01-01'
-        print(f'✅ Bancos leidos del Excel: {list(saldos.keys())} | Fecha inicio: {fecha_inicio}')
-        return saldos, fecha_inicio
+            bancos.append({'nombre': nombre, 'eur': eur, 'usd': usd})
+        print(f'✅ Bancos leidos del Excel (F=€, L=$): {[b["nombre"] for b in bancos]}')
+        return {'bancos': bancos, 'total': total}
     except Exception as e:
         print(f'⚠️  Error leyendo pestaña Bancos: {e}')
-        return None, None
+        return None
 
 
-def inyectar_bancos(html, saldos, fecha_inicio):
+def inyectar_bancos(html, datos):
     """
-    Reemplaza BANCOS_SALDOS_INICIALES y BANCOS_FECHA_INICIO en index.html
-    con los valores leídos del Excel.
+    Reemplaza la variable BANCOS_SALDOS en index.html con los saldos finales
+    leídos del Excel (columnas F y L). No se recalcula nada en el navegador.
+    'datos' es el dict {"bancos": [...], "total": {...}} de leer_bancos_excel().
     """
     import re as _re, json as _json
 
-    saldos_js = _json.dumps(saldos, ensure_ascii=False)
-    # Reemplazar la variable JS de saldos
+    datos_js = _json.dumps(datos, ensure_ascii=False)
     html = _re.sub(
-        r'var BANCOS_SALDOS_INICIALES\s*=\s*\{[^}]*(?:\{[^}]*\}[^}]*)*\};',
-        f'var BANCOS_SALDOS_INICIALES = {saldos_js};',
+        r'var BANCOS_SALDOS\s*=\s*\{.*?\};',
+        f'var BANCOS_SALDOS = {datos_js};',
         html, flags=_re.DOTALL
     )
-    # Reemplazar la fecha de inicio
-    html = _re.sub(
-        r"var BANCOS_FECHA_INICIO\s*=\s*'[^']*';",
-        f"var BANCOS_FECHA_INICIO = '{fecha_inicio}';",
-        html
-    )
-    print(f'✅ Bancos inyectados en index.html | Fecha inicio: {fecha_inicio}')
+    print(f'✅ Bancos inyectados en index.html ({len(datos.get("bancos", []))} bancos)')
     return html
 
 

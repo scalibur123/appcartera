@@ -120,7 +120,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   </div>
   
   <div class="card" id="card-ganancias"><div class="card-label">Cartera · Valores</div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">HOY</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="hoy-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="hoy-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div></div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">ESTA SEMANA</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="sem-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+6.253,52 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="sem-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+4.951,86 €</span></span></div></div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">ESTE MES</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="mes-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+825,30 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="mes-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+668,49 €</span></span></div></div><div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">ANUAL</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="anual-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+168.982,97 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="anual-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+129.564,72 €</span></span></div></div></div><!--/card-ganancias-->
-  <p class="note">Datos del Excel del 1 jul 2026. Pulsa ↻ para actualizar.</p>
+  <p class="note">Datos del Excel del 2 jul 2026. Pulsa ↻ para actualizar.</p>
 </div>
 
 <div id="cartera" class="section">
@@ -1093,86 +1093,48 @@ window.renderVentas = function() {
 
 <script>
 // Saldos iniciales a 2026-06-03
-var BANCOS_SALDOS_INICIALES = {"ING": {"eur": -96895.37, "usd": 0.0}, "MYINV": {"eur": 88324.63, "usd": 0.0}, "R4": {"eur": 54980.64, "usd": 0.0}, "IBKR": {"eur": 0.0, "usd": 0.0}, "REVOLUT": {"eur": -18723.8, "usd": 0.0}, "MEDIOLANUM": {"eur": 3585.86, "usd": 0.0}};
-var BANCOS_FECHA_INICIO = '2026-01-01';
+var BANCOS_SALDOS = {"bancos": [{"nombre": "ING", "eur": 50510.81, "usd": null}, {"nombre": "Myinvestor", "eur": 99875.0, "usd": null}, {"nombre": "R4", "eur": 23976.69, "usd": 56374.91}, {"nombre": "IBKR", "eur": null, "usd": 19659.43}, {"nombre": "Revolut", "eur": 725.48, "usd": 256.24}, {"nombre": "Mediolanum", "eur": 1265.63, "usd": null}], "total": {"eur": 176353.6, "usd": 76290.59}};
 
 window.renderBancos = function() {
   var el = document.getElementById('bancos-content');
 
-  // Calcular saldos actuales
-  var saldos = {};
-  for (var b in BANCOS_SALDOS_INICIALES) {
-    saldos[b] = { eur: BANCOS_SALDOS_INICIALES[b].eur, usd: BANCOS_SALDOS_INICIALES[b].usd };
-  }
+  // Los saldos vienen YA CALCULADOS del Excel (columnas F=€ y L=$).
+  // Aquí solo se muestran tal cual: no se recalcula nada.
+  var bancos = (BANCOS_SALDOS && BANCOS_SALDOS.bancos) ? BANCOS_SALDOS.bancos : [];
+  var total  = (BANCOS_SALDOS && BANCOS_SALDOS.total)  ? BANCOS_SALDOS.total  : {eur:null, usd:null};
 
-  // Restar compras desde fecha inicio (de const C -> compras)
-  C.forEach(function(item) {
-    var banco = item.banco;
-    var moneda = item.moneda;
-    if (!saldos[banco]) saldos[banco] = { eur: 0, usd: 0 };
-    (item.compras || []).forEach(function(c) {
-      // Convertir fecha compra a YYYY-MM-DD
-      var partes = c.fecha.split('/');
-      var fechaComp = partes.length === 3 ? partes[2]+'-'+partes[1]+'-'+partes[0] : c.fecha;
-      if (fechaComp >= BANCOS_FECHA_INICIO) {
-        var bcomp = c.banco || banco;
-        if (!saldos[bcomp]) saldos[bcomp] = { eur: 0, usd: 0 };
-        if (moneda === 'USD') saldos[bcomp].usd -= c.coste;
-        else saldos[bcomp].eur -= c.coste;
-      }
-    });
-  });
-
-  // Sumar ventas desde fecha inicio
-  (window.VENTAS_ANUAL || []).forEach(function(v) {
-    if (v.fecha >= BANCOS_FECHA_INICIO && v.banco) {
-      var b = v.banco;
-      if (!saldos[b]) saldos[b] = { eur: 0, usd: 0 };
-      if (v.moneda === 'USD') saldos[b].usd += v.bruto;
-      else saldos[b].eur += v.bruto;
-    }
-  });
-
-  // Formatear
   function fmt(v, sym) {
     var color = v >= 0 ? 'var(--green)' : 'var(--red)';
     var num = Math.abs(v).toLocaleString('es-ES', {minimumFractionDigits:0, maximumFractionDigits:0});
     return '<span style="color:'+color+';font-weight:600">'+num+' '+sym+'</span>';
   }
 
-  var orden = ['R4','ING','IBKR','MYINV','MEDIOLANUM','REVOLUT'];
-  var nombres = {'R4':'R4','ING':'ING','IBKR':'IBKR','MYINV':'MyInvestor','MEDIOLANUM':'Mediolanum','REVOLUT':'Revolut'};
-
   var html = '<h2 style="font-size:15px;color:var(--muted);margin-bottom:16px;font-weight:600">Liquidez disponible</h2>';
-  html += '<p style="font-size:11px;color:var(--muted);margin-bottom:16px">Saldo inicial: 3 jun 2026 · Se actualiza con compras y ventas del Excel</p>';
+  html += '<p style="font-size:11px;color:var(--muted);margin-bottom:16px">Saldo inicial: 3 jun 2026 · Actualizado con ventas, compras y dividendos cobrados del Excel</p>';
 
-  var totalEur = 0, totalUsd = 0;
-
-  orden.forEach(function(b) {
-    var s = saldos[b] || { eur: 0, usd: 0 };
-    totalEur += s.eur;
-    totalUsd += s.usd;
-    var tieneEur = BANCOS_SALDOS_INICIALES[b] && BANCOS_SALDOS_INICIALES[b].eur !== undefined;
-    var tieneUsd = BANCOS_SALDOS_INICIALES[b] && BANCOS_SALDOS_INICIALES[b].usd !== undefined && BANCOS_SALDOS_INICIALES[b].usd > 0;
-
+  bancos.forEach(function(b) {
     html += '<div style="padding:14px 0;border-bottom:1px solid var(--border)">';
-    html += '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">'+(nombres[b]||b)+'</div>';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">'+b.nombre+'</div>';
     html += '<div style="display:flex;gap:24px">';
-    if (tieneEur || s.eur !== 0) {
-      html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">EUR</div>'+fmt(s.eur,'€')+'</div>';
+    if (b.eur !== null && b.eur !== undefined) {
+      html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">EUR</div>'+fmt(b.eur,'€')+'</div>';
     }
-    if (tieneUsd || s.usd !== 0) {
-      html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">USD</div>'+fmt(s.usd,'$')+'</div>';
+    if (b.usd !== null && b.usd !== undefined) {
+      html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">USD</div>'+fmt(b.usd,'$')+'</div>';
     }
     html += '</div></div>';
   });
 
-  // Total
+  // Total (leído del Excel, fila TOTAL)
   html += '<div style="padding:14px 0;margin-top:4px">';
   html += '<div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">TOTAL</div>';
   html += '<div style="display:flex;gap:24px">';
-  html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">EUR</div>'+fmt(totalEur,'€')+'</div>';
-  html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">USD</div>'+fmt(totalUsd,'$')+'</div>';
+  if (total.eur !== null && total.eur !== undefined) {
+    html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">EUR</div>'+fmt(total.eur,'€')+'</div>';
+  }
+  if (total.usd !== null && total.usd !== undefined) {
+    html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">USD</div>'+fmt(total.usd,'$')+'</div>';
+  }
   html += '</div></div>';
 
   el.innerHTML = html;

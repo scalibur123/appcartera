@@ -113,7 +113,7 @@
     "moneda": "USD",
     "titulos": 170.0,
     "coste_eur": 4718.1195,
-    "precio_excel": 26.53,
+    "precio_excel": 26.55,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "AMP": {
@@ -374,7 +374,7 @@
     "moneda": "USD",
     "titulos": 100.0,
     "coste_eur": 3807.1178,
-    "precio_excel": 5.97,
+    "precio_excel": 5.96,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "CIE": {
@@ -887,7 +887,7 @@
     "moneda": "USD",
     "titulos": 850.0,
     "coste_eur": 11957.3492,
-    "precio_excel": 18.765,
+    "precio_excel": 18.77,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "KLAR": {
@@ -1004,7 +1004,7 @@
     "moneda": "USD",
     "titulos": 100.0,
     "coste_eur": 8207.6768,
-    "precio_excel": 79.22,
+    "precio_excel": 79.2,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "MFEB": {
@@ -1058,7 +1058,7 @@
     "moneda": "USD",
     "titulos": 20.0,
     "coste_eur": 3034.6071,
-    "precio_excel": 232.55,
+    "precio_excel": 232.63,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "NTGY": {
@@ -1526,7 +1526,7 @@
     "moneda": "USD",
     "titulos": 20.0,
     "coste_eur": 9102.5655,
-    "precio_excel": 513.46,
+    "precio_excel": 513.33,
     "fuente_resolucion": "fallback_usd_directo"
   },
   "DJT": {
