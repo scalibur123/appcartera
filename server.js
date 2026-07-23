@@ -3,20 +3,6 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-// Cargar variables de entorno desde .env
-try {
-  const envPath = path.join(__dirname, '.env');
-  if (fs.existsSync(envPath)) {
-    fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
-      const l = line.trim();
-      if (!l || l.startsWith('#')) return;
-      const idx = l.indexOf('=');
-      if (idx > 0) process.env[l.slice(0, idx).trim()] = l.slice(idx + 1).trim();
-    });
-    console.log('✅ Variables .env cargadas');
-  }
-} catch(e) { console.error('Error cargando .env:', e.message); }
-
 const PORT = process.env.PORT || 3000;
 const BATCH = 15;
 const TIMEOUT = 8000;
@@ -355,7 +341,7 @@ setInterval(()=>{
 // Reset base_semana cada lunes a las 8:00
 setInterval(()=>{
   const ahora = new Date();
-  if(ahora.getDay()===1 && ahora.getUTCHours()===5 && ahora.getUTCMinutes()>=59){
+  if(ahora.getDay()===1 && ahora.getUTCHours()===5 && ahora.getUTCMinutes()<1){
     const {supabase} = require('./supabase-client');
     const hoy = ahora.toISOString().slice(0,10);
     supabase.from('alert_state').upsert({
@@ -369,11 +355,11 @@ setInterval(()=>{
 // Snapshot diario + variación diaria
 function guardarSnapshotSiToca(){
   var ahora=new Date();
-  var horaUTC=ahora.getUTCHours();
-  var minUTC=ahora.getUTCMinutes();
+  var hora=ahora.getHours();
+  var min=ahora.getMinutes();
   var dia=ahora.getDay();
   if(dia===0||dia===6)return;
-  if(horaUTC!==20||minUTC<20||minUTC>25)return;
+  if(hora!==21||min<30||min>35)return;
   var fecha=ahora.toISOString().slice(0,10);
   var f=require("fs"),p=require("path");
   try{
@@ -446,4 +432,3 @@ setInterval(actualizarEarnings, 24*60*60*1000);
 setInterval(() => {
   https.get('https://appcartera.onrender.com', () => {}).on('error', () => {});
 }, 14 * 60 * 1000);
-
