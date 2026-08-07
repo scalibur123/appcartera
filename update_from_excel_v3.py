@@ -30,7 +30,11 @@ PROYECTO = HOME / "APPCARTERA_NUEVA"
 EXCEL = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/INVERSION/PLUSVALIAS BOLSA 26_sinmacros_Claude.xlsm"
 HOJA = "2026"
 FILA_INI = 5
-FILA_FIN = 258
+FILA_FIN = 258   # solo se usa como respaldo si falla la deteccion automatica
+FILA_VENTAS_INI_FALLBACK = 262
+FILA_VENTAS_FIN_FALLBACK = 400
+PALABRA_SEPARADORA = "ejecuciones"              # marca el INICIO del bloque de VENTAS
+PALABRA_FINAL = "final app cartera diseno"      # marca el FINAL del bloque de VENTAS
 INDEX_HTML = PROYECTO / "index.html"
 TICKERS_JSON = PROYECTO / "tickers.json"
 OVERRIDE_JSON = PROYECTO / "tickers_override.json"
@@ -96,6 +100,140 @@ def normalizar_banco(b):
     if not b: return '-'
     b = str(b).strip()
     return BANCO_NORMALIZE.get(b, b.upper())
+
+
+# ══════════════════════════════════════════════════════════════════════
+# DETECCION AUTOMATICA DE BLOQUES EN LA PESTAÑA "2026"
+#
+# La pestaña 2026 tiene dos tablas apiladas:
+#   - POSICIONES ABIERTAS : desde la fila 5 hasta justo antes de la
+#                           fila que contiene la palabra "ejecuciones"
+#   - VENTAS              : desde la fila de "ejecuciones" hacia abajo
+#
+# Antes estaban fijas (5-258 y 262-400). Al crecer la tabla de posiciones
+# las ventas se desplazaban y el script leia filas de posicion como si
+# fueran ventas (venta fantasma con importe 0) y perdia las ultimas
+# posiciones abiertas. Ahora se localiza la frontera en cada ejecucion.
+# ══════════════════════════════════════════════════════════════════════
+
+_BLOQUES_CACHE = None
+
+
+def _sin_acentos(s):
+    reemplazos = {
+        'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n',
+        'Á': 'a', 'É': 'e', 'Í': 'i', 'Ó': 'o', 'Ú': 'u', 'Ü': 'u', 'Ñ': 'n',
+    }
+    limpio = "".join(reemplazos.get(c, c) for c in str(s)).lower()
+    return " ".join(limpio.split())   # colapsa espacios dobles y saltos de linea
+
+
+def detectar_bloques(forzar=False):
+    """
+    Localiza en la pestaña 2026:
+      - fila_ejecuciones : fila donde aparece la palabra "ejecuciones"
+      - pos_ini / pos_fin: rango de POSICIONES ABIERTAS
+      - ven_ini / ven_fin: rango de VENTAS
+
+    El resultado se cachea: solo se escanea el Excel una vez por ejecucion.
+    Si no encuentra la palabra, usa los rangos fijos antiguos y avisa.
+    """
+    global _BLOQUES_CACHE
+    if _BLOQUES_CACHE is not None and not forzar:
+        return _BLOQUES_CACHE
+
+    fila_ejecuciones = None
+    fila_final = None
+    ultima_fila_datos = None
+
+    try:
+        wb = openpyxl.load_workbook(open(str(EXCEL), "rb"), read_only=True, data_only=True)
+        ws = wb[HOJA]
+        candidatas_ini = []
+        candidatas_fin = []
+        for r, row in enumerate(
+            ws.iter_rows(min_row=1, max_row=2000, max_col=40, values_only=True), start=1
+        ):
+            hay_dato = False
+            for v in row:
+                if v is None:
+                    continue
+                hay_dato = True
+                if not isinstance(v, str):
+                    continue
+                texto = _sin_acentos(v)
+                if PALABRA_SEPARADORA in texto:
+                    candidatas_ini.append(r)
+                if PALABRA_FINAL in texto:
+                    candidatas_fin.append(r)
+            if hay_dato:
+                ultima_fila_datos = r
+        wb.close()
+
+        # Nos quedamos con la primera aparicion por debajo de la fila 50,
+        # para no confundirla con un titulo o una leyenda de la cabecera.
+        utiles = [r for r in candidatas_ini if r >= 50]
+        if utiles:
+            fila_ejecuciones = utiles[0]
+        elif candidatas_ini:
+            fila_ejecuciones = candidatas_ini[0]
+
+        # La marca final tiene que estar por debajo del inicio de ventas
+        if fila_ejecuciones:
+            posteriores = [r for r in candidatas_fin if r > fila_ejecuciones]
+            if posteriores:
+                fila_final = posteriores[0]
+        elif candidatas_fin:
+            fila_final = candidatas_fin[0]
+    except Exception as e:
+        print(f"⚠️  Error detectando bloques en '{HOJA}': {e}")
+
+    if fila_ejecuciones:
+        if fila_final:
+            ven_fin = fila_final - 1
+            origen_fin = f"'{PALABRA_FINAL}' en fila {fila_final}"
+        else:
+            ven_fin = max(ultima_fila_datos or 0, fila_ejecuciones + 1)
+            origen_fin = "ultima fila con datos (marca final NO encontrada)"
+
+        bloques = {
+            "fila_ejecuciones": fila_ejecuciones,
+            "fila_final": fila_final,
+            "pos_ini": FILA_INI,
+            "pos_fin": fila_ejecuciones - 1,
+            "ven_ini": fila_ejecuciones + 1,
+            "ven_fin": max(ven_fin, fila_ejecuciones + 1),
+            "detectado": True,
+        }
+        print(
+            f"📐 Bloques detectados en '{HOJA}': "
+            f"'{PALABRA_SEPARADORA}' en fila {fila_ejecuciones} · {origen_fin} → "
+            f"POSICIONES {bloques['pos_ini']}-{bloques['pos_fin']} · "
+            f"VENTAS {bloques['ven_ini']}-{bloques['ven_fin']}"
+        )
+        if not fila_final:
+            print(
+                f"⚠️  No se ha encontrado la frase final del bloque de ventas. "
+                f"Se lee hasta la ultima fila con datos."
+            )
+    else:
+        bloques = {
+            "fila_ejecuciones": None,
+            "fila_final": None,
+            "pos_ini": FILA_INI,
+            "pos_fin": FILA_FIN,
+            "ven_ini": FILA_VENTAS_INI_FALLBACK,
+            "ven_fin": FILA_VENTAS_FIN_FALLBACK,
+            "detectado": False,
+        }
+        print(
+            f"⚠️  No se ha encontrado la palabra '{PALABRA_SEPARADORA}' en '{HOJA}'. "
+            f"Usando rangos fijos de respaldo: POSICIONES {bloques['pos_ini']}-{bloques['pos_fin']} · "
+            f"VENTAS {bloques['ven_ini']}-{bloques['ven_fin']}"
+        )
+
+    _BLOQUES_CACHE = bloques
+    return bloques
 
 
 def cargar_overrides():
@@ -260,6 +398,7 @@ def leer_excel_con_mic():
     # Cargar dos versiones: una con valores cacheados y otra con formulas
     wb = openpyxl.load_workbook(EXCEL, data_only=True, keep_vba=False)
     ws = wb[HOJA]
+    B = detectar_bloques()
     mensual_data = None
     plusv_hoy = 0
     plusv_semana = 0
@@ -276,7 +415,7 @@ def leer_excel_con_mic():
         lunes_d = hoy_d - timedelta(days=hoy_d.weekday())
         plusv_semana = 0
         ws_ej = wb['2026']
-        for row in range(262, 401):
+        for row in range(B["ven_ini"], B["ven_fin"] + 1):
             fecha_v = ws_ej.cell(row=row, column=17).value
             plusv = ws_ej.cell(row=row, column=25).value
             if fecha_v and hasattr(fecha_v, 'date') and fecha_v.date() >= lunes_d and plusv:
@@ -315,7 +454,7 @@ def leer_excel_con_mic():
         
         # Leer compras desglosadas (col D=ticker, I=fecha, K=titulos, N=coste_eur)
         compras_por_ticker = {}
-        for row in range(5, 258):
+        for row in range(B["pos_ini"], B["pos_fin"] + 1):
             tckr_r = ws.cell(row=row, column=4).value
             fecha_i = ws.cell(row=row, column=9).value
             titulos_i = ws.cell(row=row, column=11).value
@@ -361,13 +500,18 @@ def leer_excel_con_mic():
     orden = []
     sin_mic = []
 
-    for row in range(FILA_INI, FILA_FIN + 1):
+    for row in range(B["pos_ini"], B["pos_fin"] + 1):
         ticker = ws[f"D{row}"].value
         if not ticker or not str(ticker).strip():
             continue
         ticker = str(ticker).strip()
-        titulos = ws[f"K{row}"].value or 0
-        coste_eur = ws[f"N{row}"].value or 0
+        titulos_raw = ws[f"K{row}"].value
+        coste_raw = ws[f"N{row}"].value
+        # Fila sin ningun numero en titulos ni coste = cabecera o rotulo, no es posicion
+        if not isinstance(titulos_raw, (int, float)) and not isinstance(coste_raw, (int, float)):
+            continue
+        titulos = titulos_raw or 0
+        coste_eur = coste_raw or 0
         moneda = ws[f"G{row}"].value
         precio_excel = ws[f"E{row}"].value
 
@@ -792,8 +936,9 @@ def leer_ganancias_realizadas():
     inicio_mes = hoy.replace(day=1,hour=0,minute=0,second=0,microsecond=0)
     r = {"sem_b":0,"sem_n":0,"mes_b":0,"mes_n":0,"ani_b":0,"ani_n":0}
 
+    B = detectar_bloques()
     ws = wb["2026"]
-    for row in ws.iter_rows(min_row=262, max_row=400, values_only=True):
+    for row in ws.iter_rows(min_row=B["ven_ini"], max_row=B["ven_fin"], values_only=True):
         fecha, bruta, neta = row[16], row[24], row[25]
         if not fecha or not isinstance(fecha, datetime) or not bruta or not neta: continue
         if fecha.year != hoy.year: continue
@@ -1068,13 +1213,14 @@ def verificar_precios_yahoo(ticker_map):
 
 
 def leer_ventas_anual():
-    """Lee ventas del año actual del Excel (pestaña 2026, filas 262-400)."""
+    """Lee ventas del año actual del Excel (pestaña 2026, bloque posterior a 'ejecuciones')."""
     from datetime import datetime
     wb2 = openpyxl.load_workbook(open(str(EXCEL), "rb"), read_only=True, data_only=True)
+    B = detectar_bloques()
     ws2 = wb2["2026"]
     hoy = datetime.now()
     ventas = []
-    for row in ws2.iter_rows(min_row=262, max_row=400, values_only=True):
+    for row in ws2.iter_rows(min_row=B["ven_ini"], max_row=B["ven_fin"], values_only=True):
         ticker = row[3]   # col D
         moneda = row[6]   # col G
         banco  = row[7]   # col H
@@ -1086,6 +1232,11 @@ def leer_ventas_anual():
         if not isinstance(fecha, datetime):
             continue
         if fecha.year != hoy.year:
+            continue
+        # Una venta real nunca tiene bruto y neto a cero
+        if not isinstance(bruto, (int, float)) or not isinstance(neto, (int, float)):
+            continue
+        if bruto == 0 and neto == 0:
             continue
         ventas.append({
             "ticker": str(ticker).strip(),

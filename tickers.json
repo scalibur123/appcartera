@@ -459,13 +459,13 @@
     "fuente_resolucion": "override"
   },
   "CBK": {
-    "yahoo": "CBK.MC",
+    "yahoo": "CBK.DE",
     "mic": null,
     "moneda": "EUR",
     "titulos": 500.0,
     "coste_eur": 15595,
     "precio_excel": 39.29,
-    "fuente_resolucion": "fallback_madrid"
+    "fuente_resolucion": "override"
   },
   "CRBP": {
     "yahoo": "CRBP",
@@ -1780,5 +1780,32 @@
     "coste_eur": 13393.0,
     "precio_excel": 13.118,
     "fuente_resolucion": "override"
+  },
+  "ZAL": {
+    "yahoo": "ZAL.DE",
+    "mic": null,
+    "moneda": "EUR",
+    "titulos": 507.0,
+    "coste_eur": 17217.76,
+    "precio_excel": 24.91,
+    "fuente_resolucion": "override"
+  },
+  "Z": {
+    "yahoo": "Z",
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 100.0,
+    "coste_eur": 3937.8184,
+    "precio_excel": 33.43,
+    "fuente_resolucion": "fallback_usd_directo"
+  },
+  "ZS": {
+    "yahoo": "ZS",
+    "mic": null,
+    "moneda": "USD",
+    "titulos": 80.0,
+    "coste_eur": 10145.2166,
+    "precio_excel": 162.6,
+    "fuente_resolucion": "fallback_usd_directo"
   }
 }
