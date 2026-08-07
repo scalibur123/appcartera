@@ -342,6 +342,37 @@ def asegurar_serie_latentes():
         print(f"✅ Historico regenerado: {len(fechas)} dias, hasta {fechas[-1]}\n")
 
 
+def leer_tipo_irpf():
+    """Tipo fiscal medio real: IRPF!F35, la misma celda que alimenta AA1 de la
+    hoja 2026 ('TIPO FISCAL'). Si no se puede leer, se deja el que ya hubiera."""
+    try:
+        wb = openpyxl.load_workbook(open(str(EXCEL), "rb"), read_only=True, data_only=True)
+        v = wb["IRPF"].cell(35, 6).value
+        wb.close()
+        if isinstance(v, (int, float)) and 0 < v < 1:
+            print(f"✅ Tipo fiscal leido de IRPF!F35: {v*100:.4f}%")
+            return float(v)
+        print(f"⚠️  IRPF!F35 no es un tipo valido ({v!r}), se mantiene el anterior")
+    except Exception as e:
+        print(f"⚠️  No se puede leer IRPF!F35 ({e}), se mantiene el anterior")
+    return None
+
+
+def inyectar_tipo_irpf(html):
+    tipo = leer_tipo_irpf()
+    if tipo is None:
+        return html
+    nuevo = f"/*tipo-irpf-start*/var TIPO_IRPF = {tipo!r};/*tipo-irpf-end*/"
+    if "/*tipo-irpf-start*/" in html:
+        return re.sub(r"/\*tipo-irpf-start\*/.*?/\*tipo-irpf-end\*/",
+                      lambda m: nuevo, html, flags=re.DOTALL)
+    # index.html antiguo: lo colocamos antes del primer uso
+    if "function _grp(" in html:
+        return html.replace("function _grp(", nuevo + "\nfunction netoIRPF(v){ return v * (1 - TIPO_IRPF); }\nfunction _grp(", 1)
+    print("⚠️  No se encuentra donde inyectar el tipo fiscal")
+    return html
+
+
 def leer_dividendos_brutos():
     """Dividendos del año en curso: col A fecha, col H Total Bruto (ya en euros)."""
     try:
@@ -1275,6 +1306,7 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
     nuevo_html = asegurar_marcadores_serie(nuevo_html)
     asegurar_serie_latentes()
     nuevo_html = inyectar_serie_y_dividendos(nuevo_html)
+    nuevo_html = inyectar_tipo_irpf(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
     print(f"✅ index.html actualizado. Backup: {backup.name}")
 

@@ -312,6 +312,11 @@ function fN(n,d=2){return n.toLocaleString('es-ES',{minimumFractionDigits:d,maxi
 // OJO: toLocaleString('es-ES') NO agrupa los numeros de 4 digitos (3702,51 en vez
 // de 3.702,51) porque el estandar español fija minimumGroupingDigits=2. Por eso
 // se agrupa a mano, igual que hace fE(), y asi todos los campos salen iguales.
+// Tipo fiscal real, leido de IRPF!F35 del Excel (misma celda que alimenta AA1
+// de la hoja 2026). Lo reinyecta update_from_excel_v3.py en cada actualizar.
+// Antes habia un 0.20925 clavado a mano en tres sitios distintos del JS.
+/*tipo-irpf-start*/var TIPO_IRPF = 0.21606817129493497;/*tipo-irpf-end*/
+function netoIRPF(v){ return v * (1 - TIPO_IRPF); }
 function _grp(s){return s.replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
 function fNum(n,d=2){
   if(n==null||isNaN(n))return '—';
@@ -340,7 +345,7 @@ function updateResumen(){
       varB+=varEur;
     }
   }
-  const varN=varB*(1-0.20925);
+  const varN=netoIRPF(varB);
   // Valor total cartera ahora en euros
   let valorAhora=0;
   for(const i of C){const p=prices[i.symbol];if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;valorAhora+=i.titulos*pe;}}
@@ -348,7 +353,7 @@ function updateResumen(){
   // Plusvalías vivas (vs coste)
   let b=0;
   for(const i of C){const p=prices[i.symbol];if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;b+=i.titulos*pe-i.coste_eur;}}
-  const n=b*(1-0.20925);
+  const n=netoIRPF(b);
   const pb=document.getElementById('pv-b'),pn=document.getElementById('pv-n');
   pb.textContent=fE(b);pb.style.color=b>=0?'var(--green)':'var(--red)';
   pn.textContent=fE(n);pn.style.color=n>=0?'var(--green)':'var(--red)';
@@ -360,7 +365,7 @@ function updateResumen(){
 
   const fmtR=(v)=>{const s=v<0;const abs=Math.abs(v);const parts=abs.toFixed(2).split('.');const int=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return(s?'-':'+')+int+','+parts[1]+' €';};
   const colorR=(v)=>v>=0?'var(--green)':'var(--red)';
-  const IRPF=0.20925;
+  const IRPF=TIPO_IRPF;
 
   function pintarBloque(idB,idN,val){
     const valN=val*(1-IRPF);
