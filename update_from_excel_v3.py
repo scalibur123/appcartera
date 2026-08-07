@@ -23,7 +23,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 
 HOME = Path.home()
 PROYECTO = HOME / "APPCARTERA_NUEVA"
@@ -234,6 +234,87 @@ def detectar_bloques(forzar=False):
 
     _BLOQUES_CACHE = bloques
     return bloques
+
+
+# ══════════════════════════════════════════════════════════════════════
+# SERIE DE LATENTES + DIVIDENDOS BRUTOS -> index.html
+#
+# La tarjeta HOY/SEMANA/MES/ANUAL usa:
+#   GANANCIA = (latente ahora - latente antes del periodo) + ventas + dividendos
+# La latente de ahora la calcula el JS en vivo; las pasadas salen de
+# serie_latentes.json, que genera reconstruir_historico.py con cierres de Yahoo.
+# ══════════════════════════════════════════════════════════════════════
+
+SERIE_JSON = PROYECTO / "serie_latentes.json"
+
+
+def leer_dividendos_brutos():
+    """Dividendos del año en curso: col A fecha, col H Total Bruto (ya en euros)."""
+    try:
+        wb = openpyxl.load_workbook(open(str(EXCEL), "rb"), read_only=True, data_only=True)
+    except Exception as e:
+        print(f"⚠️  No se pueden leer dividendos: {e}")
+        return []
+    if "dividendos 26" not in wb.sheetnames:
+        wb.close()
+        return []
+    anio = datetime.now().year
+    out = []
+    for row in wb["dividendos 26"].iter_rows(min_row=4, max_row=600, max_col=10, values_only=True):
+        f, bruto = row[0], row[7]
+        if isinstance(f, datetime) and isinstance(bruto, (int, float)) and f.year == anio:
+            out.append({"fecha": f.strftime("%Y-%m-%d"), "bruto": round(float(bruto), 2)})
+    wb.close()
+    out.sort(key=lambda x: x["fecha"])
+    print(f"✅ {len(out)} dividendos brutos leidos del Excel")
+    return out
+
+
+def inyectar_serie_y_dividendos(html):
+    # --- dividendos ---
+    divs = leer_dividendos_brutos()
+    bloque_div = ('<!--dividendos-anual-start--><script>var DIVIDENDOS_ANUAL='
+                  + json.dumps(divs, ensure_ascii=False)
+                  + ';</script><!--dividendos-anual-end-->')
+    html = re.sub(r'<!--dividendos-anual-start-->.*?<!--dividendos-anual-end-->',
+                  lambda m: bloque_div, html, flags=re.DOTALL)
+
+    # --- serie de latentes ---
+    serie = {"serie": {}}
+    if SERIE_JSON.exists():
+        try:
+            serie = json.loads(SERIE_JSON.read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"⚠️  serie_latentes.json ilegible: {e}")
+    n = len(serie.get("serie", {}))
+    bloque_serie = ('<!--serie-latentes-start--><script>var SERIE_LATENTES='
+                    + json.dumps({"serie": serie.get("serie", {}),
+                                  "generado": serie.get("generado", "")}, ensure_ascii=False)
+                    + ';</script><!--serie-latentes-end-->')
+    html = re.sub(r'<!--serie-latentes-start-->.*?<!--serie-latentes-end-->',
+                  lambda m: bloque_serie, html, flags=re.DOTALL)
+
+    # --- aviso de frescura ---
+    if n == 0:
+        print("⚠️  NO hay serie de latentes. SEMANA/MES/ANUAL saldran vacios.")
+        print("    Ejecuta:  python3 reconstruir_historico.py")
+    else:
+        hoy = datetime.now().date()
+        lunes = hoy - timedelta(days=hoy.weekday())
+        dia1 = hoy.replace(day=1)
+        fechas = sorted(serie["serie"].keys())
+        falta = []
+        for etq, ref in (("SEMANA", lunes), ("MES", dia1)):
+            if not any(f < ref.strftime("%Y-%m-%d") for f in fechas):
+                falta.append(etq)
+        ultimo = fechas[-1]
+        print(f"✅ Serie de latentes: {n} dias, hasta {ultimo}")
+        if falta:
+            print(f"⚠️  Falta base para {', '.join(falta)}. Ejecuta reconstruir_historico.py")
+        elif ultimo < (hoy - timedelta(days=7)).strftime("%Y-%m-%d"):
+            print(f"⚠️  La serie tiene mas de una semana. Conviene regenerarla:")
+            print(f"    python3 reconstruir_historico.py")
+    return html
 
 
 def cargar_overrides():
@@ -1112,6 +1193,8 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
             nuevo_html = inyectar_bancos(nuevo_html, bancos_data)
     nuevo_html = asegurar_proximas_compras(nuevo_html, proximas_compras or [])
     nuevo_html = asegurar_historico(nuevo_html)
+    nuevo_html = asegurar_marcadores_serie(nuevo_html)
+    nuevo_html = inyectar_serie_y_dividendos(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
     print(f"✅ index.html actualizado. Backup: {backup.name}")
 
@@ -1248,6 +1331,29 @@ def leer_ventas_anual():
         })
     print(f"\u2705 {len(ventas)} ventas leidas del Excel (VENTAS_ANUAL)")
     return ventas
+
+
+
+def asegurar_marcadores_serie(html):
+    """Recrea los marcadores de SERIE_LATENTES / DIVIDENDOS_ANUAL si faltan,
+    para que un index.html antiguo no se quede sin ellos."""
+    if "<!--serie-latentes-start-->" not in html:
+        bloque = ('<!--serie-latentes-start--><script>var SERIE_LATENTES={"serie":{}};</script>'
+                  '<!--serie-latentes-end-->\n')
+        if "var PLUSV_SEMANA=" in html:
+            html = html.replace("<script>var PLUSV_SEMANA=", bloque + "<script>var PLUSV_SEMANA=", 1)
+        else:
+            html = html.replace("</body>", bloque + "</body>", 1)
+        print("ℹ️  Marcadores de serie-latentes recreados")
+    if "<!--dividendos-anual-start-->" not in html:
+        bloque = ('<!--dividendos-anual-start--><script>var DIVIDENDOS_ANUAL=[];</script>'
+                  '<!--dividendos-anual-end-->\n')
+        if "var PLUSV_SEMANA=" in html:
+            html = html.replace("<script>var PLUSV_SEMANA=", bloque + "<script>var PLUSV_SEMANA=", 1)
+        else:
+            html = html.replace("</body>", bloque + "</body>", 1)
+        print("ℹ️  Marcadores de dividendos-anual recreados")
+    return html
 
 
 def inyectar_ventas_anual(html, ventas):

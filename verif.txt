@@ -1,0 +1,125 @@
+📐 POSICIONES 5-263 · VENTAS 265-382
+
+==========================================================================
+PREGUNTA 1 · ¿Estan completas las POSICIONES ABIERTAS?
+==========================================================================
+  Posiciones abiertas          : 256
+  SIN fecha de compra (col I)  : 1
+  SIN coste (col N)            : 0
+  SIN titulos (col K)          : 0
+    ⚠️  fila  198 SCYR     fecha='28//17'
+  Compra mas antigua           : 02/09/2008
+  Compra mas reciente          : 06/08/2026
+
+==========================================================================
+PREGUNTA 2 · ¿Que guardan las filas de VENTA?
+==========================================================================
+  Filas de venta detectadas    : 54
+
+  VOLCADO COMPLETO de las 3 ultimas ventas (para mapear columnas):
+
+  ── fila 336 ──
+      A ( 1) = 0
+      B ( 2) = #VALUE!
+      D ( 4) = SAH
+      E ( 5) = 83.02
+      F ( 6) = 82.52
+      G ( 7) = USD
+      H ( 8) = revolut
+      I ( 9) = 23/02/2026
+      J (10) = 0.85
+      K (11) = 135
+      L (12) = 65.82
+      M (13) = 8,900.70
+      N (14) = 7,521.98
+      O (15) = 15
+      Q (17) = 09/07/2026
+      R (18) = 0.87
+      S (19) = 135
+      T (20) = 93.07
+      U (21) = 12,564.45
+      V (22) = 10,981.33
+      W (23) = 0
+      Y (25) = 3,459.35
+      Z (26) = 2,711.89
+
+  ── fila 340 ──
+      A ( 1) = 0
+      B ( 2) = #VALUE!
+      D ( 4) = ZBRA
+      E ( 5) = 377.71
+      F ( 6) = 368.29
+      G ( 7) = USD
+      H ( 8) = ibkr
+      I ( 9) = 18/05/2026
+      J (10) = 0.86
+      K (11) = 50
+      L (12) = 261.48
+      M (13) = 13075
+      N (14) = 11,222.27
+      O (15) = 1
+      Q (17) = 04/08/2026
+      R (18) = 0.87
+      S (19) = 50
+      T (20) = 350
+      U (21) = 17,498.77
+      V (22) = 15,171.43
+      W (23) = 1.23
+      Y (25) = 3,949.16
+      Z (26) = 3,095.87
+
+  ── fila 341 ──
+      A ( 1) = 0
+      B ( 2) = #VALUE!
+      D ( 4) = CBK
+      E ( 5) = 39.26
+      F ( 6) = 38.64
+      G ( 7) = EUR
+      H ( 8) = R4
+      I ( 9) = 30/10/2025
+      K (11) = 500
+      L (12) = 31.16
+      M (13) = 15595
+      N (14) = 15595
+      O (15) = 15
+      Q (17) = 07/08/2026
+      S (19) = 500
+      T (20) = 39.30
+      U (21) = 19635
+      V (22) = 19635
+      W (23) = 15
+      Y (25) = 4040
+      Z (26) = 3,167.08
+
+  Tickers distintos vendidos este año: 50
+
+==========================================================================
+PREGUNTA 3 · ¿Da Yahoo cierres historicos desde enero?
+==========================================================================
+  Simbolos a probar            : 201 (incluye EUR/USD)
+  Descargando 1 año de cierres... (1-2 minutos)
+
+    25/201...
+    50/201...
+    75/201...
+    100/201...
+    125/201...
+    150/201...
+    175/201...
+    200/201...
+
+  ✅ Con historico             : 201/201
+  ❌ Sin datos                 : 0
+  ⚠️  Sin cierres hasta 2026-01-02: 0
+  Media de sesiones por ticker : 253
+
+==========================================================================
+VEREDICTO
+==========================================================================
+  1. Excel completo            : NO
+  2. Ventas (ver volcado arriba, lo miro yo)
+  3. Yahoo historico completo  : SI
+
+  ⚠️  Hay huecos. Mira los detalles de arriba antes de seguir.
+
+  Copia y pegame TODA la salida.

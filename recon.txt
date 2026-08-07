@@ -1,0 +1,72 @@
+📐 POSICIONES 5-263 · VENTAS 265-382
+   256 posiciones abiertas · 54 ventas · 143 dividendos
+   Latente HOY segun columna AB del Excel: 100.091,49 €
+   Coste  HOY segun columna N  del Excel: 2.258.981,42 €
+
+==========================================================================
+RESOLVIENDO SIMBOLOS DE YAHOO
+==========================================================================
+
+==========================================================================
+DESCARGANDO CIERRES HISTORICOS DE YAHOO
+==========================================================================
+    25/244...
+    50/244...
+    75/244...
+    100/244...
+    125/244...
+    150/244...
+    175/244...
+    200/244...
+    225/244...
+  ✅ 243/244 con datos
+  ❌ sin datos: APLS
+  Calendario: 169 dias habiles de 2025-12-11 a 2026-08-07
+
+==========================================================================
+RECONSTRUYENDO LA SERIE DIARIA
+==========================================================================
+
+==========================================================================
+VALIDACION CONTRA EL EXCEL
+==========================================================================
+  Fecha calculada          : 2026-08-07
+  Valor cartera calculado  :     2.351.828,04 €
+  Coste calculado          :     2.258.981,42 €
+  LATENTE calculada        :        92.846,63 €
+  LATENTE segun Excel (AB) :       100.091,49 €
+  Valor cartera Excel      :     2.359.072,91 €
+
+  Δ COSTE  (prueba dura)   :             0,00 €
+  Δ VALOR                  :        -7.244,86 €   (0.31%)
+  Δ LATENTE                :        -7.244,86 €
+
+  COSTE  : ✅ exacto
+  VALOR  : ✅ dentro del 1%
+
+  ✅ METODO VALIDADO.
+
+==========================================================================
+GANANCIA POR PERIODOS (todo BRUTO)
+==========================================================================
+  SEMANA  base 2026-07-31 (57.576,47 €)
+          Δ latentes      35.270,16 €
+          + ventas         7.989,16 €
+          + dividend           0,00 €
+          = TOTAL         43.259,32 €
+
+  MES     base 2026-07-31 (57.576,47 €)
+          Δ latentes      35.270,16 €
+          + ventas         7.989,16 €
+          + dividend           0,00 €
+          = TOTAL         43.259,32 €
+
+  ANUAL   base 2025-12-31 (-43.109,47 €)
+          Δ latentes     135.956,10 €
+          + ventas       154.743,91 €
+          + dividend      37.271,54 €
+          = TOTAL        327.971,55 €
+
+💾 Serie de 169 dias guardada en historico_latentes.csv
+
+  Copia y pegame el bloque de VALIDACION y el de PERIODOS.
