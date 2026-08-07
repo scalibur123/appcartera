@@ -186,11 +186,20 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   </div>
   <div class="card">
     <div class="card-label">Nómina</div>
-    <div class="plusv-row"><span class="plusv-label">Sueldo neto 12 pagas</span><span class="mensual-val green" id="sueldo-bruto-val">19.228,92 €</span></div>
-    <div class="plusv-row"><span class="plusv-label">Sueldo neto est. 26</span><span class="mensual-val green" id="sueldo-neto-val">10.987,95 €</span></div>
+    <div class="plusv-row"><span class="plusv-label">Ganancia neta 12p (<span id="lbl-mes-actual">agosto</span>)</span><span class="mensual-val green" id="sueldo-bruto-val">19.228,92 €</span></div>
+    <div class="plusv-row"><span class="plusv-label">Ganancia neta 14p (diciembre)</span><span class="mensual-val green" id="sueldo-neto-val">10.987,95 €</span></div>
     <div class="plusv-row"><span class="plusv-label">Prom. neto 14p 24/26</span><span class="mensual-val green" id="prom-neto-conservador-val">13.939,49 €</span></div>
     <div class="plusv-row"><span class="plusv-label">Prom. neto 12p 24/26</span><span class="mensual-val green" id="prom-neto-optimista-val">16.262,74 €</span></div>
   </div>
+  <script>
+  // El mes de "Ganancia neta 12p" se actualiza solo en cada carga de la app
+  (function(){
+    var MESES=['enero','febrero','marzo','abril','mayo','junio',
+               'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    var el=document.getElementById('lbl-mes-actual');
+    if(el) el.textContent=MESES[new Date().getMonth()];
+  })();
+  </script>
 </div>
 
 
