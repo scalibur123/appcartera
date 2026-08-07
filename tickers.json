@@ -6,7 +6,7 @@
     "titulos": 800.0,
     "coste_eur": 4922.2951,
     "precio_excel": 7.24,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "ACHC": {
     "yahoo": "ACHC",
@@ -15,7 +15,7 @@
     "titulos": 203.0,
     "coste_eur": 4246.175,
     "precio_excel": 31.53,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "ANA": {
     "yahoo": "ANA.MC",
@@ -51,7 +51,7 @@
     "titulos": 1300.0,
     "coste_eur": 9200.9411,
     "precio_excel": 7.64,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "AED": {
     "yahoo": "AED.BR",
@@ -69,7 +69,7 @@
     "titulos": 74.0,
     "coste_eur": 7598.4044,
     "precio_excel": 145.97,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "AKZA": {
     "yahoo": "AKZA.AS",
@@ -114,7 +114,7 @@
     "titulos": 170.0,
     "coste_eur": 4718.1195,
     "precio_excel": 25.65,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "AMP": {
     "yahoo": "AMP.MC",
@@ -141,7 +141,7 @@
     "titulos": 25.0,
     "coste_eur": 10905.2636,
     "precio_excel": 346.8,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "ABUS": {
     "yahoo": "ABUS",
@@ -150,7 +150,7 @@
     "titulos": 1500.0,
     "coste_eur": 5393.871,
     "precio_excel": 4.63,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "ARCAD": {
     "yahoo": "ARCAD.AS",
@@ -186,7 +186,7 @@
     "titulos": 987.0,
     "coste_eur": 12530.5721,
     "precio_excel": 9.26,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "A3M": {
     "yahoo": "A3M.MC",
@@ -222,7 +222,7 @@
     "titulos": 150.0,
     "coste_eur": 8502.7761,
     "precio_excel": 74.13,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "override"
   },
   "BKR": {
     "yahoo": "BKR",
@@ -231,7 +231,7 @@
     "titulos": 115.0,
     "coste_eur": 5296.4055,
     "precio_excel": 61.55,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "BLCO": {
     "yahoo": "BLCO",
@@ -240,7 +240,7 @@
     "titulos": 248.0,
     "coste_eur": 4741.8103,
     "precio_excel": 16.78,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "BAX": {
     "yahoo": "BAX",
@@ -249,7 +249,7 @@
     "titulos": 180.0,
     "coste_eur": 7221.3603,
     "precio_excel": 27.54,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "BAYN": {
     "yahoo": "BAYN.DE",
@@ -285,7 +285,7 @@
     "titulos": 133.0,
     "coste_eur": 6962.9604,
     "precio_excel": 35.21,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "BCRX": {
     "yahoo": "BCRX",
@@ -294,7 +294,7 @@
     "titulos": 487.0,
     "coste_eur": 3612.4091,
     "precio_excel": 9.38,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "BHVN": {
     "yahoo": "BHVN",
@@ -303,7 +303,7 @@
     "titulos": 150.0,
     "coste_eur": 7907.2006,
     "precio_excel": 14.66,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "BNR": {
     "yahoo": "BNR.DE",
@@ -321,7 +321,7 @@
     "titulos": 235.0,
     "coste_eur": 7671.9362,
     "precio_excel": 10.22,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "CABK": {
     "yahoo": "CABK.MC",
@@ -339,7 +339,7 @@
     "titulos": 400.0,
     "coste_eur": 8683.6792,
     "precio_excel": 30.15,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "CALM": {
     "yahoo": "CALM",
@@ -348,7 +348,7 @@
     "titulos": 120.0,
     "coste_eur": 8943.325,
     "precio_excel": 85.08,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "AFX": {
     "yahoo": "AFX.DE",
@@ -375,7 +375,7 @@
     "titulos": 900.0,
     "coste_eur": 9298.4954,
     "precio_excel": 8.2,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "CRNC": {
     "yahoo": "CRNC",
@@ -384,7 +384,7 @@
     "titulos": 1087.0,
     "coste_eur": 10016.5209,
     "precio_excel": 9.145,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "CHPT": {
     "yahoo": "CHPT",
@@ -393,7 +393,7 @@
     "titulos": 100.0,
     "coste_eur": 3807.1178,
     "precio_excel": 6.22,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "CIE": {
     "yahoo": "CIE.MC",
@@ -411,7 +411,7 @@
     "titulos": 350.0,
     "coste_eur": 10354.5922,
     "precio_excel": 51.29,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "COIN": {
     "yahoo": "COIN",
@@ -420,7 +420,7 @@
     "titulos": 23.0,
     "coste_eur": 4130.6921,
     "precio_excel": 153.6,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "CNDT": {
     "yahoo": "CNDT",
@@ -429,7 +429,7 @@
     "titulos": 3927.0,
     "coste_eur": 11685.211,
     "precio_excel": 1.7,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "CON": {
     "yahoo": "CON.DE",
@@ -465,7 +465,7 @@
     "titulos": 456.0,
     "coste_eur": 4078.1503,
     "precio_excel": 10.17,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "CTSH": {
     "yahoo": "CTSH",
@@ -474,7 +474,7 @@
     "titulos": 214.0,
     "coste_eur": 10611.5686,
     "precio_excel": 57.67,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "CXT": {
     "yahoo": "CXT",
@@ -483,7 +483,7 @@
     "titulos": 220.0,
     "coste_eur": 9249.4507,
     "precio_excel": 53.33,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "DTG": {
     "yahoo": "DTG.DE",
@@ -501,7 +501,7 @@
     "titulos": 52.0,
     "coste_eur": 11915.672,
     "precio_excel": 204.76,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "DDOG": {
     "yahoo": "DDOG",
@@ -510,7 +510,7 @@
     "titulos": 78.0,
     "coste_eur": 10774.5924,
     "precio_excel": 233.93,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "LHA": {
     "yahoo": "LHA.DE",
@@ -537,7 +537,7 @@
     "titulos": 1072.0,
     "coste_eur": 11007.0089,
     "precio_excel": 12.12,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "DOCU": {
     "yahoo": "DOCU",
@@ -546,7 +546,7 @@
     "titulos": 156.0,
     "coste_eur": 10986.0978,
     "precio_excel": 60.26,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "EDP": {
     "yahoo": "EDP.LS",
@@ -591,7 +591,7 @@
     "titulos": 193.0,
     "coste_eur": 9197.8387,
     "precio_excel": 51.676,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "EGLA": {
     "yahoo": "EGLA.MI",
@@ -663,7 +663,7 @@
     "titulos": 125.0,
     "coste_eur": 7919.1733,
     "precio_excel": 33.99,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "FTV": {
     "yahoo": "FTV",
@@ -672,7 +672,7 @@
     "titulos": 100.0,
     "coste_eur": 6153.4773,
     "precio_excel": 61.71,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "FRA": {
     "yahoo": "FRA.DE",
@@ -699,7 +699,7 @@
     "titulos": 133.32999999999998,
     "coste_eur": 3314.0405,
     "precio_excel": 9.26,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "GLXY": {
     "yahoo": "GLXY",
@@ -708,7 +708,7 @@
     "titulos": 300.0,
     "coste_eur": 7404.9876,
     "precio_excel": 20.17,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "GEHC": {
     "yahoo": "GEHC",
@@ -717,7 +717,7 @@
     "titulos": 89.0,
     "coste_eur": 7331.2607,
     "precio_excel": 71.77,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "GNTX": {
     "yahoo": "GNTX",
@@ -726,7 +726,7 @@
     "titulos": 440.0,
     "coste_eur": 9121.9009,
     "precio_excel": 24.08,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "GEST": {
     "yahoo": "GEST.MC",
@@ -744,7 +744,7 @@
     "titulos": 280.0,
     "coste_eur": 6306.429,
     "precio_excel": 35.46,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "DOM": {
     "yahoo": "DOM.MC",
@@ -762,7 +762,7 @@
     "titulos": 260.0,
     "coste_eur": 14304.3597,
     "precio_excel": 53.93,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "HAVAS": {
     "yahoo": "HAVAS.AS",
@@ -798,7 +798,7 @@
     "titulos": 400.0,
     "coste_eur": 11831.862,
     "precio_excel": 38.41,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "BOSS": {
     "yahoo": "BOSS.DE",
@@ -870,7 +870,7 @@
     "titulos": 13.0,
     "coste_eur": 8361.1095,
     "precio_excel": 325.25,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "ISRG": {
     "yahoo": "ISRG",
@@ -879,7 +879,7 @@
     "titulos": 20.0,
     "coste_eur": 9343.9667,
     "precio_excel": 378.81,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "IOVA": {
     "yahoo": "IOVA",
@@ -888,7 +888,7 @@
     "titulos": 491.0,
     "coste_eur": 5677.8538,
     "precio_excel": 6.34,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "JKHY": {
     "yahoo": "JKHY",
@@ -897,7 +897,7 @@
     "titulos": 77.0,
     "coste_eur": 11313.8967,
     "precio_excel": 155.95,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "JEN": {
     "yahoo": "JEN.DE",
@@ -915,7 +915,7 @@
     "titulos": 806.06922712,
     "coste_eur": 7230.9198,
     "precio_excel": 8.63,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "KVUE": {
     "yahoo": "KVUE",
@@ -924,7 +924,7 @@
     "titulos": 300.0,
     "coste_eur": 5835.6265,
     "precio_excel": 19.23,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "KSS": {
     "yahoo": "KSS",
@@ -933,7 +933,7 @@
     "titulos": 850.0,
     "coste_eur": 11957.3492,
     "precio_excel": 19.3,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "KLAR": {
     "yahoo": "KLAR",
@@ -942,7 +942,7 @@
     "titulos": 493.0,
     "coste_eur": 8641.4548,
     "precio_excel": 19.91,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "LI": {
     "yahoo": "LI.PA",
@@ -969,7 +969,7 @@
     "titulos": 1130.0,
     "coste_eur": 6235.905,
     "precio_excel": 7.48,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "LEG": {
     "yahoo": "LEG.DE",
@@ -987,7 +987,7 @@
     "titulos": 800.0,
     "coste_eur": 5296.2151,
     "precio_excel": 8.11,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "LBTYA": {
     "yahoo": "LBTYA",
@@ -996,7 +996,7 @@
     "titulos": 515.0,
     "coste_eur": 4691.1299,
     "precio_excel": 10.55,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "LDA": {
     "yahoo": "LDA.MC",
@@ -1023,7 +1023,7 @@
     "titulos": 366.0,
     "coste_eur": 5349.0561,
     "precio_excel": 10.09,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "MAS": {
     "yahoo": "MAS",
@@ -1032,7 +1032,7 @@
     "titulos": 120.0,
     "coste_eur": 9285.4139,
     "precio_excel": 77.51,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "MKC": {
     "yahoo": "MKC",
@@ -1041,7 +1041,7 @@
     "titulos": 125.0,
     "coste_eur": 9492.4637,
     "precio_excel": 52.945,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "MDT": {
     "yahoo": "MDT",
@@ -1050,7 +1050,7 @@
     "titulos": 100.0,
     "coste_eur": 8207.6768,
     "precio_excel": 87.16,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "MFEB": {
     "yahoo": "MFEB.MI",
@@ -1068,7 +1068,7 @@
     "titulos": 23.0,
     "coste_eur": 9677.4736,
     "precio_excel": 499.99,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "MSTR": {
     "yahoo": "MSTR",
@@ -1077,7 +1077,7 @@
     "titulos": 49.83,
     "coste_eur": 7104.548,
     "precio_excel": 100.01,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "MRNA": {
     "yahoo": "MRNA",
@@ -1086,7 +1086,7 @@
     "titulos": 69.0,
     "coste_eur": 6863.1669,
     "precio_excel": 59.17,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "MONC": {
     "yahoo": "MONC.MI",
@@ -1104,7 +1104,7 @@
     "titulos": 715.0,
     "coste_eur": 10913.7427,
     "precio_excel": 12.73,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "NTGY": {
     "yahoo": "NTGY.MC",
@@ -1122,7 +1122,7 @@
     "titulos": 450.0,
     "coste_eur": 2271.871,
     "precio_excel": 2.835,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "NKE": {
     "yahoo": "NKE",
@@ -1131,7 +1131,7 @@
     "titulos": 280.0,
     "coste_eur": 11184.4754,
     "precio_excel": 41.7,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "NEXI": {
     "yahoo": "NEXI.MI",
@@ -1167,7 +1167,7 @@
     "titulos": 520.0,
     "coste_eur": 9571.0808,
     "precio_excel": 13.6,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "OKLO": {
     "yahoo": "OKLO",
@@ -1176,7 +1176,7 @@
     "titulos": 100.0,
     "coste_eur": 5668.67,
     "precio_excel": 48.46,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "OC": {
     "yahoo": "OC",
@@ -1185,7 +1185,7 @@
     "titulos": 94.0,
     "coste_eur": 10224.4894,
     "precio_excel": 157.19,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "ORY": {
     "yahoo": "ORY.MC",
@@ -1203,7 +1203,7 @@
     "titulos": 490.0,
     "coste_eur": 11093.9169,
     "precio_excel": 25.02,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "PGY": {
     "yahoo": "PGY",
@@ -1212,7 +1212,7 @@
     "titulos": 300.0,
     "coste_eur": 6078.0447,
     "precio_excel": 21.28,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "PGEN": {
     "yahoo": "PGEN",
@@ -1221,7 +1221,7 @@
     "titulos": 1100.0,
     "coste_eur": 3257.8057,
     "precio_excel": 7.23,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "PHM": {
     "yahoo": "PHM.MC",
@@ -1239,7 +1239,7 @@
     "titulos": 25.0,
     "coste_eur": 9611.8799,
     "precio_excel": 206.31,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "PAH3": {
     "yahoo": "PAH3.DE",
@@ -1284,7 +1284,7 @@
     "titulos": 296.56,
     "coste_eur": 4238.5014,
     "precio_excel": 17.94,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "RGEN": {
     "yahoo": "RGEN",
@@ -1293,7 +1293,7 @@
     "titulos": 38.13,
     "coste_eur": 4238.8121,
     "precio_excel": 163.9,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "REGN": {
     "yahoo": "REGN",
@@ -1302,7 +1302,7 @@
     "titulos": 17.0,
     "coste_eur": 11221.6842,
     "precio_excel": 784.36,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "SCYR": {
     "yahoo": "SCYR.MC",
@@ -1338,7 +1338,7 @@
     "titulos": 2000.0,
     "coste_eur": 6071.817,
     "precio_excel": 3.52,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "SAN": {
     "yahoo": "SAN.PA",
@@ -1365,7 +1365,7 @@
     "titulos": 387.0,
     "coste_eur": 8654.0913,
     "precio_excel": 18.16,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "S": {
     "yahoo": "S",
@@ -1374,7 +1374,7 @@
     "titulos": 325.0,
     "coste_eur": 8955.1566,
     "precio_excel": 21.39,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "SHL": {
     "yahoo": "SHL.DE",
@@ -1419,7 +1419,7 @@
     "titulos": 4278.0,
     "coste_eur": 7759.186,
     "precio_excel": 1.23,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "SNOW": {
     "yahoo": "SNOW",
@@ -1428,7 +1428,7 @@
     "titulos": 45.0,
     "coste_eur": 7026.2036,
     "precio_excel": 330.47,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "SW": {
     "yahoo": "SW.PA",
@@ -1455,7 +1455,7 @@
     "titulos": 229.0,
     "coste_eur": 7470.2213,
     "precio_excel": 10.34,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "SFM": {
     "yahoo": "SFM",
@@ -1464,7 +1464,7 @@
     "titulos": 125.0,
     "coste_eur": 7915.9377,
     "precio_excel": 85.86,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "SQRL": {
     "yahoo": "SQRL.MC",
@@ -1518,7 +1518,7 @@
     "titulos": 300.0,
     "coste_eur": 7174.629,
     "precio_excel": 7.13,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "TEF": {
     "yahoo": "TEF.MC",
@@ -1545,7 +1545,7 @@
     "titulos": 96.0,
     "coste_eur": 9061.3512,
     "precio_excel": 74.23,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "HNST": {
     "yahoo": "HNST",
@@ -1554,7 +1554,7 @@
     "titulos": 2519.0,
     "coste_eur": 9485.6201,
     "precio_excel": 5.46,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "GT": {
     "yahoo": "GT",
@@ -1563,7 +1563,7 @@
     "titulos": 1222.0,
     "coste_eur": 9159.1572,
     "precio_excel": 6.44,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "TMO": {
     "yahoo": "TMO",
@@ -1572,7 +1572,7 @@
     "titulos": 20.0,
     "coste_eur": 9102.5655,
     "precio_excel": 594,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "DJT": {
     "yahoo": "DJT",
@@ -1581,7 +1581,7 @@
     "titulos": 118.0,
     "coste_eur": 3764.4068,
     "precio_excel": 10.21,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "TMUS": {
     "yahoo": "TMUS",
@@ -1590,7 +1590,7 @@
     "titulos": 50.0,
     "coste_eur": 8497.494,
     "precio_excel": 177.19,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "TUB": {
     "yahoo": "TUB.MC",
@@ -1626,7 +1626,7 @@
     "titulos": 115.0,
     "coste_eur": 7602.7455,
     "precio_excel": 75.02,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "RARE": {
     "yahoo": "RARE",
@@ -1635,7 +1635,7 @@
     "titulos": 125.0,
     "coste_eur": 6383.9506,
     "precio_excel": 25.91,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "PATH": {
     "yahoo": "PATH",
@@ -1644,7 +1644,7 @@
     "titulos": 900.0,
     "coste_eur": 9331.655,
     "precio_excel": 15.04,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "UPM": {
     "yahoo": "UPM.HE",
@@ -1662,7 +1662,7 @@
     "titulos": 702.0,
     "coste_eur": 9533.699,
     "precio_excel": 12.41,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "VRLA": {
     "yahoo": "VRLA.PA",
@@ -1680,7 +1680,7 @@
     "titulos": 32.0,
     "coste_eur": 3895.0247,
     "precio_excel": 272.35,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "VERI": {
     "yahoo": "VERI",
@@ -1689,7 +1689,7 @@
     "titulos": 200.0,
     "coste_eur": 694.34,
     "precio_excel": 1.31,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "DG": {
     "yahoo": "DG.PA",
@@ -1734,7 +1734,7 @@
     "titulos": 1910.0,
     "coste_eur": 12822.5024,
     "precio_excel": 7.93,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "XNCR": {
     "yahoo": "XNCR",
@@ -1743,7 +1743,7 @@
     "titulos": 1000.0,
     "coste_eur": 11689.6315,
     "precio_excel": 20.81,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "WEAV": {
     "yahoo": "WEAV",
@@ -1752,7 +1752,7 @@
     "titulos": 2000.0,
     "coste_eur": 13073.8725,
     "precio_excel": 5.295,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "WDAY": {
     "yahoo": "WDAY",
@@ -1761,7 +1761,7 @@
     "titulos": 32.0,
     "coste_eur": 7151.7776,
     "precio_excel": 179.64,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "WLN": {
     "yahoo": "WLN.PA",
@@ -1788,7 +1788,7 @@
     "titulos": 100.0,
     "coste_eur": 3937.8184,
     "precio_excel": 33.61,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "ZS": {
     "yahoo": "ZS",
@@ -1797,6 +1797,6 @@
     "titulos": 80.0,
     "coste_eur": 10145.2166,
     "precio_excel": 168.68,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   }
 }
