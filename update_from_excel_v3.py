@@ -22,6 +22,7 @@ import openpyxl
 import json
 import re
 import sys
+import subprocess
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -248,6 +249,99 @@ def detectar_bloques(forzar=False):
 SERIE_JSON = PROYECTO / "serie_latentes.json"
 
 
+RECONSTRUCTOR = PROYECTO / "reconstruir_historico.py"
+
+
+def _base_valida(fechas, ref, margen_dias=5):
+    """¿Hay en la serie algun dia habil util como base para 'ref'?
+    Tiene que existir una fecha ANTERIOR a ref y pegada a ella. El margen es de
+    5 dias naturales: la base buena es el ultimo dia de cotizacion justo antes
+    del periodo (normalmente el viernes). Con un margen mas ancho colaria como
+    valida la base de la semana anterior y se contarian dos semanas como una."""
+    ref_s = ref.strftime("%Y-%m-%d")
+    limite = (ref - timedelta(days=margen_dias)).strftime("%Y-%m-%d")
+    return any(limite <= f < ref_s for f in fechas)
+
+
+def serie_necesita_regenerarse(serie):
+    """Devuelve (hace_falta, motivo). Se comprueban las tres bases que usa la app."""
+    fechas = sorted(serie.get("serie", {}).keys()) if serie else []
+    if not fechas:
+        return True, "no hay serie de latentes"
+
+    hoy = datetime.now().date()
+    lunes = hoy - timedelta(days=hoy.weekday())
+    dia1 = hoy.replace(day=1)
+    enero1 = hoy.replace(month=1, day=1)
+
+    if not _base_valida(fechas, lunes):
+        return True, f"sin base valida para SEMANA (lunes {lunes})"
+    if not _base_valida(fechas, dia1):
+        return True, f"sin base valida para MES (dia 1 = {dia1})"
+    if not any(f < enero1.strftime("%Y-%m-%d") for f in fechas):
+        return True, f"sin base para ANUAL (anterior a {enero1})"
+    return False, ""
+
+
+def asegurar_serie_latentes():
+    """Si la serie se ha quedado corta (semana nueva, mes nuevo), lanza
+    reconstruir_historico.py automaticamente. Si falla, sigue con lo que haya."""
+    serie = {}
+    if SERIE_JSON.exists():
+        try:
+            serie = json.loads(SERIE_JSON.read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"⚠️  serie_latentes.json ilegible ({e}), se regenera")
+            serie = {}
+
+    hace_falta, motivo = serie_necesita_regenerarse(serie)
+    if not hace_falta:
+        fechas = sorted(serie.get("serie", {}).keys())
+        print(f"✅ Serie de latentes al dia ({len(fechas)} dias, hasta {fechas[-1]})")
+        return
+
+    print(f"\n🔄 Regenerando historico de latentes: {motivo}")
+    if not RECONSTRUCTOR.exists():
+        print(f"❌ No se encuentra {RECONSTRUCTOR.name}. SEMANA/MES/ANUAL saldran vacios.")
+        return
+
+    print("   Bajando cierres historicos de Yahoo, esto tarda 1-2 minutos...")
+    try:
+        r = subprocess.run([sys.executable, str(RECONSTRUCTOR)],
+                           cwd=str(PROYECTO), capture_output=True, text=True, timeout=900)
+    except subprocess.TimeoutExpired:
+        print("❌ La reconstruccion ha tardado demasiado y se ha cancelado.")
+        return
+    except Exception as e:
+        print(f"❌ No se ha podido lanzar la reconstruccion: {e}")
+        return
+
+    # Solo mostramos las lineas que importan, no los 200 tickers
+    for linea in (r.stdout or "").splitlines():
+        if any(k in linea for k in ("VALIDACION", "Δ COSTE", "Δ VALOR", "COSTE  :",
+                                    "VALOR  :", "METODO VALIDADO", "PARA AQUI",
+                                    "❌", "⚠️", "Calendario:", "Serie JSON")):
+            print("   " + linea.strip())
+    if r.returncode != 0:
+        print(f"❌ La reconstruccion ha fallado (codigo {r.returncode}).")
+        if r.stderr:
+            print("   " + r.stderr.strip().splitlines()[-1][:160])
+        return
+
+    # Comprobamos que de verdad ha quedado bien
+    try:
+        serie = json.loads(SERIE_JSON.read_text(encoding="utf-8"))
+    except Exception:
+        print("❌ La reconstruccion no ha dejado un serie_latentes.json legible.")
+        return
+    sigue, motivo2 = serie_necesita_regenerarse(serie)
+    if sigue:
+        print(f"⚠️  Tras regenerar sigue faltando base: {motivo2}")
+    else:
+        fechas = sorted(serie["serie"].keys())
+        print(f"✅ Historico regenerado: {len(fechas)} dias, hasta {fechas[-1]}\n")
+
+
 def leer_dividendos_brutos():
     """Dividendos del año en curso: col A fecha, col H Total Bruto (ya en euros)."""
     try:
@@ -296,24 +390,9 @@ def inyectar_serie_y_dividendos(html):
 
     # --- aviso de frescura ---
     if n == 0:
-        print("⚠️  NO hay serie de latentes. SEMANA/MES/ANUAL saldran vacios.")
-        print("    Ejecuta:  python3 reconstruir_historico.py")
+        print("⚠️  Serie de latentes vacia: SEMANA/MES/ANUAL saldran sin base.")
     else:
-        hoy = datetime.now().date()
-        lunes = hoy - timedelta(days=hoy.weekday())
-        dia1 = hoy.replace(day=1)
-        fechas = sorted(serie["serie"].keys())
-        falta = []
-        for etq, ref in (("SEMANA", lunes), ("MES", dia1)):
-            if not any(f < ref.strftime("%Y-%m-%d") for f in fechas):
-                falta.append(etq)
-        ultimo = fechas[-1]
-        print(f"✅ Serie de latentes: {n} dias, hasta {ultimo}")
-        if falta:
-            print(f"⚠️  Falta base para {', '.join(falta)}. Ejecuta reconstruir_historico.py")
-        elif ultimo < (hoy - timedelta(days=7)).strftime("%Y-%m-%d"):
-            print(f"⚠️  La serie tiene mas de una semana. Conviene regenerarla:")
-            print(f"    python3 reconstruir_historico.py")
+        print(f"✅ Serie de latentes inyectada: {n} dias")
     return html
 
 
@@ -1194,6 +1273,7 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
     nuevo_html = asegurar_proximas_compras(nuevo_html, proximas_compras or [])
     nuevo_html = asegurar_historico(nuevo_html)
     nuevo_html = asegurar_marcadores_serie(nuevo_html)
+    asegurar_serie_latentes()
     nuevo_html = inyectar_serie_y_dividendos(nuevo_html)
     INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
     print(f"✅ index.html actualizado. Backup: {backup.name}")
