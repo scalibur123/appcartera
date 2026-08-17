@@ -141,7 +141,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
     <button class="filter-btn" id="cf-R4/ING" onclick="fC('R4/ING',this)">R4/ING</button>
     <button class="filter-btn" id="cf-MEDIO/ING" onclick="fC('MEDIO/ING',this)">MEDIO/ING</button>
     <button class="filter-btn" id="cf-sort-pct" onclick="setSortC('pct',this)">↑ % día</button>
-    <button class="filter-btn" id="cf-sort-val" onclick="setSortC('val',this)">↑ Valor</button><button class="filter-btn" id="cf-sort-abc" onclick="setSortC('abc',this)">ABC</button>
+    <button class="filter-btn" id="cf-sort-val" onclick="setSortC('val',this)">↑ Valor</button><button class="filter-btn" id="cf-sort-abc" onclick="setSortC('abc',this)">ABC</button><button class="filter-btn" id="cf-sort-max" onclick="setSortC('max',this)">● Máx reciente</button>
   </div>
   <div class="list-count" id="c-count"></div>
   <div class="list-card" id="c-list"><div class="empty">Cargando…</div></div>
@@ -168,7 +168,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
         <div id="df-MEDIO/ING" onclick="fD('MEDIO/ING',this)" style="padding:8px 14px;font-size:13px;cursor:pointer">MEDIO/ING</div>
       </div>
     </div>
-    <button class="filter-btn active" id="df-sort-obj" onclick="setSortD('obj',this)">↑ Obj</button><button class="filter-btn" id="df-sort-pct" onclick="setSortD('pct',this)">↑ % día</button>
+    <button class="filter-btn active" id="df-sort-obj" onclick="setSortD('obj',this)">↑ Obj</button><button class="filter-btn" id="df-sort-pct" onclick="setSortD('pct',this)">↑ % día</button><button class="filter-btn" id="df-sort-max" onclick="setSortD('max',this)">● Máx reciente</button>
     <button class="filter-btn" id="df-sort-val" onclick="setSortD('val',this)">↑ Valor</button>
   </div>
   <div class="list-count" id="d-count"></div>
@@ -686,7 +686,8 @@ function renderDiana(){
     };
     return dFilters.every(f=>checks[f]?checks[f]():true);
   });
-  if(!dSort||dSort==='obj'){data.sort((a,b)=>{const pa=prices[a.symbol]?.price,pb=prices[b.symbol]?.price;const da=pa?-(pa-a.objetivo)/Math.abs(a.objetivo):-999,db=pb?-(pb-b.objetivo)/Math.abs(b.objetivo):-999;return da-db;});}
+  if(dSort==='max'){data.sort((a,b)=>{const da=diasMax(a),db=diasMax(b);if(da!==db)return da-db;return a.tckr.localeCompare(b.tckr);});}
+  else if(!dSort||dSort==='obj'){data.sort((a,b)=>{const pa=prices[a.symbol]?.price,pb=prices[b.symbol]?.price;const da=pa?-(pa-a.objetivo)/Math.abs(a.objetivo):-999,db=pb?-(pb-b.objetivo)/Math.abs(b.objetivo):-999;return da-db;});}
   document.getElementById('d-count').textContent=data.length+' valores';
   document.getElementById('d-list').innerHTML=data.map(item=>{
     const p=prices[item.symbol];const price=p?.price;
@@ -715,7 +716,14 @@ document.addEventListener('click',function(e){
   if(menu&&btn&&!btn.contains(e.target)&&!menu.contains(e.target)){menu.style.display='none';}
 });
 function setSortD(s,btn){if(dSort===s){dSort=null;btn.classList.remove('active');}else{dSort=s;document.querySelectorAll('[id^="df-sort-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}renderDiana();}
-function sortItems(items,sortBy){if(!sortBy)return items;return [...items].sort((a,b)=>{if(sortBy==='pct'){const pa=prices[a.symbol]?.pct||-999;const pb=prices[b.symbol]?.pct||-999;return pb-pa;}if(sortBy==='val'){const va=(prices[a.symbol]?.price||0)*a.titulos;const vb=(prices[b.symbol]?.price||0)*b.titulos;return vb-va;}return a.tckr.localeCompare(b.tckr);});}
+function diasMax(item){
+  // Dias transcurridos desde el maximo. Sin dato -> al final de la lista.
+  const M=window.MAXIMOS&&window.MAXIMOS[item.symbol];
+  if(!M)return 999999;
+  const hoy=new Date();hoy.setHours(12,0,0,0);
+  return Math.round((hoy-new Date(M.fecha+'T12:00:00'))/86400000);
+}
+function sortItems(items,sortBy){if(!sortBy)return items;return [...items].sort((a,b)=>{if(sortBy==='max'){const da=diasMax(a),db=diasMax(b);if(da!==db)return da-db;return a.tckr.localeCompare(b.tckr);}if(sortBy==='pct'){const pa=prices[a.symbol]?.pct||-999;const pb=prices[b.symbol]?.pct||-999;return pb-pa;}if(sortBy==='val'){const va=(prices[a.symbol]?.price||0)*a.titulos;const vb=(prices[b.symbol]?.price||0)*b.titulos;return vb-va;}return a.tckr.localeCompare(b.tckr);});}
 
 
 window.goToCartera = function(ticker) {
