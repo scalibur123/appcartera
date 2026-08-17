@@ -1333,13 +1333,18 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
             signo = "+" if v >= 0 else ""
             num = f"{abs(v):,.2f}".replace(",","X").replace(".",",").replace("X",".")
             return f'<span style="color:{color};font-size:20px;font-weight:500">{signo}{num} \u20ac</span>'
-        def bloque(titulo, bruto, neto, id_b=None, id_n=None):
+        def bloque(titulo, bruto, neto, id_b=None, id_n=None, id_lbl=None):
             ib = f' id="{id_b}"' if id_b else ''
             ib_n = f' id="{id_n}"' if id_n else ''
+            # id_lbl: el JS escribe ahi la fecha base ("desde 14 ago"), en la
+            # linea del titulo y no pegada al importe. Filas mas juntas: 6px.
+            lbl = f' id="{id_lbl}"' if id_lbl else ''
             return (
-                f'<div style="padding:10px 0;border-bottom:1px solid var(--border)">' +
-                f'<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:6px">{titulo}</div>' +
-                f'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">' +
+                f'<div style="padding:6px 0;border-bottom:1px solid var(--border)">' +
+                f'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">' +
+                f'<span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px">{titulo}</span>' +
+                f'<span{lbl} style="font-size:11px;color:var(--muted);font-weight:400"></span></div>' +
+                f'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1px">' +
                 f'<span style="font-size:12px;color:var(--muted)">bruto</span><span{ib} style="font-size:20px;font-weight:500">{fmtg(bruto)}</span></div>' +
                 f'<div style="display:flex;justify-content:space-between;align-items:baseline">' +
                 f'<span style="font-size:12px;color:var(--muted)">neto</span><span{ib_n} style="font-size:20px;font-weight:500">{fmtg(neto)}</span></div>' +
@@ -1348,10 +1353,10 @@ def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None,
         card = (
             '<div class="card" id="card-ganancias">' +
             '<div class="card-label">Cartera · Valores</div>' +
-            bloque("HOY", 0, 0, id_b="hoy-b", id_n="hoy-n") +
-            bloque("ESTA SEMANA", ganancias_data["sem_b"], ganancias_data["sem_n"], id_b="sem-b", id_n="sem-n") +
-            bloque("ESTE MES", ganancias_data["mes_b"], ganancias_data["mes_n"], id_b="mes-b", id_n="mes-n") +
-            bloque("ANUAL", ganancias_data["ani_b"], ganancias_data["ani_n"], id_b="anual-b", id_n="anual-n") +
+            bloque("HOY", 0, 0, id_b="hoy-b", id_n="hoy-n", id_lbl="lbl-hoy") +
+            bloque("ESTA SEMANA", ganancias_data["sem_b"], ganancias_data["sem_n"], id_b="sem-b", id_n="sem-n", id_lbl="lbl-sem") +
+            bloque("ESTE MES", ganancias_data["mes_b"], ganancias_data["mes_n"], id_b="mes-b", id_n="mes-n", id_lbl="lbl-mes") +
+            bloque("ANUAL", ganancias_data["ani_b"], ganancias_data["ani_n"], id_b="anual-b", id_n="anual-n", id_lbl="lbl-anual") +
             '</div>'
         )
         END_MARKER = '<!--/card-ganancias-->'

@@ -50,6 +50,19 @@ async function fetchYahooBatch(symbols) {
     const batchResults = await Promise.all(slice.map(fetchYahoo));
     results.push(...batchResults);
   }
+  // Segundo intento para los que han fallado o han venido sin precio. Un
+  // timeout suelto dejaba la posicion sin cotizar y la app la contaba como 0.
+  const fallidos = results.filter(r => r.error || r.price == null).map(r => r.symbol);
+  if (fallidos.length) {
+    console.log('Reintentando sin precio:', fallidos.join(', '));
+    await new Promise(r => setTimeout(r, 600));
+    const retry = await Promise.all(fallidos.map(fetchYahoo));
+    for (const r of retry) {
+      if (r.error || r.price == null) continue;
+      const idx = results.findIndex(x => x.symbol === r.symbol);
+      if (idx >= 0) results[idx] = r;
+    }
+  }
   return results;
 }
 
@@ -192,27 +205,39 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/save-token" && req.method === "POST") {
       let body = "";
       req.on("data", d => body += d);
-      req.on("end", () => {
+      req.on("end", async () => {
         try {
           const { token } = JSON.parse(body);
+          if (!token) { res.writeHead(400); res.end("Sin token"); return; }
+          // Cache local (se pierde en cada deploy) + persistencia en Supabase
           try { fs.writeFileSync(path.join(__dirname, "fcm-token.txt"), token); } catch(e) {}
-          require("./supabase-client").supabase.from("alert_state").upsert({
+          const { supabase } = require("./supabase-client");
+          await supabase.from("alert_state").upsert({
             key: "fcm_token",
             value: { token, updated_at: new Date().toISOString() },
             updated_at: new Date().toISOString()
-          }, { onConflict: "key" }).then(()=>console.log("Token FCM en Supabase"));
+          }, { onConflict: "key" });
+          console.log("Token FCM guardado en Supabase");
           res.writeHead(200); res.end("OK");
-        } catch(e) { res.writeHead(500); res.end("Error"); }
+        } catch(e) { console.error("Error save-token:", e.message); res.writeHead(500); res.end("Error"); }
       });
       return;
     }
 
     if (pathname === '/get-token' && req.method === 'GET') {
-      const fs = require('fs');
       try {
-        const token = fs.readFileSync('./fcm-token.txt', 'utf8').trim();
-        res.writeHead(200); res.end(token);
-      } catch(e) { res.writeHead(404); res.end('No token'); }
+        const { supabase } = require('./supabase-client');
+        const { data } = await supabase.from('alert_state').select('value').eq('key', 'fcm_token').single();
+        if (data && data.value && data.value.token) {
+          res.writeHead(200); res.end(data.value.token);
+          return;
+        }
+      } catch(e) {}
+      try {
+        const token = fs.readFileSync(path.join(__dirname, 'fcm-token.txt'), 'utf8').trim();
+        if (token) { res.writeHead(200); res.end(token); return; }
+      } catch(e) {}
+      res.writeHead(404); res.end('No token');
       return;
     }
 
@@ -312,14 +337,22 @@ server.listen(PORT, () => {
   console.log(`AppCartera escuchando en puerto ${PORT}`);
 });
 
-// Chequeo alertas cada 5 min
+// Chequeo alertas cada 5 min (con candado: no se solapan dos pasadas)
 let alertasEnCurso = false;
 async function lanzarChequeoAlertas() {
-  if (alertasEnCurso) { console.log("Chequeo en curso, se omite"); return; }
+  if (alertasEnCurso) {
+    console.log('Chequeo de alertas aun en curso, se omite esta pasada');
+    return;
+  }
   alertasEnCurso = true;
-  try { await require("./check-alerts").checkAlerts(); }
-  catch(e) { console.error("Error chequeo:", e.message); }
-  finally { alertasEnCurso = false; }
+  try {
+    const { checkAlerts } = require("./check-alerts");
+    await checkAlerts();
+  } catch(e) {
+    console.error('Error chequeo alertas:', e.message);
+  } finally {
+    alertasEnCurso = false;
+  }
 }
 setTimeout(lanzarChequeoAlertas, 60000);
 setInterval(lanzarChequeoAlertas, 5*60*1000);
