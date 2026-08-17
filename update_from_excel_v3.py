@@ -449,12 +449,14 @@ def inyectar_serie_y_dividendos(html):
 
     # --- maximos con fecha (para el color de antiguedad) ---
     mx = {}
-    try:
-        f_mx = DIR / "maximos.json"
-        if f_mx.exists():
+    f_mx = PROYECTO / "maximos.json"
+    if f_mx.exists():
+        try:
             mx = json.loads(f_mx.read_text(encoding="utf-8"))
-    except Exception:
-        mx = {}
+        except Exception as e:
+            print(f"⚠️  maximos.json ilegible: {e}")
+    else:
+        print("⚠️  no existe maximos.json (ejecuta reconstruir_historico.py)")
     bloque_mx = ('<!--maximos-start--><script>var MAXIMOS='
                  + json.dumps(mx, ensure_ascii=False) + ';</script><!--maximos-end-->')
     if "<!--maximos-start-->" in html:
