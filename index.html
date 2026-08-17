@@ -542,6 +542,13 @@ function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.clas
     const dx=e.changedTouches[0].clientX-swipeStartX;
     const dy=e.changedTouches[0].clientY-swipeStartY;
     if(Math.abs(dx)<50||Math.abs(dy)>Math.abs(dx)*0.8)return;
+    // Con el detalle de un valor abierto, deslizar a la derecha lo cierra
+    // (equivale a "atras"). Y nunca se cambia de pestana por detras.
+    const det=document.getElementById('detalle-valor');
+    if(det&&det.style.display!=='none'){
+      if(dx>0&&typeof hideDetalle==='function')hideDetalle();
+      return;
+    }
     const active=document.querySelector('.section.active');
     if(!active)return;
     const idx=tabs.indexOf(active.id);
