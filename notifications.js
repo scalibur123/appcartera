@@ -9,7 +9,16 @@ if (!admin.apps.length) {
 
 async function sendNotification(token, title, body) {
   try {
-    await admin.messaging().send({ token, notification: { title, body }, apns: { headers: { 'apns-collapse-id': title } }, android: { collapseKey: title } });
+    // Payload SOLO data: sin bloque "notification" el navegador no pinta
+    // ninguna notificacion por su cuenta. La unica que se muestra es la que
+    // dibuja firebase-messaging-sw.js en onBackgroundMessage.
+    await admin.messaging().send({
+      token,
+      data: { title, body },
+      webpush: {
+        headers: { Urgency: 'high', TTL: '3600' }
+      }
+    });
     console.log(`✅ Notificación enviada: ${title}`);
   } catch (err) {
     console.error('❌ Error notificación:', err.message);
