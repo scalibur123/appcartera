@@ -264,6 +264,24 @@ def _base_valida(fechas, ref, margen_dias=5):
     return any(limite <= f < ref_s for f in fechas)
 
 
+def _ultimo_habil_exigible():
+    """Ultimo dia de cotizacion que la serie YA deberia contener.
+
+    Si hoy es dia habil y el mercado europeo ha cerrado (>= 18:00 local),
+    el propio dia de hoy. Si no, el dia habil anterior.
+
+    Con esto la serie se extiende el mismo viernes por la tarde, y el lunes
+    la base de SEMANA ya esta puesta aunque no se ejecute nada."""
+    ahora = datetime.now()
+    d = ahora.date()
+    if d.weekday() < 5 and ahora.hour >= 18:
+        return d
+    d = d - timedelta(days=1)
+    while d.weekday() >= 5:
+        d = d - timedelta(days=1)
+    return d
+
+
 def serie_necesita_regenerarse(serie):
     """Devuelve (hace_falta, motivo). Se comprueban las tres bases que usa la app."""
     fechas = sorted(serie.get("serie", {}).keys()) if serie else []
@@ -274,6 +292,15 @@ def serie_necesita_regenerarse(serie):
     lunes = hoy - timedelta(days=hoy.weekday())
     dia1 = hoy.replace(day=1)
     enero1 = hoy.replace(month=1, day=1)
+
+    # La serie tiene que llegar SIEMPRE hasta el ultimo dia de cotizacion
+    # cerrado. Antes solo se comprobaba que hubiera "algo" a menos de 5 dias
+    # del lunes en curso, asi que de martes a viernes la comprobacion pasaba
+    # sin extender la serie y el lunes siguiente la base se quedaba a 10 dias:
+    # la tarjeta seguia diciendo ESTA SEMANA mientras medía dos.
+    tope = _ultimo_habil_exigible().strftime("%Y-%m-%d")
+    if fechas[-1] < tope:
+        return True, f"la serie termina el {fechas[-1]} y deberia llegar al {tope}"
 
     if not _base_valida(fechas, lunes):
         return True, f"sin base valida para SEMANA (lunes {lunes})"

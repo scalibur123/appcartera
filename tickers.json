@@ -1752,7 +1752,7 @@
     "titulos": 110.0,
     "coste_eur": 11124.1222,
     "precio_excel": 115.005,
-    "fuente_resolucion": "fallback_usd_directo"
+    "fuente_resolucion": "historico_symbols"
   },
   "WEAV": {
     "yahoo": "WEAV",
