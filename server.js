@@ -195,7 +195,12 @@ const server = http.createServer(async (req, res) => {
       req.on("end", () => {
         try {
           const { token } = JSON.parse(body);
-          require("fs").writeFileSync("./fcm-token.txt", token);
+          try { fs.writeFileSync(path.join(__dirname, "fcm-token.txt"), token); } catch(e) {}
+          require("./supabase-client").supabase.from("alert_state").upsert({
+            key: "fcm_token",
+            value: { token, updated_at: new Date().toISOString() },
+            updated_at: new Date().toISOString()
+          }, { onConflict: "key" }).then(()=>console.log("Token FCM en Supabase"));
           res.writeHead(200); res.end("OK");
         } catch(e) { res.writeHead(500); res.end("Error"); }
       });
@@ -308,7 +313,16 @@ server.listen(PORT, () => {
 });
 
 // Chequeo alertas cada 5 min
-setInterval(() => { try { delete require.cache[require.resolve("./check-alerts")]; require("./check-alerts"); } catch(e) { console.error(e); } }, 5*60*1000);
+let alertasEnCurso = false;
+async function lanzarChequeoAlertas() {
+  if (alertasEnCurso) { console.log("Chequeo en curso, se omite"); return; }
+  alertasEnCurso = true;
+  try { await require("./check-alerts").checkAlerts(); }
+  catch(e) { console.error("Error chequeo:", e.message); }
+  finally { alertasEnCurso = false; }
+}
+setTimeout(lanzarChequeoAlertas, 60000);
+setInterval(lanzarChequeoAlertas, 5*60*1000);
 
 // Actualizar bases cada sabado a las 18:00 (mercado cerrado)
 setInterval(()=>{
