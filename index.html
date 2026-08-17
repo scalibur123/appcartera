@@ -332,6 +332,54 @@ function updateResumen(){
   const pb=document.getElementById('pv-b'),pn=document.getElementById('pv-n');
   pb.textContent=fE(b);pb.style.color=b>=0?'var(--green)':'var(--red)';
   pn.textContent=fE(n);pn.style.color=n>=0?'var(--green)':'var(--red)';
+
+  function fechaLocal(d){
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function divPeriodo(desde){
+    if(!window.DIVIDENDOS_ANUAL)return 0;
+    return DIVIDENDOS_ANUAL.filter(d=>d.fecha>=desde).reduce((s,d)=>s+d.bruto,0);
+  }
+  function latenteAntesDe(ref){
+    const S=window.SERIE_LATENTES;
+    if(!S||!S.serie)return null;
+    const previas=Object.keys(S.serie).filter(f=>f<ref).sort();
+    if(!previas.length)return null;
+    return {fecha:previas[previas.length-1], latente:S.serie[previas[previas.length-1]]};
+  }
+  setTimeout(function(){
+    const ahora=new Date();
+    const hoy=fechaLocal(ahora);
+    const lunesStr=(function(){const d=new Date(ahora);d.setDate(d.getDate()-((d.getDay()+6)%7));return fechaLocal(d);})();
+    const primerMes=hoy.slice(0,8)+'01';
+    const primerAnio=hoy.slice(0,4)+'-01-01';
+    const latenteAhora=b;
+    const varHoyMercado=calcVarHoyMercado();
+    const ventasHoy=(window.VENTAS_ANUAL||[]).filter(v=>v.fecha===hoy).reduce((s,v)=>s+v.bruto,0);
+    const divHoy=(window.DIVIDENDOS_ANUAL||[]).filter(d=>d.fecha===hoy).reduce((s,d)=>s+d.bruto,0);
+    pintarBloque('hoy-b','hoy-n',varHoyMercado+ventasHoy+divHoy,'en vivo');
+    function habilAntesDe(f){
+      const d=new Date(f+'T12:00:00');
+      do { d.setDate(d.getDate()-1); } while(d.getDay()===0||d.getDay()===6);
+      return fechaLocal(d);
+    }
+    const MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    function fCorta(f){const p=f.split('-');return parseInt(p[2],10)+' '+MESES[parseInt(p[1],10)-1];}
+    [['sem-b','sem-n',lunesStr],['mes-b','mes-n',primerMes],['anual-b','anual-n',primerAnio]]
+      .forEach(function(cfg){
+        const base=latenteAntesDe(cfg[2]);
+        if(!base){
+          const el=document.getElementById(cfg[0]);
+          if(el) el.innerHTML='<span style="color:var(--muted);font-size:14px">sin base historica</span>';
+          return;
+        }
+        const esperada=habilAntesDe(cfg[2]);
+        const desfase=base.fecha<esperada;
+        const nota='desde '+fCorta(base.fecha)+(desfase?' \u26a0 serie corta':'');
+        pintarBloque(cfg[0],cfg[1],(latenteAhora-base.latente)+ventasPeriodo(cfg[2])+divPeriodo(cfg[2]),nota);
+      });
+  },0);
+
   const wo=C.filter(i=>i.objetivo&&prices[i.symbol]);
   const negCount=wo.filter(i=>prices[i.symbol].price>=i.objetivo).length;
   const warnCount=wo.filter(i=>{const d=(i.objetivo-prices[i.symbol].price)/i.objetivo;return d>=0&&d<=0.07;}).length;
