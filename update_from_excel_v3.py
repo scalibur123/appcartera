@@ -447,6 +447,23 @@ def inyectar_serie_y_dividendos(html):
     html = re.sub(r'<!--serie-latentes-start-->.*?<!--serie-latentes-end-->',
                   lambda m: bloque_serie, html, flags=re.DOTALL)
 
+    # --- maximos con fecha (para el color de antiguedad) ---
+    mx = {}
+    try:
+        f_mx = DIR / "maximos.json"
+        if f_mx.exists():
+            mx = json.loads(f_mx.read_text(encoding="utf-8"))
+    except Exception:
+        mx = {}
+    bloque_mx = ('<!--maximos-start--><script>var MAXIMOS='
+                 + json.dumps(mx, ensure_ascii=False) + ';</script><!--maximos-end-->')
+    if "<!--maximos-start-->" in html:
+        html = re.sub(r'<!--maximos-start-->.*?<!--maximos-end-->',
+                      lambda m: bloque_mx, html, flags=re.DOTALL)
+    else:
+        html = html.replace('<!--serie-latentes-start-->', bloque_mx + '\n<!--serie-latentes-start-->', 1)
+    print(f"✅ Maximos con fecha inyectados: {len(mx)} simbolos")
+
     # --- aviso de frescura ---
     if n == 0:
         print("⚠️  Serie de latentes vacia: SEMANA/MES/ANUAL saldran sin base.")

@@ -50,6 +50,8 @@ CONGELADO = DIR / "historico_congelado.json"
 # se acumulan en disco. Yahoo trunca al azar unos pocos .MC en cada ejecucion;
 # con esta cache, un dia bajado bien queda guardado para siempre.
 CACHE_CIERRES = DIR / "cierres_historicos.json"
+# Fecha del maximo de cada simbolo dentro del historico que tenemos guardado.
+SALIDA_MAXIMOS = DIR / "maximos.json"
 
 HOJA = "2026"
 HOJA_DIV = "dividendos 26"
@@ -539,6 +541,19 @@ def main():
         else:
             x["congelado"] = False
     CONGELADO.write_text(json.dumps(congelado, indent=1, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    # ── FECHA DEL MAXIMO DE CADA SIMBOLO ──────────────────────────────
+    # Saber que un valor esta al 1% de su maximo no dice nada si ese maximo
+    # fue hace cuatro meses. Aqui se guarda CUANDO lo hizo.
+    maximos = {}
+    for sim, serie in series.items():
+        if not serie:
+            continue
+        f_max = max(serie, key=lambda f: serie[f])
+        maximos[sim] = {"valor": round(serie[f_max], 4), "fecha": str(f_max),
+                        "desde": str(min(serie))}
+    SALIDA_MAXIMOS.write_text(json.dumps(maximos, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    print(f"💾 Maximos con fecha de {len(maximos)} simbolos en {SALIDA_MAXIMOS.name}")
+
     barra("HISTORICO CONGELADO")
     print(f"   {reutilizados} dias reutilizados del archivo (no recalculados)")
     print(f"   {nuevos} dias nuevos congelados")
