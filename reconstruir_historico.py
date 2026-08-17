@@ -114,12 +114,15 @@ def leer_excel():
         K, N = cel(r, 11), cel(r, 14)
         if not isinstance(K, (int, float)) or not isinstance(N, (int, float)):
             continue
-        f_compra = cel(r, 9)
-        f_compra = f_compra.date() if isinstance(f_compra, datetime) else date(2000, 1, 1)
+        f_compra_raw = cel(r, 9)
+        if isinstance(f_compra_raw, datetime):
+            f_compra, fecha_ok = f_compra_raw.date(), True
+        else:
+            f_compra, fecha_ok = date(2000, 1, 1), False
         posiciones.append({
             "fila": r, "tckr": str(t).strip(), "moneda": str(cel(r, 7) or "EUR").strip().upper(),
             "titulos": float(K), "coste": float(N),
-            "f_compra": f_compra, "f_venta": None,
+            "f_compra": f_compra, "f_venta": None, "fecha_ok": fecha_ok,
         })
         AB = cel(r, 28)
         if isinstance(AB, (int, float)):
@@ -136,12 +139,15 @@ def leer_excel():
         Y = cel(r, 25)
         if not isinstance(K, (int, float)) or not isinstance(N, (int, float)):
             continue
-        f_compra = cel(r, 9)
-        f_compra = f_compra.date() if isinstance(f_compra, datetime) else date(2000, 1, 1)
+        f_compra_raw = cel(r, 9)
+        if isinstance(f_compra_raw, datetime):
+            f_compra, fecha_ok = f_compra_raw.date(), True
+        else:
+            f_compra, fecha_ok = date(2000, 1, 1), False
         posiciones.append({
             "fila": r, "tckr": str(t).strip(), "moneda": str(cel(r, 7) or "EUR").strip().upper(),
             "titulos": float(K), "coste": float(N),
-            "f_compra": f_compra, "f_venta": q.date(),
+            "f_compra": f_compra, "f_venta": q.date(), "fecha_ok": fecha_ok,
         })
         if isinstance(Y, (int, float)):
             ventas.append({"fecha": q.date(), "tckr": str(t).strip(), "bruto": float(Y)})
@@ -160,6 +166,25 @@ def leer_excel():
     coste_excel = sum(p["coste"] for p in posiciones if p["f_venta"] is None)
     print(f"   Latente HOY segun columna AB del Excel: {fmt(latente_excel)} €")
     print(f"   Coste  HOY segun columna N  del Excel: {fmt(coste_excel)} €")
+
+    # ── FECHAS DE COMPRA NO LEIDAS ────────────────────────────────────
+    # Una posicion sin fecha de compra legible se trataba como comprada en el
+    # año 2000: entraba en la serie desde el primer dia, con el coste completo
+    # pagado meses despues. Eso reescribe el pasado en cada ejecucion.
+    rotas = [p for p in posiciones if not p.get("fecha_ok")]
+    if rotas:
+        barra("⚠️  FECHAS DE COMPRA NO LEIDAS (columna J)")
+        coste_roto = sum(p["coste"] for p in rotas)
+        for p in sorted(rotas, key=lambda x: -x["coste"]):
+            estado = "vendida " + str(p["f_venta"]) if p["f_venta"] else "abierta"
+            print(f"   fila {p['fila']:>4}  {p['tckr']:<10} coste {fmt(p['coste']):>14} €   {estado}")
+        pct = (coste_roto / coste_excel * 100) if coste_excel else 0.0
+        print(f"\n   {len(rotas)} posiciones sin fecha legible")
+        print(f"   Coste afectado: {fmt(coste_roto)} € ({pct:.1f}% de la cartera)")
+        print("   Estas posiciones falsean TODOS los dias pasados de la serie.")
+    else:
+        print("   ✅ Todas las fechas de compra se han leido correctamente")
+
     return posiciones, ventas, dividendos, latente_excel, coste_excel
 
 
@@ -242,21 +267,47 @@ def resolver_simbolos(posiciones):
 # ══════════════════════════════════════════════════════════════════════
 # 3. DESCARGAR CIERRES HISTORICOS
 # ══════════════════════════════════════════════════════════════════════
+def _pedir(url):
+    req = urllib.request.Request(url, headers=UA)
+    d = json.loads(urllib.request.urlopen(req, timeout=20).read().decode())
+    res = d["chart"]["result"][0]
+    ts = res["timestamp"]
+    cl = res["indicators"]["quote"][0]["close"]
+    return {datetime.utcfromtimestamp(t).date(): c
+            for t, c in zip(ts, cl) if c is not None}
+
+
 def descargar(simbolo, desde):
-    p1 = int(datetime.combine(desde - timedelta(days=20), datetime.min.time()).timestamp())
+    """Cierres diarios desde 'desde'.
+
+    Yahoo, cuando estrangula por exceso de peticiones, IGNORA period1/period2 y
+    responde con su rango por defecto (~1 mes) sin dar ningun error. El script
+    antiguo aceptaba esa respuesta corta como buena y los dias anteriores se
+    calculaban sin esa posicion. Aqui se comprueba que el histórico devuelto
+    llegue de verdad hasta 'desde', y si no, se reintenta esperando mas.
+    """
+    tope = desde - timedelta(days=20)
+    p1 = int(datetime.combine(tope, datetime.min.time()).timestamp())
     p2 = int(time.time())
-    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(simbolo)}"
-           f"?period1={p1}&period2={p2}&interval=1d")
-    try:
-        req = urllib.request.Request(url, headers=UA)
-        d = json.loads(urllib.request.urlopen(req, timeout=15).read().decode())
-        res = d["chart"]["result"][0]
-        ts = res["timestamp"]
-        cl = res["indicators"]["quote"][0]["close"]
-        return {datetime.utcfromtimestamp(t).date(): c
-                for t, c in zip(ts, cl) if c is not None}
-    except Exception:
-        return {}
+    base = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(simbolo)}"
+    intentos = [
+        f"{base}?period1={p1}&period2={p2}&interval=1d",
+        f"{base}?range=2y&interval=1d",
+        f"{base}?period1={p1}&period2={p2}&interval=1d",
+        f"{base}?range=2y&interval=1d",
+    ]
+    mejor = {}
+    for n, url in enumerate(intentos):
+        try:
+            serie = _pedir(url)
+        except Exception:
+            serie = {}
+        if len(serie) > len(mejor):
+            mejor = serie
+        if mejor and min(mejor) <= desde:
+            return mejor          # cobertura suficiente, no hace falta insistir
+        time.sleep(1.5 * (n + 1))  # espera creciente: es estrangulamiento
+    return mejor
 
 
 def descargar_todo(simbolos):
@@ -275,6 +326,22 @@ def descargar_todo(simbolos):
     print(f"  ✅ {len(series)}/{total} con datos")
     if vacios:
         print(f"  ❌ sin datos: {', '.join(vacios)}")
+
+    # Simbolos cuyo historico NO llega al inicio del periodo. Sin esto, los dias
+    # anteriores a su primer cierre se calculan sin esa posicion (ni su valor ni
+    # su coste) y la latente de esas fechas sale falseada.
+    cortos = []
+    for sim, serie in series.items():
+        if not serie:
+            continue
+        primera = min(serie)
+        if primera > DESDE:
+            cortos.append((sim, primera, max(serie), len(serie)))
+    if cortos:
+        barra("⚠️  SIMBOLOS SIN HISTORICO COMPLETO")
+        for sim, pri, ult, n in sorted(cortos, key=lambda x: x[1], reverse=True):
+            print(f"   {sim:<12} solo desde {pri}  (hasta {ult}, {n} cierres)")
+        print(f"\n   {len(cortos)} simbolos con historico truncado.")
     return series, vacios
 
 
@@ -329,6 +396,14 @@ def main():
     for f in dias:
         cambio = valor_en(fx, f) or 1.0
         valor = coste = 0.0
+        n_pos = 0
+        # Coste de posiciones ABIERTAS ese dia para las que no hay precio.
+        # Cuando falta el precio la posicion se cae entera: no suma valor pero
+        # TAMPOCO suma coste. La composicion del dia cambia segun lo que Yahoo
+        # devuelva en cada ejecucion, y por eso la latente de una fecha pasada
+        # sale distinta cada vez. Esto lo mide.
+        falta_coste = 0.0
+        falta_tckrs = []
         for p in posiciones:
             if p["f_compra"] > f:
                 continue
@@ -338,13 +413,56 @@ def main():
             s = series.get(sim) if sim else None
             px = valor_en(s, f) if s else None
             if px is None:
+                falta_coste += p["coste"]
+                falta_tckrs.append(p["tckr"])
                 if f == dias[-1]:
                     sin_precio_hoy.append(p["tckr"])
                 continue
             pe = px / cambio if p["moneda"] == "USD" else px
             valor += p["titulos"] * pe
             coste += p["coste"]
-        serie_out.append({"fecha": f, "valor": valor, "coste": coste, "latente": valor - coste})
+            n_pos += 1
+        coste_abierto = coste + falta_coste
+        # Un dia al que le falta coste no es comparable con un dia completo:
+        # la resta de latentes mide el hueco, no el mercado. Se marca y NO se
+        # publica en el JSON, para que la app diga "sin base" en vez de mentir.
+        incompleto = falta_coste > 0.005 * coste_abierto if coste_abierto else True
+        serie_out.append({"fecha": f, "valor": valor, "coste": coste, "latente": valor - coste,
+                          "n_pos": n_pos, "falta_coste": falta_coste, "falta_tckrs": falta_tckrs,
+                          "coste_abierto": coste_abierto, "incompleto": incompleto})
+
+    # ── HUELLA DE LAS FECHAS BASE ─────────────────────────────────────
+    # Si el coste de una fecha base cambia entre ejecuciones, la serie no es
+    # reproducible y el ANUAL/MES de la app se movera solo.
+    malos = [x for x in serie_out if x["incompleto"]]
+    if malos:
+        barra("⚠️  DIAS DESCARTADOS POR COSTE SIN PRECIO")
+        print(f"   {len(malos)} de {len(serie_out)} dias no se publican en la serie.")
+        print(f"   Del {malos[0]['fecha']} al {malos[-1]['fecha']}")
+        peor = max(malos, key=lambda x: x["falta_coste"])
+        print(f"   Peor dia: {peor['fecha']} con {fmt(peor['falta_coste'])} € de coste sin precio")
+        print("   Mientras existan estos huecos, MES y ANUAL saldran 'sin base' en la app.")
+        print("   Es lo correcto: mejor sin dato que con un dato inventado.")
+
+    barra("HUELLA DE LAS FECHAS BASE (composicion del dia)")
+    por_fecha = {str(x["fecha"]): x for x in serie_out}
+    claves = [k for k in sorted(por_fecha) if k < f"{ANIO}-01-01"][-1:]
+    claves += [k for k in sorted(por_fecha) if k.startswith(f"{ANIO}-07")][-1:]
+    claves += [k for k in sorted(por_fecha)][-6:]
+    vistos = set()
+    for k in claves:
+        if k in vistos:
+            continue
+        vistos.add(k)
+        d = por_fecha[k]
+        print(f"\n  {k}   posiciones {d['n_pos']:>4}")
+        print(f"     coste   {fmt(d['coste']):>16} €")
+        print(f"     valor   {fmt(d['valor']):>16} €")
+        print(f"     latente {fmt(d['latente']):>16} €")
+        if d["falta_coste"]:
+            print(f"     ⚠️  SIN PRECIO: {fmt(d['falta_coste'])} € de coste excluido "
+                  f"({len(d['falta_tckrs'])} posiciones)")
+            print(f"        {', '.join(sorted(set(d['falta_tckrs']))[:20])}")
 
     # ── VALIDACION ────────────────────────────────────────────────────
     barra("VALIDACION CONTRA EL EXCEL")
@@ -418,10 +536,14 @@ def main():
         "ultimo_dia": str(ult["fecha"]),
         "latente_ultimo": round(ult["latente"], 2),
         "coste_ultimo": round(ult["coste"], 2),
-        "serie": {str(s["fecha"]): round(s["latente"], 2) for s in serie_out},
+        "serie": {str(s["fecha"]): round(s["latente"], 2)
+                  for s in serie_out if not s["incompleto"]},
+        "dias_descartados": [str(s["fecha"]) for s in serie_out if s["incompleto"]],
     }
     SALIDA_JSON.write_text(json.dumps(serie_json, indent=1, ensure_ascii=False), encoding="utf-8")
-    print(f"💾 Serie JSON ({len(serie_out)} dias) en {SALIDA_JSON.name}")
+    n_pub = len(serie_json["serie"])
+    print(f"💾 Serie JSON: {n_pub} dias publicados de {len(serie_out)} calculados "
+          f"en {SALIDA_JSON.name}")
 
     with open(SALIDA_CSV, "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh, delimiter=";")

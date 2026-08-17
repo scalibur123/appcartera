@@ -14,7 +14,6 @@
   "APLS": "APLS",
   "APP": "APP",
   "ASAN": "ASAN",
-  "AUGO": "AUGO",
   "BAX": "BAX",
   "BCRX": "BCRX",
   "BESI": "BESI.AS",
@@ -44,7 +43,6 @@
   "DOCN": "DOCN",
   "DOCU": "DOCU",
   "EDIT": "EDIT",
-  "ENI": "ENI.SW",
   "EQT": "EQT",
   "FIVN": "FIVN",
   "FLR": "FLR",
@@ -131,12 +129,12 @@
   "VRT": "VRT",
   "WDAY": "WDAY",
   "WEAV": "WEAV",
+  "WMT": "WMT",
   "XERS": "XERS",
   "XNCR": "XNCR",
   "XRAY": "XRAY",
   "YOU": "YOU",
   "Z": "Z",
   "ZBRA": "ZBRA",
-  "ZS": "ZS",
-  "WMT": "WMT"
+  "ZS": "ZS"
 }
