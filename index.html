@@ -357,10 +357,14 @@ function updateResumen(){
     else{costeSinPrecio+=i.coste_eur;sinPrecio.push(i.tckr);}}
   (function(){
     const costeTot=C.reduce((a,i)=>a+i.coste_eur,0);
+    // El aviso se RECALCULA en cada pasada: si en la primera aun no habian
+    // llegado todos los lotes de precios, al llegar se borra solo.
+    const viejo=document.getElementById('aviso-precios');
+    if(viejo)viejo.remove();
     if(costeSinPrecio<=0.005*costeTot)return;
     console.warn('Sin precio: '+sinPrecio.join(', '));
     const card=document.getElementById('card-ganancias');
-    if(!card||document.getElementById('aviso-precios'))return;
+    if(!card)return;
     const d=document.createElement('div');d.id='aviso-precios';
     d.style.cssText='background:#4a2c00;color:#ffb84d;padding:8px;border-radius:8px;font-size:12px;margin-bottom:8px';
     d.textContent='\u26a0 Sin precio: '+sinPrecio.join(', ')+'  ('+
