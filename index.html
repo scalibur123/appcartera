@@ -333,6 +333,29 @@ function updateResumen(){
   pb.textContent=fE(b);pb.style.color=b>=0?'var(--green)':'var(--red)';
   pn.textContent=fE(n);pn.style.color=n>=0?'var(--green)':'var(--red)';
 
+  function ventasPeriodo(desde){
+    if(!window.VENTAS_ANUAL)return 0;
+    return VENTAS_ANUAL.filter(v=>v.fecha>=desde).reduce((s,v)=>s+v.bruto,0);
+  }
+  function mercadoAbierto(moneda){
+    const a=new Date(), d=a.getUTCDay();
+    if(d===0||d===6)return false;
+    const m=a.getUTCHours()*60+a.getUTCMinutes();
+    if(moneda==='USD') return m>=810&&m<1200;
+    return m>=420&&m<930;
+  }
+  function calcVarHoyMercado(){
+    let v=0;
+    for(const i of C){
+      const p=prices[i.symbol];
+      if(!p||p.pct==null)continue;
+      if(!mercadoAbierto(i.moneda))continue;
+      const ayer=p.price/(1+p.pct/100);
+      const dif=(p.price-ayer)*i.titulos;
+      v+=(i.moneda==='USD'&&eurUsd)?dif/eurUsd:dif;
+    }
+    return v;
+  }
   function fechaLocal(d){
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
