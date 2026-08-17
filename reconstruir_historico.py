@@ -43,6 +43,13 @@ OVERRIDE_JSON = DIR / "tickers_override.json"
 CACHE_SYMS = DIR / "historico_symbols.json"
 SALIDA_CSV = DIR / "historico_latentes.csv"
 SALIDA_JSON = DIR / "serie_latentes.json"
+# Dias pasados YA calculados con datos completos. Se escriben una vez y no se
+# vuelven a tocar: si manana Yahoo sirve otra cosa, el pasado no se mueve.
+CONGELADO = DIR / "historico_congelado.json"
+# Cierres historicos ya descargados. Un cierre pasado no cambia nunca, asi que
+# se acumulan en disco. Yahoo trunca al azar unos pocos .MC en cada ejecucion;
+# con esta cache, un dia bajado bien queda guardado para siempre.
+CACHE_CIERRES = DIR / "cierres_historicos.json"
 
 HOJA = "2026"
 HOJA_DIV = "dividendos 26"
@@ -310,19 +317,59 @@ def descargar(simbolo, desde):
     return mejor
 
 
+def _cargar_cache():
+    try:
+        crudo = json.loads(CACHE_CIERRES.read_text(encoding="utf-8")) if CACHE_CIERRES.exists() else {}
+    except Exception:
+        crudo = {}
+    return {sim: {date.fromisoformat(f): v for f, v in d.items()} for sim, d in crudo.items()}
+
+
+def _guardar_cache(cache):
+    crudo = {sim: {str(f): round(v, 6) for f, v in d.items()} for sim, d in cache.items()}
+    CACHE_CIERRES.write_text(json.dumps(crudo, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+
+
 def descargar_todo(simbolos):
     barra("DESCARGANDO CIERRES HISTORICOS DE YAHOO")
+    cache = _cargar_cache()
+    print(f"  Cache en disco: {len(cache)} simbolos")
     series, vacios = {}, []
+    rescatados, splits = [], []
     total = len(simbolos)
     for n, s in enumerate(sorted(simbolos), 1):
-        serie = descargar(s, DESDE)
-        if serie:
-            series[s] = serie
+        nueva = descargar(s, DESDE)
+        guardada = cache.get(s, {})
+
+        # ¿Split? Si en fechas comunes los precios difieren mucho, la serie
+        # guardada esta sin ajustar y hay que tirarla.
+        if nueva and guardada:
+            comunes = [f for f in nueva if f in guardada][:20]
+            if comunes:
+                dif = sum(abs(nueva[f] - guardada[f]) / max(abs(guardada[f]), 1e-9) for f in comunes) / len(comunes)
+                if dif > 0.05:
+                    splits.append(s)
+                    guardada = {}
+
+        fusion = dict(guardada)
+        fusion.update(nueva)
+        if fusion:
+            if nueva and guardada and min(nueva) > min(guardada):
+                rescatados.append(s)
+            series[s] = fusion
+            cache[s] = fusion
         else:
             vacios.append(s)
         if n % 25 == 0:
             print(f"    {n}/{total}...")
         time.sleep(0.25)
+
+    _guardar_cache(cache)
+    if splits:
+        print(f"  ↺ serie guardada descartada por ajuste/split: {', '.join(splits)}")
+    if rescatados:
+        print(f"  💾 {len(rescatados)} simbolos truncados hoy, rescatados de la cache:")
+        print(f"     {', '.join(sorted(rescatados))}")
     print(f"  ✅ {len(series)}/{total} con datos")
     if vacios:
         print(f"  ❌ sin datos: {', '.join(vacios)}")
@@ -356,6 +403,36 @@ def valor_en(serie, f):
 # ══════════════════════════════════════════════════════════════════════
 # 4. RECONSTRUIR LA SERIE
 # ══════════════════════════════════════════════════════════════════════
+def _habil_antes(d):
+    d = d - timedelta(days=1)
+    while d.weekday() >= 5:
+        d = d - timedelta(days=1)
+    return d
+
+
+def _salud(serie_out, hoy):
+    """Estado de las tres bases que usa la app, para que pueda avisar."""
+    pub = sorted(str(x["fecha"]) for x in serie_out if not x["incompleto"])
+    lunes = hoy - timedelta(days=hoy.weekday())
+    dia1 = hoy.replace(day=1)
+    ene1 = hoy.replace(month=1, day=1)
+    out = {}
+    for nombre, ini in (("semana", lunes), ("mes", dia1), ("anual", ene1)):
+        ini_s = ini.strftime("%Y-%m-%d")
+        previas = [f for f in pub if f < ini_s]
+        esperada = _habil_antes(ini).strftime("%Y-%m-%d")
+        if not previas:
+            out[nombre] = {"ok": False, "base": None, "esperada": esperada,
+                           "motivo": "no hay ningun dia anterior al periodo"}
+        else:
+            base = previas[-1]
+            ok = base >= esperada
+            out[nombre] = {"ok": ok, "base": base, "esperada": esperada,
+                           "motivo": "" if ok else "la base va con retraso"}
+    out["ultimo_dia"] = pub[-1] if pub else None
+    return out
+
+
 def main():
     posiciones, ventas, dividendos, latente_excel, coste_excel = leer_excel()
     mapa, fallidos = resolver_simbolos(posiciones)
@@ -434,6 +511,44 @@ def main():
     # ── HUELLA DE LAS FECHAS BASE ─────────────────────────────────────
     # Si el coste de una fecha base cambia entre ejecuciones, la serie no es
     # reproducible y el ANUAL/MES de la app se movera solo.
+    # ── CONGELAR EL PASADO ────────────────────────────────────────────
+    # Un dia completo y ya cerrado se guarda para siempre. En ejecuciones
+    # posteriores se REUTILIZA el valor guardado en vez de recalcularlo.
+    try:
+        congelado = json.loads(CONGELADO.read_text(encoding="utf-8")) if CONGELADO.exists() else {}
+    except Exception:
+        congelado = {}
+    hoy_str = str(dias[-1])
+    nuevos, reutilizados, derivas = 0, 0, []
+    for x in serie_out:
+        f = str(x["fecha"])
+        if f in congelado:
+            g = congelado[f]
+            if not x["incompleto"] and abs(x["latente"] - g["latente"]) > max(500, abs(g["latente"]) * 0.005):
+                derivas.append((f, g["latente"], x["latente"]))
+            x["valor"], x["coste"], x["latente"] = g["valor"], g["coste"], g["latente"]
+            x["incompleto"] = False
+            x["congelado"] = True
+            reutilizados += 1
+        elif not x["incompleto"] and f < hoy_str:
+            congelado[f] = {"valor": round(x["valor"], 2), "coste": round(x["coste"], 2),
+                            "latente": round(x["latente"], 2), "n_pos": x["n_pos"],
+                            "grabado": datetime.now().isoformat(timespec="seconds")}
+            x["congelado"] = True
+            nuevos += 1
+        else:
+            x["congelado"] = False
+    CONGELADO.write_text(json.dumps(congelado, indent=1, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    barra("HISTORICO CONGELADO")
+    print(f"   {reutilizados} dias reutilizados del archivo (no recalculados)")
+    print(f"   {nuevos} dias nuevos congelados")
+    print(f"   {len(congelado)} dias en total en {CONGELADO.name}")
+    if derivas:
+        print(f"\n   ⚠️  {len(derivas)} dias en los que Yahoo daria hoy algo distinto")
+        print("      (se mantiene el valor congelado, que es el bueno):")
+        for f, viejo, nuevo in derivas[:10]:
+            print(f"      {f}  congelado {fmt(viejo)} vs ahora {fmt(nuevo)}")
+
     malos = [x for x in serie_out if x["incompleto"]]
     if malos:
         barra("⚠️  DIAS DESCARTADOS POR COSTE SIN PRECIO")
@@ -539,6 +654,8 @@ def main():
         "serie": {str(s["fecha"]): round(s["latente"], 2)
                   for s in serie_out if not s["incompleto"]},
         "dias_descartados": [str(s["fecha"]) for s in serie_out if s["incompleto"]],
+        "congelados": len(congelado),
+        "salud": _salud(serie_out, dias[-1]),
     }
     SALIDA_JSON.write_text(json.dumps(serie_json, indent=1, ensure_ascii=False), encoding="utf-8")
     n_pub = len(serie_json["serie"])

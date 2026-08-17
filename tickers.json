@@ -81,7 +81,7 @@
     "fuente_resolucion": "override"
   },
   "ALM": {
-    "yahoo": "ALM.MC",
+    "yahoo": "E2Z.SG",
     "mic": null,
     "moneda": "EUR",
     "titulos": 2562.0,
@@ -729,7 +729,7 @@
     "fuente_resolucion": "historico_symbols"
   },
   "GEST": {
-    "yahoo": "GEST.MC",
+    "yahoo": "7GA.F",
     "mic": null,
     "moneda": "EUR",
     "titulos": 2165.0,
@@ -1530,7 +1530,7 @@
     "fuente_resolucion": "historico_symbols"
   },
   "TEF": {
-    "yahoo": "TEF.MC",
+    "yahoo": "TNE5.F",
     "mic": null,
     "moneda": "EUR",
     "titulos": 4628.0,
