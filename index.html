@@ -312,8 +312,22 @@ function updateResumen(){
   for(const i of C){const p=prices[i.symbol];if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;valorAhora+=i.titulos*pe;}}
 
   // Plusvalías vivas (vs coste)
-  let b=0;
-  for(const i of C){const p=prices[i.symbol];if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;b+=i.titulos*pe-i.coste_eur;}}
+  let b=0, costeSinPrecio=0, sinPrecio=[];
+  for(const i of C){const p=prices[i.symbol];
+    if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;b+=i.titulos*pe-i.coste_eur;}
+    else{costeSinPrecio+=i.coste_eur;sinPrecio.push(i.tckr);}}
+  const costeTot=C.reduce((a,i)=>a+i.coste_eur,0);
+  if(costeSinPrecio>0.005*costeTot){
+    console.warn('Sin precio: '+sinPrecio.join(', '));
+    const av=document.getElementById('card-ganancias');
+    if(av&&!document.getElementById('aviso-precios')){
+      const d=document.createElement('div');d.id='aviso-precios';
+      d.style.cssText='background:#4a2c00;color:#ffb84d;padding:8px;border-radius:8px;font-size:12px;margin-bottom:8px';
+      d.textContent='⚠ Sin precio para '+sinPrecio.length+' valores ('+
+        Math.round(costeSinPrecio).toLocaleString('es-ES')+' € de coste). Las cifras estan incompletas.';
+      av.parentNode.insertBefore(d,av);
+    }
+  }
   const n=b*(1-0.20925);
   const pb=document.getElementById('pv-b'),pn=document.getElementById('pv-n');
   pb.textContent=fE(b);pb.style.color=b>=0?'var(--green)':'var(--red)';
