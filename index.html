@@ -120,7 +120,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   </div>
   
   <div class="card" id="card-ganancias"><div class="card-label">Cartera · Valores</div><div style="padding:6px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px">HOY</span><span id="lbl-hoy" style="font-size:11px;color:var(--muted);font-weight:400"></span></div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="hoy-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="hoy-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div></div><div style="padding:6px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px">ESTA SEMANA</span><span id="lbl-sem" style="font-size:11px;color:var(--muted);font-weight:400"></span></div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="sem-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="sem-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+0,00 €</span></span></div></div><div style="padding:6px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px">ESTE MES</span><span id="lbl-mes" style="font-size:11px;color:var(--muted);font-weight:400"></span></div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="mes-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+10.848,22 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="mes-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+8.496,07 €</span></span></div></div><div style="padding:6px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px">ANUAL</span><span id="lbl-anual" style="font-size:11px;color:var(--muted);font-weight:400"></span></div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1px"><span style="font-size:12px;color:var(--muted)">bruto</span><span id="anual-b" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+194.855,37 €</span></span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:var(--muted)">neto</span><span id="anual-n" style="font-size:20px;font-weight:500"><span style="color:var(--green);font-size:20px;font-weight:500">+149.887,49 €</span></span></div></div></div><!--/card-ganancias-->
-  <p class="note">Datos del Excel del 17 ago 2026. Pulsa ↻ para actualizar.</p>
+  <p class="note">Datos del Excel del 18 ago 2026. Pulsa ↻ para actualizar.</p>
 </div>
 
 <div id="cartera" class="section">
@@ -531,7 +531,7 @@ function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.clas
 
 // Swipe lateral para cambiar pestanas
 (function(){
-  const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','proximas','analistas'];
+  const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','proximas','analistas','bancos'];
   const tabCallbacks={'ventas':()=>renderVentas(),'historico':()=>loadHistorico(),'earnings':()=>loadEarnings(),'analistas':()=>loadAnalistas()};
   let swipeStartX=0, swipeStartY=0;
   document.addEventListener('touchstart',function(e){
@@ -723,7 +723,11 @@ window.loadEarnings = async function() {
   const el = document.getElementById('earnings-list');
   try {
     const r = await fetch('/earnings');
-    const data = await r.json();
+    let data = await r.json();
+    // La tabla de Supabase guarda todo lo que alguna vez estuvo en cartera.
+    // Se filtra contra las posiciones ABIERTAS: lo vendido no aparece.
+    const enCartera = new Set(C.map(i => i.symbol).concat(C.map(i => i.tckr)));
+    data = data.filter(d => enCartera.has(d.symbol));
     if (data.length === 0) { el.innerHTML = '<p style="color:var(--muted)">Sin earnings próximos.</p>'; return; }
     let html = '';
     let fechaActual = '';
@@ -981,12 +985,6 @@ function showDetalle(tckr) {
 }
 function hideDetalle() { document.getElementById('detalle-valor').style.display = 'none'; }
 </script><div id="earnings" class="section">
-  <div style="padding:16px">
-    <h2 style="margin-bottom:12px;font-size:16px;color:var(--muted)">Próximos resultados</h2>
-    <div id="earnings-list">Cargando...</div>
-  </div>
-</div>
-<div id="earnings" class="section">
   <div style="padding:16px">
     <h2 style="margin-bottom:12px;font-size:16px;color:var(--muted)">Próximos resultados</h2>
     <div id="earnings-list">Cargando...</div>
