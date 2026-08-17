@@ -13,6 +13,30 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const { title, body } = payload.notification;
-  self.registration.showNotification(title, { body, icon: '/icon.png' });
+  const n = payload.notification || payload.data || {};
+  const title = n.title || 'AppCartera';
+  const body = n.body || '';
+
+  // El tag hace que una notificacion con el mismo titulo+cuerpo REEMPLACE
+  // a la anterior en lugar de apilarse. Si el navegador ya pinto una
+  // automaticamente (payload con bloque "notification"), esta la sustituye
+  // en vez de duplicarla.
+  self.registration.showNotification(title, {
+    body,
+    icon: '/icon.png',
+    tag: title + '|' + body,
+    renotify: false
+  });
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((lista) => {
+      for (const c of lista) {
+        if (c.url.includes('appcartera') && 'focus' in c) return c.focus();
+      }
+      if (clients.openWindow) return clients.openWindow('/');
+    })
+  );
 });

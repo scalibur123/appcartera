@@ -4,9 +4,25 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-function getToken() {
-  const f = path.join(__dirname, 'fcm-token.txt');
-  return fs.existsSync(f) ? fs.readFileSync(f, 'utf8').trim() : null;
+const TOKEN_FILE = path.join(__dirname, 'fcm-token.txt');
+
+async function getToken() {
+  // 1) Supabase (persiste entre deploys y reinicios de Render)
+  try {
+    const { data } = await supabase.from('alert_state').select('value').eq('key', 'fcm_token').single();
+    if (data && data.value && data.value.token) {
+      try { fs.writeFileSync(TOKEN_FILE, data.value.token); } catch (e) {}
+      return data.value.token;
+    }
+  } catch (e) {}
+  // 2) Fallback: fichero local (se borra en cada deploy)
+  try {
+    if (fs.existsSync(TOKEN_FILE)) {
+      const t = fs.readFileSync(TOKEN_FILE, 'utf8').trim();
+      if (t) return t;
+    }
+  } catch (e) {}
+  return null;
 }
 
 async function getStateFromDB(key) {
@@ -51,7 +67,7 @@ async function guardar(ticker, banco, evento, precio, objetivo) {
 }
 
 async function checkAlerts() {
-  const token = getToken();
+  const token = await getToken();
   if (!token) return console.log('No hay token FCM');
 
   const C = getC();
@@ -113,13 +129,6 @@ async function checkAlerts() {
       next[key].subida5notif = true;
     }
 
-    // Alerta subida >5% en el día (una sola vez)
-    if (pctDia >= 5 && !yaNotifSubida) {
-      await guardar(item.tckr, item.banco, 'subida_5pct', price, item.objetivo || 0);
-      await sendNotification(token, `😊 ${item.tckr} sube +${pctDia.toFixed(1)}% hoy`, `Precio ${price.toFixed(2)} · +${pctDia.toFixed(2)}%`);
-      next[key].subida5notif = true;
-    }
-
     // Alerta máximo 52 semanas
     if (high52 && price) {
       const distMax = (high52 - price) / high52;
@@ -143,4 +152,9 @@ async function checkAlerts() {
   }
 }
 
-checkAlerts();
+module.exports = { checkAlerts };
+
+// Permite seguir ejecutándolo a mano: node check-alerts.js
+if (require.main === module) {
+  checkAlerts();
+}
