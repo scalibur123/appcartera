@@ -148,6 +148,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
 </div>
 
 <div id="diana" class="section">
+  <div id="leyenda-max-d" style="padding:0 12px"></div>
   <div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" type="search" placeholder="Buscar ticker o nombre…" id="dsearch" oninput="renderDiana();document.getElementById('dclr').style.display=this.value?'block':'none'" autocomplete="off" autocorrect="off" autocapitalize="off"><button id="dclr" onclick="document.getElementById('dsearch').value='';renderDiana();this.style.display='none'" style="display:none;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 8px">✕</button></div>
   <div class="filters">
     <button class="filter-btn active" id="df-all" onclick="fD('all',this)">Todos</button>
@@ -699,7 +700,7 @@ function renderDiana(){
     const pcc=p?(p.pct>=0?'var(--green)':'var(--red)'):'var(--muted)';
     let ds='',dc='';
     if(price!=null){const d=(price-item.objetivo)/item.objetivo*100;ds=(d>=0?'+':'')+fN(d)+'% obj';dc=d>=0?'pos':'neg';}
-    return`<div class="list-row" onclick="showDetalle('${item.tckr}')" style="cursor:pointer"><div class="row-left"><span class="tckr">${item.tckr}${getDisplayName(item)!==item.tckr?`<br><span style="font-size:11px;color:var(--muted);font-weight:normal">${getDisplayName(item)}</span>`:''}</span><span class="banco-pill">${item.banco}</span></div><div class="row-right"><span class="price-val ${atO?'at-obj':nearO?'near-obj':'normal'}">${ps} <span style="font-size:10px;color:${pcc}">${pcs}</span></span>${price!=null?`<span class="pill ${dc}">${ds}</span>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}<span class="price-sub">Obj. ${fN(item.objetivo)}${p?(` · Val.`+fE(item.titulos*(item.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price))):''}</span></div></div>`;
+    return`<div class="list-row" onclick="showDetalle('${item.tckr}')" style="cursor:pointer"><div class="row-left"><span class="tckr">${item.tckr}${getDisplayName(item)!==item.tckr?`<br><span style="font-size:11px;color:var(--muted);font-weight:normal">${getDisplayName(item)}</span>`:''}</span><span class="banco-pill">${item.banco}</span></div><div class="row-right"><span class="price-val ${atO?'at-obj':nearO?'near-obj':'normal'}">${ps} <span style="font-size:10px;color:${pcc}">${pcs}</span></span>${price!=null?`<span class="pill ${dc}">${ds}</span>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}<span class="price-sub">Obj. ${fN(item.objetivo)}${p&&p.high52?' · Max52:'+fN(p.high52)+((window.maxInfo&&maxInfo(item.symbol))?maxInfo(item.symbol).punto:''):''}${p?(` · Val.`+fE(item.titulos*(item.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price))):''}</span></div></div>`;
   }).join('');
 }
 
@@ -757,8 +758,11 @@ window.maxInfo = function(symbol){
           punto:'<span title="Maximo el '+txt+'" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+color+';margin-left:4px;vertical-align:middle"></span>'};
 };
 window.pintarLeyendaMax = function(){
-  const el=document.getElementById('leyenda-max');
-  if(el&&!el.innerHTML)el.innerHTML='<div style="font-size:10px;color:var(--muted);padding-top:6px">Punto junto a Max52 = cuando se alcanzo:</div>'+leyendaMax();
+  const cab='<div style="font-size:10px;color:var(--muted);padding-top:6px">Punto junto a Max52 = cuando se alcanzo:</div>';
+  ['leyenda-max','leyenda-max-d'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(el&&!el.innerHTML)el.innerHTML=cab+leyendaMax();
+  });
 };
 document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(window.pintarLeyendaMax)pintarLeyendaMax();},300);});
 
