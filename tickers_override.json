@@ -35,7 +35,7 @@
   "SQRL": "SQRL.MC",
   "TEF": "TNE5.F",
   "TUB": "TCX.SG",
-  "TRG": "TRG.MC",
+  "TRG": "TRGP",
   "VIS": "VIS.MC",
   "NTGY": "NTGY.MC",
   "ADS": "ADS.DE",
@@ -51,7 +51,7 @@
   "EVK": "EVK.DE",
   "FRA": "FRA.DE",
   "FNTN": "FNTN.DE",
-  "HFG": "HFG.DE",
+  "HFG": "HFG.VI",
   "BOSS": "BOSS.DE",
   "JEN": "JEN.DE",
   "LEG": "LEG.DE",
@@ -110,5 +110,6 @@
   "LDOS": "LDOS",
   "BLSH": "BLSH",
   "INFQ": "INFQ",
-  "#VALUE!": "VTV"
+  "#VALUE!": "VTV",
+  "HRMY": "HRMY260821P00027500"
 }
