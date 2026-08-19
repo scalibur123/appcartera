@@ -1602,7 +1602,7 @@
     "fuente_resolucion": "override"
   },
   "TRG": {
-    "yahoo": "TRGP",
+    "yahoo": "TRG.MC",
     "mic": null,
     "moneda": "EUR",
     "titulos": 20000.0,
