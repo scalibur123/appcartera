@@ -457,6 +457,30 @@ def inyectar_serie_y_dividendos(html):
             print(f"⚠️  maximos.json ilegible: {e}")
     else:
         print("⚠️  no existe maximos.json (ejecuta reconstruir_historico.py)")
+    # --- ultimo cierre conocido de cada simbolo (para valores suspendidos) ---
+    # Si Yahoo deja de cotizar un valor (suspension, exclusion), la posicion
+    # desaparecia del calculo: ni su valor ni su coste. Eso mejora las
+    # plusvalias en falso. Con esto se valora al ultimo cierre que tengamos.
+    ult = {}
+    f_cc = PROYECTO / "cierres_historicos.json"
+    if f_cc.exists():
+        try:
+            crudo = json.loads(f_cc.read_text(encoding="utf-8"))
+            for sim, serie in crudo.items():
+                if serie:
+                    f = max(serie)
+                    ult[sim] = {"px": serie[f], "fecha": f}
+        except Exception as e:
+            print(f"⚠️  cierres_historicos.json ilegible: {e}")
+    bloque_ult = ('<!--ultimos-start--><script>var ULTIMOS='
+                  + json.dumps(ult, ensure_ascii=False) + ';</script><!--ultimos-end-->')
+    if "<!--ultimos-start-->" in html:
+        html = re.sub(r'<!--ultimos-start-->.*?<!--ultimos-end-->',
+                      lambda m: bloque_ult, html, flags=re.DOTALL)
+    else:
+        html = html.replace('<!--serie-latentes-start-->', bloque_ult + '\n<!--serie-latentes-start-->', 1)
+    print(f"✅ Ultimos cierres inyectados: {len(ult)} simbolos")
+
     bloque_mx = ('<!--maximos-start--><script>var MAXIMOS='
                  + json.dumps(mx, ensure_ascii=False) + ';</script><!--maximos-end-->')
     if "<!--maximos-start-->" in html:
@@ -1520,6 +1544,15 @@ def verificar_precios_yahoo(ticker_map):
         candidatos = [c for c in buscar_simbolo_yahoo_auto(tckr, moneda) if c != sym][:4]
         elegido = None
         for cand in candidatos:
+            # El ticker base del candidato TIENE que ser el mismo del Excel.
+            # Sin esta comprobacion bastaba con que un simbolo parecido
+            # cotizara para adoptarlo: TRG (Tubos Reunidos, suspendida) acabo
+            # resuelto como TRGP (Targa Resources, 297 USD) y metio 5,9
+            # millones de plusvalia falsa en la cartera.
+            base = cand.split(".")[0].upper()
+            if base != tckr.upper():
+                print(f"     ✗ {tckr}: descartado {cand} (empresa distinta)")
+                continue
             if _yahoo_tiene_precio(cand):
                 elegido = cand
                 break
@@ -1541,6 +1574,8 @@ def verificar_precios_yahoo(ticker_map):
     if siguen_mal:
         print(f"\n{'='*50}")
         print(f"⚠️  {len(siguen_mal)} sin resolver, estos si necesitan mano:")
+        print("   (si alguno esta SUSPENDIDO de cotizacion, es lo esperado:")
+        print("    se quedara con su ultimo precio conocido)")
         for tckr, sym, cands in siguen_mal:
             moneda = ticker_map[tckr].get('moneda', '?')
             print(f"\n  ❌ {tckr} ({moneda}) -> '{sym}' no devuelve precio")
