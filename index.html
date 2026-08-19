@@ -105,6 +105,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   <button class="nav-btn" onclick="showTab('proximas',this)">Próximas</button>
   <button class="nav-btn" onclick="showTab('analistas',this);loadAnalistas()">Analistas</button>
   <button class="nav-btn" onclick="showTab('bancos',this);renderBancos()">Bancos</button>
+  <button class="nav-btn" onclick="showTab('fuera',this);loadFuera()">Fuera mcdo</button>
 </div>
 
 <div id="eurusd-display" style="text-align:center;padding:6px 0;font-size:11px;color:var(--muted)">Cambio EUR/USD: --</div><div id="resumen" class="section active">
@@ -558,7 +559,7 @@ function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.clas
 
 // Swipe lateral para cambiar pestanas
 (function(){
-  const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','proximas','analistas','bancos'];
+  const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','proximas','analistas','bancos','fuera'];
   const tabCallbacks={'ventas':()=>renderVentas(),'historico':()=>loadHistorico(),'earnings':()=>loadEarnings(),'analistas':()=>loadAnalistas()};
   let swipeStartX=0, swipeStartY=0;
   document.addEventListener('touchstart',function(e){
@@ -797,6 +798,36 @@ window.leyendaMax = function(){
     '<span><b style="color:#ff9500">\u25cf</b> esta semana</span>'+
     '<span><b style="color:#ffd60a">\u25cf</b> este mes</span>'+
     '<span><b style="color:#8e8e93">\u25cf</b> mas antiguo</span></div>';
+};
+
+let fueraCargado=false;
+window.loadFuera = async function(forzar){
+  const el=document.getElementById('fuera-list');
+  if(fueraCargado&&!forzar)return;
+  const usa=C.filter(i=>!i.symbol.includes('.'));
+  if(!usa.length){el.innerHTML='<p style="color:var(--muted)">Sin valores USA en cartera.</p>';return;}
+  el.innerHTML='<p style="color:var(--muted)">Consultando '+usa.length+' valores…</p>';
+  try{
+    const r=await fetch('/fuera?symbols='+encodeURIComponent(usa.map(i=>i.symbol).join(',')));
+    const d=await r.json();
+    let res=(d.result||[]).filter(x=>Math.abs(x.pct)>0.01);
+    if(!res.length){el.innerHTML='<p style="color:var(--muted)">Sin cotización fuera de sesión ahora mismo.</p>';return;}
+    res.sort((a,b)=>b.pct-a.pct);
+    const mapa={}; C.forEach(i=>mapa[i.symbol]=i);
+    let h='';
+    if(d.throttled)h+='<div style="background:#4a2c00;color:#ffb84d;padding:8px;border-radius:8px;font-size:12px;margin-bottom:8px">⚠ Yahoo limitó las peticiones. Lista incompleta.</div>';
+    h+='<div style="font-size:11px;color:var(--muted);margin-bottom:6px">'+res.length+' con movimiento · destacados los de ±3%</div>';
+    for(const x of res){
+      const it=mapa[x.symbol]||{};
+      const fuerte=Math.abs(x.pct)>=3;
+      const col=x.pct>=0?'var(--green)':'var(--red)';
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-bottom:1px solid var(--border);'+(fuerte?'background:rgba(255,255,255,0.04);border-radius:6px':'')+'">'
+        +'<div><b style="font-size:14px">'+(it.tckr||x.symbol)+'</b>'+(fuerte?' <span style="font-size:10px;color:'+col+'">●</span>':'')
+        +'<div style="font-size:11px;color:var(--muted)">cierre '+fNum(x.cierre)+' → '+fNum(x.fuera)+'</div></div>'
+        +'<div style="color:'+col+';font-weight:600;font-size:15px">'+(x.pct>=0?'+':'')+fNum(x.pct)+'%</div></div>';
+    }
+    el.innerHTML=h; fueraCargado=true;
+  }catch(e){ el.innerHTML='<p style="color:var(--red)">Error consultando fuera de mercado.</p>'; }
 };
 
 window.loadEarnings = async function() {
@@ -1245,6 +1276,16 @@ window.renderVentas = function() {
   el.innerHTML = html;
 };
 </script>
+<div id="fuera" class="section">
+  <div style="padding:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h2 style="font-size:16px;color:var(--muted)">Pre-market y after-hours</h2>
+      <button onclick="loadFuera(true)" style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px">↻</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Solo valores USA. El volumen fuera de sesión es bajo: los movimientos suelen no confirmarse en la apertura.</div>
+    <div id="fuera-list">Pulsa ↻ para cargar.</div>
+  </div>
+</div>
 <div id="bancos" class="section">
   <div style="padding:16px" id="bancos-content">Cargando...</div>
 </div>

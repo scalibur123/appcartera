@@ -109,6 +109,54 @@ async function fetchNamesBatch(symbols) {
 
 // ============== HANDLERS ==============
 
+// ── FUERA DE MERCADO (pre-market y after-hours) ─────────────────────
+// interval=5m es la clave: da el mismo precio que 1m con una quinta parte
+// de las velas. Con 1d no llega el dato fuera de sesion.
+function fetchFuera(symbol) {
+  return new Promise((resolve) => {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`
+              + `?interval=5m&range=1d&includePrePost=true`;
+    const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: TIMEOUT }, (res2) => {
+      let data = '';
+      res2.on('data', c => data += c);
+      res2.on('end', () => {
+        if (res2.statusCode === 429) return resolve({ symbol, error: 'throttled' });
+        try {
+          const r = JSON.parse(data).chart.result[0];
+          const m = r.meta || {};
+          const cierre = m.regularMarketPrice;
+          const cl = (r.indicators.quote[0].close || []).filter(x => x != null);
+          const ultimo = cl.length ? cl[cl.length - 1] : null;
+          if (!cierre || !ultimo) return resolve({ symbol, error: 'sin_datos' });
+          resolve({
+            symbol, cierre, fuera: ultimo,
+            pct: ((ultimo - cierre) / cierre) * 100,
+            longName: m.longName || m.shortName || null
+          });
+        } catch { resolve({ symbol, error: 'parse' }); }
+      });
+    });
+    req.on('error', () => resolve({ symbol, error: 'red' }));
+    req.on('timeout', () => { req.destroy(); resolve({ symbol, error: 'timeout' }); });
+  });
+}
+
+async function handleFuera(req, res, symbolsParam) {
+  const symbols = symbolsParam.split(',').map(s => s.trim()).filter(Boolean);
+  const out = [];
+  let cortado = false;
+  for (let i = 0; i < symbols.length && !cortado; i += BATCH) {
+    const slice = symbols.slice(i, i + BATCH);
+    const r = await Promise.all(slice.map(fetchFuera));
+    // Si Yahoo estrangula, se abandona: insistir nos deja capados tambien
+    // para las cotizaciones normales, que son lo que no puede fallar.
+    if (r.some(x => x.error === 'throttled')) { cortado = true; }
+    out.push(...r.filter(x => !x.error));
+  }
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ result: out, throttled: cortado }));
+}
+
 async function handleSymbols(req, res, symbolsParam) {
   const symbols = symbolsParam.split(',').map(s => s.trim()).filter(Boolean);
   const results = await fetchYahooBatch(symbols);
@@ -322,6 +370,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/names' && symbols) return handleNames(req, res, symbols);
+    if (pathname === '/fuera' && symbols) return handleFuera(req, res, symbols);
     if (pathname === '/' && symbols) return handleSymbols(req, res, symbols);
     if (pathname === '/' || pathname === '/index.html') return handleIndex(req, res);
 
@@ -356,6 +405,16 @@ async function lanzarChequeoAlertas() {
 }
 setTimeout(lanzarChequeoAlertas, 60000);
 setInterval(lanzarChequeoAlertas, 5*60*1000);
+
+// Fuera de mercado: cada 15 min, y el propio modulo decide si esta en franja.
+let fueraEnCurso = false;
+setInterval(async () => {
+  if (fueraEnCurso) return;
+  fueraEnCurso = true;
+  try { await require("./check-alerts").checkFueraMercado(); }
+  catch (e) { console.error("Error fuera de mercado:", e.message); }
+  finally { fueraEnCurso = false; }
+}, 15*60*1000);
 
 // Actualizar bases cada sabado a las 18:00 (mercado cerrado)
 setInterval(()=>{

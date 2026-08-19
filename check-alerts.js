@@ -152,7 +152,83 @@ async function checkAlerts() {
   }
 }
 
-module.exports = { checkAlerts };
+// ── ALERTAS FUERA DE MERCADO ────────────────────────────────────────
+// Solo en las franjas donde el movimiento es real: after-hours americano
+// (22:00-00:30 en España) y pre-market (11:00-15:30). Fuera de ahí no se
+// hace ni una peticion. Una notificacion por valor y dia.
+function franjaFuera() {
+  const ahora = new Date();
+  const min = ahora.getUTCHours() * 60 + ahora.getUTCMinutes();
+  // UTC: after 20:00-22:30 · pre 09:00-13:30 (España = UTC+2 en verano)
+  if (min >= 1200 && min <= 1350) return 'after';
+  if (min >= 540 && min <= 810) return 'pre';
+  return null;
+}
+
+async function checkFueraMercado() {
+  const franja = franjaFuera();
+  if (!franja) return;
+
+  const token = await getToken();
+  if (!token) return;
+
+  const C = getC().filter(i => !i.symbol.includes('.'));
+  if (!C.length) return;
+
+  const hoy = new Date().toISOString().slice(0, 10);
+  const prevRaw = await getStateFromDB('fuera_state');
+  const prev = (prevRaw && prevRaw.fecha === hoy) ? prevRaw : { fecha: hoy, avisados: [] };
+  const avisados = new Set(prev.avisados || []);
+
+  const https2 = require('https');
+  function pedir(sim) {
+    return new Promise(resolve => {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sim)}`
+                + `?interval=5m&range=1d&includePrePost=true`;
+      https2.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 8000 }, r => {
+        if (r.statusCode === 429) { r.resume(); return resolve('THROTTLED'); }
+        let d = '';
+        r.on('data', c => d += c);
+        r.on('end', () => {
+          try {
+            const x = JSON.parse(d).chart.result[0];
+            const cierre = x.meta.regularMarketPrice;
+            const cl = (x.indicators.quote[0].close || []).filter(v => v != null);
+            const ult = cl.length ? cl[cl.length - 1] : null;
+            if (!cierre || !ult) return resolve(null);
+            resolve({ cierre, fuera: ult, pct: ((ult - cierre) / cierre) * 100 });
+          } catch { resolve(null); }
+        });
+      }).on('error', () => resolve(null));
+    });
+  }
+
+  let enviadas = 0;
+  for (const item of C) {
+    if (avisados.has(item.symbol)) continue;
+    const r = await pedir(item.symbol);
+    if (r === 'THROTTLED') {
+      console.log('Yahoo estrangula: se abandona la franja');
+      break;                      // insistir nos capa tambien los precios
+    }
+    if (!r || Math.abs(r.pct) < 3) continue;
+    const flecha = r.pct >= 0 ? '🔺' : '🔻';
+    const etq = franja === 'after' ? 'after-hours' : 'pre-market';
+    await sendNotification(token,
+      `${flecha} ${item.tckr} ${r.pct >= 0 ? '+' : ''}${r.pct.toFixed(1)}% ${etq}`,
+      `Cierre ${r.cierre.toFixed(2)} → ${r.fuera.toFixed(2)}`);
+    avisados.add(item.symbol);
+    enviadas++;
+    await new Promise(s => setTimeout(s, 300));
+  }
+
+  if (enviadas) {
+    await saveStateToDB('fuera_state', { fecha: hoy, avisados: [...avisados] });
+    console.log(`✅ ${enviadas} alertas fuera de mercado (${franja})`);
+  }
+}
+
+module.exports = { checkAlerts, checkFueraMercado };
 
 // Permite seguir ejecutándolo a mano: node check-alerts.js
 if (require.main === module) {
