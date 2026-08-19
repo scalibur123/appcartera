@@ -780,7 +780,7 @@
     "titulos": 1000.0,
     "coste_eur": 11445,
     "precio_excel": 2.949,
-    "fuente_resolucion": "auto_yahoo"
+    "fuente_resolucion": "override"
   },
   "HRMY": {
     "yahoo": "HRMY260821P00027500",
@@ -789,7 +789,7 @@
     "titulos": 400.0,
     "coste_eur": 11831.862,
     "precio_excel": 39.24,
-    "fuente_resolucion": "auto_yahoo"
+    "fuente_resolucion": "override"
   },
   "BOSS": {
     "yahoo": "BOSS.DE",
@@ -1608,7 +1608,7 @@
     "titulos": 20000.0,
     "coste_eur": 12121.38,
     "precio_excel": 0.1438,
-    "fuente_resolucion": "auto_yahoo"
+    "fuente_resolucion": "override"
   },
   "TUI1": {
     "yahoo": "TUI1.DE",
