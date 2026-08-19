@@ -821,7 +821,7 @@ window.loadFuera = async function(forzar){
       const it=mapa[x.symbol]||{};
       const fuerte=Math.abs(x.pct)>=3;
       const col=x.pct>=0?'var(--green)':'var(--red)';
-      h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-bottom:1px solid var(--border);'+(fuerte?'background:rgba(255,255,255,0.04);border-radius:6px':'')+'">'
+      h+='<div onclick="showDetalle(\''+(it.tckr||x.symbol)+'\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-bottom:1px solid var(--border);'+(fuerte?'background:rgba(255,255,255,0.04);border-radius:6px':'')+'">'
         +'<div><b style="font-size:14px">'+(it.tckr||x.symbol)+'</b>'+(fuerte?' <span style="font-size:10px;color:'+col+'">●</span>':'')
         +'<div style="font-size:11px;color:var(--muted)">cierre '+fNum(x.cierre)+' → '+fNum(x.fuera)+'</div></div>'
         +'<div style="color:'+col+';font-weight:600;font-size:15px">'+(x.pct>=0?'+':'')+fNum(x.pct)+'%</div></div>';
