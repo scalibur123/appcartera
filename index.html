@@ -106,6 +106,7 @@ body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)
   <button class="nav-btn" onclick="showTab('analistas',this);loadAnalistas()">Analistas</button>
   <button class="nav-btn" onclick="showTab('bancos',this);renderBancos()">Bancos</button>
   <button class="nav-btn" onclick="showTab('fuera',this);loadFuera()">Fuera mcdo</button>
+  <button class="nav-btn" onclick="showTab('mercados',this);renderMercados()">Mercados</button>
 </div>
 
 <div id="eurusd-display" style="text-align:center;padding:6px 0;font-size:11px;color:var(--muted)">Cambio EUR/USD: --</div><div id="resumen" class="section active">
@@ -559,7 +560,7 @@ function showTab(id,btn){document.querySelectorAll('.nav-btn').forEach(b=>b.clas
 
 // Swipe lateral para cambiar pestanas
 (function(){
-  const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','proximas','analistas','bancos','fuera'];
+  const tabs=['resumen','cartera','diana','mensual','ventas','historico','earnings','proximas','analistas','bancos','fuera','mercados'];
   const tabCallbacks={'ventas':()=>renderVentas(),'historico':()=>loadHistorico(),'earnings':()=>loadEarnings(),'analistas':()=>loadAnalistas()};
   let swipeStartX=0, swipeStartY=0;
   document.addEventListener('touchstart',function(e){
@@ -801,6 +802,70 @@ window.leyendaMax = function(){
 };
 
 let fueraCargado=false;
+// ── MERCADOS ────────────────────────────────────────────────────────
+// Los 14 españoles que cotizan via replica europea (.VI, .SG, .MU, .F)
+// seguirian contando como Europa si clasificara solo por sufijo.
+const ESP=new Set(['A3M','ACX','ADX','CABK','CLNX','COL','ENC','FAE','FDR','ORY',
+  'REP','SCYR','SOL','TUB','ALM','GEST','TEF','TRG','ANA','ITX','IBE','SAN','BBVA',
+  'ROVI','IAG','SQRL','AMS','MTS','ACS','AENA','FER','ELE','NTGY','MAP','CIE','LOG']);
+let mSort='pos';
+window.setSortM=function(v,btn){mSort=v;
+  document.querySelectorAll('[id^="mf-"]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');renderMercados();};
+function mercadoDe(i){
+  if(ESP.has(i.tckr)||i.symbol.endsWith('.MC'))return 'ESP';
+  return i.symbol.includes('.')?'EUR':'USA';
+}
+window.renderMercados=function(){
+  const bloques={ESP:{n:'🇪🇸 España',v:[]},EUR:{n:'🇪🇺 Europa',v:[]},USA:{n:'🇺🇸 EEUU',v:[]}};
+  let tVal=0,tCoste=0,tDia=0;
+  for(const i of C){
+    const p=prices[i.symbol]||(window.PX_ULTIMO||{})[i.symbol];
+    if(!p)continue;
+    const px=p.price, pct=p.pct||0;
+    const pe=i.moneda==='USD'&&eurUsd?px/eurUsd:px;
+    const val=i.titulos*pe;
+    const ayer=pct?val/(1+pct/100):val;
+    const dia=val-ayer;
+    bloques[mercadoDe(i)].v.push({t:i.tckr,val:val,pct:pct,dia:dia,coste:i.coste_eur});
+    tVal+=val;tCoste+=i.coste_eur;tDia+=dia;
+  }
+  const cl=v=>v>=0?'var(--green)':'var(--red)';
+  const sg=v=>v>=0?'+':'';
+  const pctDiaTot=(tVal-tDia)?tDia/(tVal-tDia)*100:0;
+  const rent=tCoste?(tVal-tCoste)/tCoste*100:0;
+  document.getElementById('merc-tot').innerHTML=
+    '<div style="background:var(--card);border-radius:10px;padding:12px">'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:6px">'
+    +'<span style="font-size:12px;color:var(--muted)">TOTAL CARTERA</span>'
+    +'<b style="font-size:17px">'+fE(tVal)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+    +'<span style="font-size:12px;color:var(--muted)">hoy</span>'
+    +'<span style="color:'+cl(tDia)+';font-weight:600">'+sg(tDia)+fE(tDia)+' · '+sg(pctDiaTot)+fNum(pctDiaTot)+'%</span></div>'
+    +'<div style="display:flex;justify-content:space-between">'
+    +'<span style="font-size:12px;color:var(--muted)">rentabilidad</span>'
+    +'<span style="color:'+cl(rent)+';font-weight:600">'+sg(rent)+fNum(rent)+'%</span></div></div>';
+  let h='';
+  for(const k of ['ESP','EUR','USA']){
+    const b=bloques[k];
+    if(!b.v.length)continue;
+    const sv=b.v.reduce((a,x)=>a+x.val,0), sd=b.v.reduce((a,x)=>a+x.dia,0);
+    const sp=(sv-sd)?sd/(sv-sd)*100:0;
+    b.v.sort((x,y)=>mSort==='pos'?y.val-x.val:y.pct-x.pct);
+    h+='<div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 4px;border-bottom:2px solid var(--border)">'
+      +'<b style="font-size:14px">'+b.n+' <span style="font-size:11px;color:var(--muted)">('+b.v.length+')</span></b>'
+      +'<span style="font-size:13px"><b>'+fE(sv)+'</b> <span style="color:'+cl(sd)+'">'+sg(sp)+fNum(sp)+'%</span></span></div>';
+    for(const x of b.v){
+      h+='<div onclick="showDetalle(\''+x.t+'\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;padding:7px 4px;border-bottom:1px solid var(--border)">'
+        +'<b style="font-size:13px">'+x.t+'</b>'
+        +'<span style="font-size:13px">'+fE(x.val)
+        +' <span style="color:'+cl(x.pct)+';font-weight:600">'+sg(x.pct)+fNum(x.pct)+'%</span></span></div>';
+    }
+    h+='</div>';
+  }
+  document.getElementById('merc-list').innerHTML=h;
+};
+
 window.loadFuera = async function(forzar){
   const el=document.getElementById('fuera-list');
   if(fueraCargado&&!forzar)return;
@@ -1290,6 +1355,16 @@ window.renderVentas = function() {
   el.innerHTML = html;
 };
 </script>
+<div id="mercados" class="section">
+  <div style="padding:12px">
+    <div id="merc-tot" style="margin-bottom:10px"></div>
+    <div class="filters" style="margin-bottom:8px">
+      <button class="filter-btn active" id="mf-pos" onclick="setSortM('pos',this)">↑ Posición</button>
+      <button class="filter-btn" id="mf-pct" onclick="setSortM('pct',this)">↑ % día</button>
+    </div>
+    <div id="merc-list"></div>
+  </div>
+</div>
 <div id="fuera" class="section">
   <div style="padding:12px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
