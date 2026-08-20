@@ -808,7 +808,8 @@ let fueraCargado=false;
 const ESP=new Set(['A3M','ACX','ADX','CABK','CLNX','COL','ENC','FAE','FDR','ORY',
   'REP','SCYR','SOL','TUB','ALM','GEST','TEF','TRG','ANA','ITX','IBE','SAN','BBVA',
   'ROVI','IAG','SQRL','AMS','MTS','ACS','AENA','FER','ELE','NTGY','MAP','CIE','LOG']);
-let mSort='pos';
+let mSort='pos', mFiltro=null;
+window.filtrarMercado=function(k){mFiltro=(mFiltro===k)?null:k;renderMercados();};
 window.setSortM=function(v,btn){mSort=v;
   document.querySelectorAll('[id^="mf-"]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');renderMercados();};
@@ -835,10 +836,15 @@ window.renderMercados=function(){
   const pctDiaTot=(tVal-tDia)?tDia/(tVal-tDia)*100:0;
   const rent=tCoste?(tVal-tCoste)/tCoste*100:0;
   // Cuatro tarjetas: una por mercado y otra con el total.
-  function tarjeta(bandera,val,dia,coste,n){
+  function tarjeta(bandera,val,dia,coste,n,clave){
     const pd=(val-dia)?dia/(val-dia)*100:0;
     const rt=coste?(val-coste)/coste*100:0;
-    return '<div style="background:var(--card);border-radius:10px;padding:10px">'
+    // Pulsar una bandera filtra el detalle a ese mercado. Volver a pulsarla,
+    // o pulsar TOTAL, lo quita.
+    const act=(clave===mFiltro)||(clave===null&&mFiltro===null);
+    const bd=act?'2px solid var(--green)':'2px solid transparent';
+    return '<div onclick="filtrarMercado('+(clave?"'"+clave+"'":'null')+')" '
+      +'style="cursor:pointer;background:var(--card);border-radius:10px;padding:10px;border:'+bd+'">'
       +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">'
       +'<span style="font-size:15px">'+bandera+'</span>'
       +'<span style="font-size:10px;color:var(--muted)">'+n+'</span></div>'
@@ -849,16 +855,17 @@ window.renderMercados=function(){
   }
   const bl=['ESP','EUR','USA'].map(function(k){
     const b=bloques[k];
-    return {bandera:b.n.split(' ')[0], val:b.v.reduce((a,x)=>a+x.val,0),
+    return {k:k, bandera:b.n.split(' ')[0], val:b.v.reduce((a,x)=>a+x.val,0),
             dia:b.v.reduce((a,x)=>a+x.dia,0), coste:b.v.reduce((a,x)=>a+x.coste,0), n:b.v.length};
   });
   document.getElementById('merc-tot').innerHTML=
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    + bl.map(x=>tarjeta(x.bandera,x.val,x.dia,x.coste,x.n+' val.')).join('')
-    + tarjeta('🌍 TOTAL',tVal,tDia,tCoste,C.length+' val.')
+    + bl.map(x=>tarjeta(x.bandera,x.val,x.dia,x.coste,x.n+' val.',x.k)).join('')
+    + tarjeta('🌍 TOTAL',tVal,tDia,tCoste,C.length+' val.',null)
     + '</div>';
   let h='';
   for(const k of ['ESP','EUR','USA']){
+    if(mFiltro&&k!==mFiltro)continue;
     const b=bloques[k];
     if(!b.v.length)continue;
     const sv=b.v.reduce((a,x)=>a+x.val,0), sd=b.v.reduce((a,x)=>a+x.dia,0);
