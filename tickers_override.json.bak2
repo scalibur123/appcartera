@@ -101,7 +101,7 @@
   "SGO": "SGO.PA",
   "UPM": "UPM.HE",
   "ATO": "ATO.PA",
-  "AMS": "AMS.MC",
+  "AMS": "AMS.SW",
   "EL": "EL.PA",
   "AFX": "AFX.DE",
   "PRZO": "PRZO",
@@ -111,5 +111,5 @@
   "BLSH": "BLSH",
   "INFQ": "INFQ",
   "#VALUE!": "VTV",
-  "HRMY": "HRMY"
+  "HRMY": "HRMY260821P00027500"
 }

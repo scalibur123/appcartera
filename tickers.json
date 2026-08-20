@@ -99,7 +99,7 @@
     "fuente_resolucion": "override"
   },
   "AMS": {
-    "yahoo": "AMS.SW",
+    "yahoo": "AMS.MC",
     "mic": null,
     "moneda": "EUR",
     "titulos": 277.0,
@@ -783,7 +783,7 @@
     "fuente_resolucion": "override"
   },
   "HRMY": {
-    "yahoo": "HRMY260821P00027500",
+    "yahoo": "HRMY",
     "mic": null,
     "moneda": "USD",
     "titulos": 400.0,
