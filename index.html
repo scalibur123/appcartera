@@ -786,7 +786,7 @@ window.maxInfo = function(symbol){
 };
 window.pintarLeyendaMax = function(){
   const cab='<div style="font-size:10px;color:var(--muted);padding-top:6px">Punto junto a Max52 = cuando se alcanzo:</div>';
-  ['leyenda-max','leyenda-max-d'].forEach(function(id){
+  ['leyenda-max','leyenda-max-d','leyenda-max-m'].forEach(function(id){
     const el=document.getElementById(id);
     if(el&&!el.innerHTML)el.innerHTML=cab+leyendaMax();
   });
@@ -828,7 +828,7 @@ window.renderMercados=function(){
     const val=i.titulos*pe;
     const ayer=pct?val/(1+pct/100):val;
     const dia=val-ayer;
-    bloques[mercadoDe(i)].v.push({t:i.tckr,val:val,pct:pct,dia:dia,coste:i.coste_eur});
+    bloques[mercadoDe(i)].v.push({t:i.tckr,sym:i.symbol,val:val,pct:pct,dia:dia,coste:i.coste_eur});
     tVal+=val;tCoste+=i.coste_eur;tDia+=dia;
   }
   const cl=v=>v>=0?'var(--green)':'var(--red)';
@@ -875,8 +875,9 @@ window.renderMercados=function(){
       +'<b style="font-size:14px">'+b.n+' <span style="font-size:11px;color:var(--muted)">('+b.v.length+')</span></b>'
       +'<span style="font-size:13px"><b>'+fE(sv)+'</b> <span style="color:'+cl(sd)+'">'+sg(sp)+fNum(sp)+'%</span></span></div>';
     for(const x of b.v){
+      const pt=(window.maxInfo&&maxInfo(x.sym))?maxInfo(x.sym).punto:'';
       h+='<div onclick="showDetalle(\''+x.t+'\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;padding:7px 4px;border-bottom:1px solid var(--border)">'
-        +'<b style="font-size:13px">'+x.t+'</b>'
+        +'<b style="font-size:13px">'+x.t+pt+'</b>'
         +'<span style="font-size:13px">'+fE(x.val)
         +' <span style="color:'+cl(x.pct)+';font-weight:600">'+sg(x.pct)+fNum(x.pct)+'%</span></span></div>';
     }
@@ -1377,6 +1378,7 @@ window.renderVentas = function() {
 <div id="mercados" class="section">
   <div style="padding:12px">
     <div id="merc-tot" style="margin-bottom:10px"></div>
+    <div id="leyenda-max-m" style="margin-bottom:4px"></div>
     <div class="filters" style="margin-bottom:8px">
       <button class="filter-btn active" id="mf-pos" onclick="setSortM('pos',this)">↑ Posición</button>
       <button class="filter-btn" id="mf-pct" onclick="setSortM('pct',this)">↑ % día</button>
