@@ -834,17 +834,29 @@ window.renderMercados=function(){
   const sg=v=>v>=0?'+':'';
   const pctDiaTot=(tVal-tDia)?tDia/(tVal-tDia)*100:0;
   const rent=tCoste?(tVal-tCoste)/tCoste*100:0;
+  // Cuatro tarjetas: una por mercado y otra con el total.
+  function tarjeta(bandera,val,dia,coste,n){
+    const pd=(val-dia)?dia/(val-dia)*100:0;
+    const rt=coste?(val-coste)/coste*100:0;
+    return '<div style="background:var(--card);border-radius:10px;padding:10px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">'
+      +'<span style="font-size:15px">'+bandera+'</span>'
+      +'<span style="font-size:10px;color:var(--muted)">'+n+'</span></div>'
+      +'<div style="font-size:15px;font-weight:600;margin-bottom:4px">'+fE(val)+'</div>'
+      +'<div style="font-size:12px;color:'+cl(dia)+';font-weight:600">'+sg(pd)+fNum(pd)+'% hoy</div>'
+      +'<div style="font-size:11px;color:'+cl(dia)+'">'+sg(dia)+fE(dia)+'</div>'
+      +'<div style="font-size:11px;color:'+cl(rt)+';margin-top:4px">rent. '+sg(rt)+fNum(rt)+'%</div></div>';
+  }
+  const bl=['ESP','EUR','USA'].map(function(k){
+    const b=bloques[k];
+    return {bandera:b.n.split(' ')[0], val:b.v.reduce((a,x)=>a+x.val,0),
+            dia:b.v.reduce((a,x)=>a+x.dia,0), coste:b.v.reduce((a,x)=>a+x.coste,0), n:b.v.length};
+  });
   document.getElementById('merc-tot').innerHTML=
-    '<div style="background:var(--card);border-radius:10px;padding:12px">'
-    +'<div style="display:flex;justify-content:space-between;margin-bottom:6px">'
-    +'<span style="font-size:12px;color:var(--muted)">TOTAL CARTERA</span>'
-    +'<b style="font-size:17px">'+fE(tVal)+'</b></div>'
-    +'<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
-    +'<span style="font-size:12px;color:var(--muted)">hoy</span>'
-    +'<span style="color:'+cl(tDia)+';font-weight:600">'+sg(tDia)+fE(tDia)+' · '+sg(pctDiaTot)+fNum(pctDiaTot)+'%</span></div>'
-    +'<div style="display:flex;justify-content:space-between">'
-    +'<span style="font-size:12px;color:var(--muted)">rentabilidad</span>'
-    +'<span style="color:'+cl(rent)+';font-weight:600">'+sg(rent)+fNum(rent)+'%</span></div></div>';
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + bl.map(x=>tarjeta(x.bandera,x.val,x.dia,x.coste,x.n+' val.')).join('')
+    + tarjeta('🌍 TOTAL',tVal,tDia,tCoste,C.length+' val.')
+    + '</div>';
   let h='';
   for(const k of ['ESP','EUR','USA']){
     const b=bloques[k];
