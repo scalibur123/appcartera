@@ -50,6 +50,19 @@ async function fetchYahooBatch(symbols) {
     const batchResults = await Promise.all(slice.map(fetchYahoo));
     results.push(...batchResults);
   }
+  // Segundo intento para los que han fallado o han venido sin precio. Un
+  // timeout suelto dejaba la posicion sin cotizar y la app la contaba como 0.
+  const fallidos = results.filter(r => r.error || r.price == null).map(r => r.symbol);
+  if (fallidos.length) {
+    console.log('Reintentando sin precio:', fallidos.join(', '));
+    await new Promise(r => setTimeout(r, 600));
+    const retry = await Promise.all(fallidos.map(fetchYahoo));
+    for (const r of retry) {
+      if (r.error || r.price == null) continue;
+      const idx = results.findIndex(x => x.symbol === r.symbol);
+      if (idx >= 0) results[idx] = r;
+    }
+  }
   return results;
 }
 
@@ -95,6 +108,79 @@ async function fetchNamesBatch(symbols) {
 }
 
 // ============== HANDLERS ==============
+
+// ── FUERA DE MERCADO (pre-market y after-hours) ─────────────────────
+// interval=5m es la clave: da el mismo precio que 1m con una quinta parte
+// de las velas. Con 1d no llega el dato fuera de sesion.
+function fetchFuera(symbol) {
+  return new Promise((resolve) => {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`
+              + `?interval=5m&range=1d&includePrePost=true`;
+    const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: TIMEOUT }, (res2) => {
+      let data = '';
+      res2.on('data', c => data += c);
+      res2.on('end', () => {
+        if (res2.statusCode === 429) return resolve({ symbol, error: 'throttled' });
+        try {
+          const r = JSON.parse(data).chart.result[0];
+          const m = r.meta || {};
+          const cierre = m.regularMarketPrice;
+          const cl = (r.indicators.quote[0].close || []).filter(x => x != null);
+          const ultimo = cl.length ? cl[cl.length - 1] : null;
+          if (!cierre || !ultimo) return resolve({ symbol, error: 'sin_datos' });
+          resolve({
+            symbol, cierre, fuera: ultimo,
+            pct: ((ultimo - cierre) / cierre) * 100,
+            longName: m.longName || m.shortName || null
+          });
+        } catch { resolve({ symbol, error: 'parse' }); }
+      });
+    });
+    req.on('error', () => resolve({ symbol, error: 'red' }));
+    req.on('timeout', () => { req.destroy(); resolve({ symbol, error: 'timeout' }); });
+  });
+}
+
+// Buscador de valores por nombre o ticker. Va por el servidor porque el
+// navegador no puede llamar a Yahoo directamente (CORS).
+function handleBuscar(req, res, q) {
+  const url = `https://query2.finance.yahoo.com/v1/finance/search`
+            + `?q=${encodeURIComponent(q)}&quotesCount=15&newsCount=0`;
+  https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: TIMEOUT }, (r) => {
+    let d = '';
+    r.on('data', c => d += c);
+    r.on('end', () => {
+      let out = [];
+      try {
+        const q2 = (JSON.parse(d).quotes || []);
+        out = q2.filter(x => x.symbol && (x.quoteType === 'EQUITY' || x.quoteType === 'ETF'))
+                .map(x => ({ symbol: x.symbol, nombre: x.longname || x.shortname || '',
+                             bolsa: x.exchDisp || x.exchange || '', tipo: x.quoteType }));
+      } catch {}
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ result: out }));
+    });
+  }).on('error', () => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ result: [], error: 'red' }));
+  });
+}
+
+async function handleFuera(req, res, symbolsParam) {
+  const symbols = symbolsParam.split(',').map(s => s.trim()).filter(Boolean);
+  const out = [];
+  let cortado = false;
+  for (let i = 0; i < symbols.length && !cortado; i += BATCH) {
+    const slice = symbols.slice(i, i + BATCH);
+    const r = await Promise.all(slice.map(fetchFuera));
+    // Si Yahoo estrangula, se abandona: insistir nos deja capados tambien
+    // para las cotizaciones normales, que son lo que no puede fallar.
+    if (r.some(x => x.error === 'throttled')) { cortado = true; }
+    out.push(...r.filter(x => !x.error));
+  }
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ result: out, throttled: cortado }));
+}
 
 async function handleSymbols(req, res, symbolsParam) {
   const symbols = symbolsParam.split(',').map(s => s.trim()).filter(Boolean);
@@ -185,6 +271,10 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const pathname = url.pathname;
+    // La app multiusuario se sirve desde otro origen y necesita llamar aqui.
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
     const symbols = url.searchParams.get('symbols');
 
     console.log(new Date().toISOString(), req.method, pathname);
@@ -192,22 +282,39 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/save-token" && req.method === "POST") {
       let body = "";
       req.on("data", d => body += d);
-      req.on("end", () => {
+      req.on("end", async () => {
         try {
           const { token } = JSON.parse(body);
-          require("fs").writeFileSync("./fcm-token.txt", token);
+          if (!token) { res.writeHead(400); res.end("Sin token"); return; }
+          // Cache local (se pierde en cada deploy) + persistencia en Supabase
+          try { fs.writeFileSync(path.join(__dirname, "fcm-token.txt"), token); } catch(e) {}
+          const { supabase } = require("./supabase-client");
+          await supabase.from("alert_state").upsert({
+            key: "fcm_token",
+            value: { token, updated_at: new Date().toISOString() },
+            updated_at: new Date().toISOString()
+          }, { onConflict: "key" });
+          console.log("Token FCM guardado en Supabase");
           res.writeHead(200); res.end("OK");
-        } catch(e) { res.writeHead(500); res.end("Error"); }
+        } catch(e) { console.error("Error save-token:", e.message); res.writeHead(500); res.end("Error"); }
       });
       return;
     }
 
     if (pathname === '/get-token' && req.method === 'GET') {
-      const fs = require('fs');
       try {
-        const token = fs.readFileSync('./fcm-token.txt', 'utf8').trim();
-        res.writeHead(200); res.end(token);
-      } catch(e) { res.writeHead(404); res.end('No token'); }
+        const { supabase } = require('./supabase-client');
+        const { data } = await supabase.from('alert_state').select('value').eq('key', 'fcm_token').single();
+        if (data && data.value && data.value.token) {
+          res.writeHead(200); res.end(data.value.token);
+          return;
+        }
+      } catch(e) {}
+      try {
+        const token = fs.readFileSync(path.join(__dirname, 'fcm-token.txt'), 'utf8').trim();
+        if (token) { res.writeHead(200); res.end(token); return; }
+      } catch(e) {}
+      res.writeHead(404); res.end('No token');
       return;
     }
 
@@ -292,6 +399,9 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/names' && symbols) return handleNames(req, res, symbols);
+    if (pathname === '/buscar' && url.searchParams.get('q'))
+      return handleBuscar(req, res, url.searchParams.get('q'));
+    if (pathname === '/fuera' && symbols) return handleFuera(req, res, symbols);
     if (pathname === '/' && symbols) return handleSymbols(req, res, symbols);
     if (pathname === '/' || pathname === '/index.html') return handleIndex(req, res);
 
@@ -307,8 +417,35 @@ server.listen(PORT, () => {
   console.log(`AppCartera escuchando en puerto ${PORT}`);
 });
 
-// Chequeo alertas cada 5 min
-setInterval(() => { try { delete require.cache[require.resolve("./check-alerts")]; require("./check-alerts"); } catch(e) { console.error(e); } }, 5*60*1000);
+// Chequeo alertas cada 5 min (con candado: no se solapan dos pasadas)
+let alertasEnCurso = false;
+async function lanzarChequeoAlertas() {
+  if (alertasEnCurso) {
+    console.log('Chequeo de alertas aun en curso, se omite esta pasada');
+    return;
+  }
+  alertasEnCurso = true;
+  try {
+    const { checkAlerts } = require("./check-alerts");
+    await checkAlerts();
+  } catch(e) {
+    console.error('Error chequeo alertas:', e.message);
+  } finally {
+    alertasEnCurso = false;
+  }
+}
+setTimeout(lanzarChequeoAlertas, 60000);
+setInterval(lanzarChequeoAlertas, 5*60*1000);
+
+// Fuera de mercado: cada 15 min, y el propio modulo decide si esta en franja.
+let fueraEnCurso = false;
+setInterval(async () => {
+  if (fueraEnCurso) return;
+  fueraEnCurso = true;
+  try { await require("./check-alerts").checkFueraMercado(); }
+  catch (e) { console.error("Error fuera de mercado:", e.message); }
+  finally { fueraEnCurso = false; }
+}, 15*60*1000);
 
 // Actualizar bases cada sabado a las 18:00 (mercado cerrado)
 setInterval(()=>{
