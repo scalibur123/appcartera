@@ -141,6 +141,31 @@ function fetchFuera(symbol) {
   });
 }
 
+// Buscador de valores por nombre o ticker. Va por el servidor porque el
+// navegador no puede llamar a Yahoo directamente (CORS).
+function handleBuscar(req, res, q) {
+  const url = `https://query2.finance.yahoo.com/v1/finance/search`
+            + `?q=${encodeURIComponent(q)}&quotesCount=15&newsCount=0`;
+  https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: TIMEOUT }, (r) => {
+    let d = '';
+    r.on('data', c => d += c);
+    r.on('end', () => {
+      let out = [];
+      try {
+        const q2 = (JSON.parse(d).quotes || []);
+        out = q2.filter(x => x.symbol && (x.quoteType === 'EQUITY' || x.quoteType === 'ETF'))
+                .map(x => ({ symbol: x.symbol, nombre: x.longname || x.shortname || '',
+                             bolsa: x.exchDisp || x.exchange || '', tipo: x.quoteType }));
+      } catch {}
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ result: out }));
+    });
+  }).on('error', () => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ result: [], error: 'red' }));
+  });
+}
+
 async function handleFuera(req, res, symbolsParam) {
   const symbols = symbolsParam.split(',').map(s => s.trim()).filter(Boolean);
   const out = [];
@@ -246,6 +271,10 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const pathname = url.pathname;
+    // La app multiusuario se sirve desde otro origen y necesita llamar aqui.
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
     const symbols = url.searchParams.get('symbols');
 
     console.log(new Date().toISOString(), req.method, pathname);
@@ -370,6 +399,8 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/names' && symbols) return handleNames(req, res, symbols);
+    if (pathname === '/buscar' && url.searchParams.get('q'))
+      return handleBuscar(req, res, url.searchParams.get('q'));
     if (pathname === '/fuera' && symbols) return handleFuera(req, res, symbols);
     if (pathname === '/' && symbols) return handleSymbols(req, res, symbols);
     if (pathname === '/' || pathname === '/index.html') return handleIndex(req, res);
