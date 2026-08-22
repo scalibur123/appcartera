@@ -804,6 +804,7 @@ def leer_excel_con_mic():
                 "precio_excel": precio_excel,
                 "mic": mic,
                 "banco": normalizar_banco(ws[f"H{row}"].value),
+                "_bancos": [],
                 "objetivo": None,
                 "objetivo_analistas": None,
             }
@@ -813,12 +814,26 @@ def leer_excel_con_mic():
 
         posiciones[ticker]["titulos"] += titulos
         posiciones[ticker]["coste_eur"] += coste_eur
+        # Un valor puede estar repartido en varias filas y varios brokers
+        # (Repsol: 1 en Mediolanum + 3 en ING). Antes solo se guardaba el
+        # banco de la primera fila y los demas se perdian.
+        _b = normalizar_banco(ws[f"H{row}"].value)
+        if _b and _b not in posiciones[ticker]["_bancos"]:
+            posiciones[ticker]["_bancos"].append(_b)
         # Si en una fila posterior aparece el MIC, actualizar
         if mic and not posiciones[ticker]["mic"]:
             posiciones[ticker]["mic"] = mic
             posiciones[ticker]["nombre"] = nombre_completo or ticker
             if ticker in sin_mic:
                 sin_mic.remove(ticker)
+
+    # Consolidar la etiqueta de banco con todos los brokers del valor
+    for _t, _p in posiciones.items():
+        _bs = _p.pop("_bancos", [])
+        if len(_bs) > 1:
+            _p["banco"] = "/".join(_bs)
+        elif _bs:
+            _p["banco"] = _bs[0]
 
     # Leer objetivos de pestana DIANA (AC = personal, AF = analistas)
     tickers_vivos = set(posiciones.keys())
