@@ -239,7 +239,7 @@ const C=[{"tckr":"ABEO","nombre":"ABEO","titulos":800.0,"coste_eur":4922.2951,"p
 const SFX={"A3M":".MC","ACX":".MC","ADX":".MC","AED":".MC","ABI":".BR","ACA":".PA","ADS":".DE","AKZA":".AS","ALHG":".MC","ALM":".MC","ALO":".PA","AMP":".MC","AMV0":".MC","ANA":".MC","ARCAD":".BR","ARIS":".MC","BAYN":".DE","BEI":".DE","BMW":".DE","BNR":".DE","BOSS":".DE","CA":".PA","CABK":".MC","CIE":".MC","CLNX":".MC","COL":".MC","CON":".DE","DB1":".DE","DG":".PA","DOM":".PA","DTG":".DE","EDP":".LS","EGLA":".PA","ENC":".MC","ENG":".MC","ENXB":".DE","ERF":".PA","EVK":".DE","FAE":".MC","FDR":".MC","FNTN":".DE","FRA":".PA","GEST":".MC","HBX":".MC","HFG":".DE","IAG":".MC","IBE":".MC","INW":".MI","INPST":".MC","ITX":".MC","JEN":".MC","LDA":".MC","LEG":".MC","LHA":".DE","LI":".PA","LIGHT":".PA","MFEB":".MC","MONC":".MI","MTS":".MC","NEXI":".MI","NTGY":".MC","OCI":".AS","OHLA":".MC","ORY":".MC","PAH3":".DE","PHM":".MC","PUIG":".MC","REP":".MC","ROVI":".MC","S93":".DE","SAN":".MC","SAP":".DE","SCYR":".MC","SHL":".DE","SIX2":".DE","SOL":".MC","SPM":".MI","SQRL":".MC","STLAM":".MI","SW":".MC","SY1":".DE","SYENS":".MC","TE":".PA","TEF":".MC","TEP":".MC","TRG":".MC","TUB":".MC","TUI1":".DE","UIC1":".MC","UPM":".HE","VIS":".MC","VNA":".DE","VRLA":".MC","WCH":".DE","WLN":".PA","YACHT":".MC","ZAL":".DE"};
 
 let prices={}, names={}, cFilter='all', dFilters=[], busy=false, cSort="pct", dSort='obj';
-let eurUsd=null;
+let eurUsd=null;let eurUsdAyer=null;
 function yT(i){return i.moneda==='EUR'?(i.tckr+(SFX[i.tckr]||'')):i.tckr;}
 function dbg(msg){const el=document.getElementById('dbg');if(el)el.textContent=msg;}
 function setProg(p,done=false){const el=document.getElementById('prog');el.style.width=p+'%';el.className='progress-fill'+(done?' done':'');}
@@ -268,7 +268,7 @@ async function startLoad(){
   try{
     const fxRes=await fetchBatch(['EURUSD=X']);
     if(fxRes && fxRes['EURUSD=X']){
-      eurUsd=fxRes['EURUSD=X'].price;
+      eurUsd=fxRes['EURUSD=X'].price;eurUsdAyer=(fxRes['EURUSD=X'].pct!=null)?eurUsd/(1+fxRes['EURUSD=X'].pct/100):eurUsd;
       const fxEl=document.getElementById('eurusd-display');
       if(fxEl){
         const fxPct=fxRes['EURUSD=X'].pct;
@@ -440,16 +440,17 @@ function updateResumen(){
     if(moneda==='USD') return mins>=810&&mins<1200;  // 13:30-20:00 UTC
     return mins>=420&&mins<930;  // 07:00-15:30 UTC (EUR y resto)
   }
+  function sesionComenzada(m){const a=new Date();const d=a.getUTCDay();if(d===0||d===6)return false;const t=a.getUTCHours()*60+a.getUTCMinutes();return m==='USD'?t>=810:t>=420;}
   function calcVarHoyMercado(){
-    let v=0;
+    let v=0;const fxH=eurUsd,fxA=eurUsdAyer||eurUsd;
     for(const i of C){
       const p=prices[i.symbol];
-      if(!p||p.pct==null)continue;
-      if(!mercadoAbierto(i.moneda))continue;
-      const precioAyer=p.price/(1+p.pct/100);
-      const varPrecio=p.price-precioAyer;
-      const varEur=i.moneda==='USD'&&eurUsd?varPrecio*i.titulos/eurUsd:varPrecio*i.titulos;
-      v+=varEur;
+      if(!p)continue;
+      if(!sesionComenzada(i.moneda))continue;
+      const pc=(p.pct==null)?0:p.pct;
+      const pAyer=p.price/(1+pc/100);
+      if(i.moneda==='USD'&&fxH&&fxA)v+=i.titulos*(p.price/fxH-pAyer/fxA);
+      else v+=i.titulos*(p.price-pAyer);
     }
     return v;
   }
@@ -819,24 +820,26 @@ function mercadoDe(i){
 }
 window.renderMercados=function(){
   const bloques={ESP:{n:'🇪🇸 España',v:[]},EUR:{n:'🇪🇺 Europa',v:[]},USA:{n:'🇺🇸 EEUU',v:[]}};
-  let tVal=0,tCoste=0,tDia=0;
+  let tVal=0,tCoste=0,tDia=0,tFx=0;const fxH=eurUsd,fxA=eurUsdAyer||eurUsd;
   for(const i of C){
     const p=prices[i.symbol]||(window.PX_ULTIMO||{})[i.symbol];
     if(!p)continue;
     const px=p.price, pct=p.pct||0;
-    const pe=i.moneda==='USD'&&eurUsd?px/eurUsd:px;
-    const val=i.titulos*pe;
-    const ayer=pct?val/(1+pct/100):val;
+    const usd=i.moneda==='USD'&&fxH&&fxA;
+    const pxAyer=px/(1+pct/100);
+    const val=usd?i.titulos*px/fxH:i.titulos*px;
+    const ayer=usd?i.titulos*pxAyer/fxA:i.titulos*pxAyer;
     const dia=val-ayer;
-    bloques[mercadoDe(i)].v.push({t:i.tckr,sym:i.symbol,val:val,pct:pct,dia:dia,coste:i.coste_eur});
-    tVal+=val;tCoste+=i.coste_eur;tDia+=dia;
+    const fxEfecto=usd?i.titulos*px*(1/fxH-1/fxA):0;
+    bloques[mercadoDe(i)].v.push({t:i.tckr,sym:i.symbol,val:val,pct:pct,dia:dia,fx:fxEfecto,coste:i.coste_eur});
+    tVal+=val;tCoste+=i.coste_eur;tDia+=dia;tFx+=fxEfecto;
   }
   const cl=v=>v>=0?'var(--green)':'var(--red)';
   const sg=v=>v>=0?'+':'';
   const pctDiaTot=(tVal-tDia)?tDia/(tVal-tDia)*100:0;
   const rent=tCoste?(tVal-tCoste)/tCoste*100:0;
   // Cuatro tarjetas: una por mercado y otra con el total.
-  function tarjeta(bandera,val,dia,coste,n,clave){
+  function tarjeta(bandera,val,dia,coste,n,clave,fx){
     const pd=(val-dia)?dia/(val-dia)*100:0;
     const rt=coste?(val-coste)/coste*100:0;
     // Pulsar una bandera filtra el detalle a ese mercado. Volver a pulsarla,
@@ -851,17 +854,17 @@ window.renderMercados=function(){
       +'<div style="font-size:15px;font-weight:600;margin-bottom:4px">'+fE(val)+'</div>'
       +'<div style="font-size:12px;color:'+cl(dia)+';font-weight:600">'+sg(pd)+fNum(pd)+'% hoy</div>'
       +'<div style="font-size:11px;color:'+cl(dia)+'">'+sg(dia)+fE(dia)+'</div>'
-      +'<div style="font-size:11px;color:'+cl(rt)+';margin-top:4px">rent. '+sg(rt)+fNum(rt)+'%</div></div>';
+      +(Math.abs(fx||0)>=1?'<div style="font-size:10px;color:var(--muted)">de los que '+sg(fx)+fE(fx)+' es divisa</div>':'')+'<div style="font-size:11px;color:'+cl(rt)+';margin-top:4px">rent. '+sg(rt)+fNum(rt)+'%</div></div>';
   }
   const bl=['ESP','EUR','USA'].map(function(k){
     const b=bloques[k];
     return {k:k, bandera:b.n.split(' ')[0], val:b.v.reduce((a,x)=>a+x.val,0),
-            dia:b.v.reduce((a,x)=>a+x.dia,0), coste:b.v.reduce((a,x)=>a+x.coste,0), n:b.v.length};
+            dia:b.v.reduce((a,x)=>a+x.dia,0), fx:b.v.reduce((a,x)=>a+x.fx,0), coste:b.v.reduce((a,x)=>a+x.coste,0), n:b.v.length};
   });
   document.getElementById('merc-tot').innerHTML=
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    + bl.map(x=>tarjeta(x.bandera,x.val,x.dia,x.coste,x.n+' val.',x.k)).join('')
-    + tarjeta('🌍 TOTAL',tVal,tDia,tCoste,C.length+' val.',null)
+    + bl.map(x=>tarjeta(x.bandera,x.val,x.dia,x.coste,x.n+' val.',x.k,x.fx)).join('')
+    + tarjeta('🌍 TOTAL',tVal,tDia,tCoste,C.length+' val.',null,tFx)
     + '</div>';
   let h='';
   for(const k of ['ESP','EUR','USA']){
