@@ -63,6 +63,28 @@ MARCA_FIN = "final app cartera diseno"
 
 UA = {"User-Agent": "Mozilla/5.0"}
 
+# Wall Street cierra a las 22:00 hora espanola (21:00 en las pocas semanas de
+# desfase entre el cambio de hora de EEUU y el de Europa). A las 22:10 la sesion
+# esta cerrada SIEMPRE.
+CIERRE_USA_LOCAL = (22, 10)
+
+
+def _usa_ya_cerro(ahora=None):
+    """True si la sesion de Wall Street de HOY ya ha cerrado."""
+    ahora = ahora or datetime.now()
+    return (ahora.hour, ahora.minute) >= CIERRE_USA_LOCAL
+
+
+def _dia_provisional(f, hay_usd):
+    """True si el dia f no se puede dar por cerrado todavia: es hoy, hay
+    posiciones en dolares y Wall Street sigue abierta. Los precios USA que
+    devuelve Yahoo son entonces intradia, no cierres, y publicar ese dia hace
+    que ESTA SEMANA reste contra una base falsa."""
+    if not hay_usd:
+        return False
+    return f == date.today() and not _usa_ya_cerro()
+
+
 
 def sin_acentos(s):
     rep = {'á':'a','é':'e','í':'i','ó':'o','ú':'u','ü':'u','ñ':'n',
@@ -414,7 +436,8 @@ def _habil_antes(d):
 
 def _salud(serie_out, hoy):
     """Estado de las tres bases que usa la app, para que pueda avisar."""
-    pub = sorted(str(x["fecha"]) for x in serie_out if not x["incompleto"])
+    pub = sorted(str(x["fecha"]) for x in serie_out
+                 if not x["incompleto"] and not x.get("provisional"))
     lunes = hoy - timedelta(days=hoy.weekday())
     dia1 = hoy.replace(day=1)
     ene1 = hoy.replace(month=1, day=1)
@@ -483,6 +506,7 @@ def main():
         # sale distinta cada vez. Esto lo mide.
         falta_coste = 0.0
         falta_tckrs = []
+        n_usd = 0
         for p in posiciones:
             if p["f_compra"] > f:
                 continue
@@ -501,14 +525,18 @@ def main():
             valor += p["titulos"] * pe
             coste += p["coste"]
             n_pos += 1
+            if p["moneda"] == "USD":
+                n_usd += 1
         coste_abierto = coste + falta_coste
         # Un dia al que le falta coste no es comparable con un dia completo:
         # la resta de latentes mide el hueco, no el mercado. Se marca y NO se
         # publica en el JSON, para que la app diga "sin base" en vez de mentir.
         incompleto = falta_coste > 0.005 * coste_abierto if coste_abierto else True
         serie_out.append({"fecha": f, "valor": valor, "coste": coste, "latente": valor - coste,
-                          "n_pos": n_pos, "falta_coste": falta_coste, "falta_tckrs": falta_tckrs,
-                          "coste_abierto": coste_abierto, "incompleto": incompleto})
+                          "n_pos": n_pos, "n_usd": n_usd,
+                          "falta_coste": falta_coste, "falta_tckrs": falta_tckrs,
+                          "coste_abierto": coste_abierto, "incompleto": incompleto,
+                          "provisional": _dia_provisional(f, n_usd > 0)})
 
     # ── HUELLA DE LAS FECHAS BASE ─────────────────────────────────────
     # Si el coste de una fecha base cambia entre ejecuciones, la serie no es
@@ -532,7 +560,7 @@ def main():
             x["incompleto"] = False
             x["congelado"] = True
             reutilizados += 1
-        elif not x["incompleto"] and f < hoy_str:
+        elif not x["incompleto"] and not x["provisional"] and f < hoy_str:
             congelado[f] = {"valor": round(x["valor"], 2), "coste": round(x["coste"], 2),
                             "latente": round(x["latente"], 2), "n_pos": x["n_pos"],
                             "grabado": datetime.now().isoformat(timespec="seconds")}
@@ -661,13 +689,17 @@ def main():
     # JSON con la serie completa: lo consume update_from_excel_v3.py y de ahi
     # va a index.html. Guardar la serie entera (y no solo 3 numeros) hace que la
     # app pueda calcular la base de cualquier semana o mes sin recalcular nada.
+    provisionales = [str(s["fecha"]) for s in serie_out if s["provisional"]]
+    publicados = [s for s in serie_out if not s["incompleto"] and not s["provisional"]]
     serie_json = {
         "generado": datetime.now().isoformat(timespec="seconds"),
-        "ultimo_dia": str(ult["fecha"]),
-        "latente_ultimo": round(ult["latente"], 2),
-        "coste_ultimo": round(ult["coste"], 2),
-        "serie": {str(s["fecha"]): round(s["latente"], 2)
-                  for s in serie_out if not s["incompleto"]},
+        # ultimo_dia es el ultimo dia PUBLICADO, o sea el ultimo cierre bueno.
+        "ultimo_dia": str(publicados[-1]["fecha"]) if publicados else None,
+        "ultimo_calculado": str(ult["fecha"]),
+        "latente_ultimo": round(publicados[-1]["latente"], 2) if publicados else None,
+        "coste_ultimo": round(publicados[-1]["coste"], 2) if publicados else None,
+        "provisionales": provisionales,
+        "serie": {str(s["fecha"]): round(s["latente"], 2) for s in publicados},
         "dias_descartados": [str(s["fecha"]) for s in serie_out if s["incompleto"]],
         "congelados": len(congelado),
         "salud": _salud(serie_out, dias[-1]),
@@ -676,6 +708,13 @@ def main():
     n_pub = len(serie_json["serie"])
     print(f"💾 Serie JSON: {n_pub} dias publicados de {len(serie_out)} calculados "
           f"en {SALIDA_JSON.name}")
+    if provisionales:
+        barra("⚠️  DIA NO PUBLICADO: WALL STREET SIGUE ABIERTA")
+        print(f"   {', '.join(provisionales)} se ha calculado pero NO se publica.")
+        print("   Los precios USA de Yahoo son ahora intradia, no cierres: si se")
+        print("   guardaran, manana ESTA SEMANA restaria contra una base falsa.")
+        print("   Vuelve a ejecutar despues de las 22:10 para grabar el cierre bueno.")
+        print(f"   La base sigue siendo {serie_json['ultimo_dia']}, que es correcto.")
 
     with open(SALIDA_CSV, "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh, delimiter=";")

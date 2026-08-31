@@ -274,7 +274,10 @@ def _ultimo_habil_exigible():
     la base de SEMANA ya esta puesta aunque no se ejecute nada."""
     ahora = datetime.now()
     d = ahora.date()
-    if d.weekday() < 5 and ahora.hour >= 18:
+    # Antes bastaba con las 18:00 (cierre europeo), pero con mas de 90 posiciones
+    # en dolares eso grababa el dia con Wall Street a medio camino: el "cierre"
+    # guardado era un precio intradia y ESTA SEMANA restaba contra una base falsa.
+    if d.weekday() < 5 and (ahora.hour, ahora.minute) >= (22, 10):
         return d
     d = d - timedelta(days=1)
     while d.weekday() >= 5:
