@@ -17,3 +17,4 @@ firebase-credentials.json
 fcm-token.txt
 alert-state.json
 .env
+parche_*.py
