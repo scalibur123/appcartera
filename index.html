@@ -440,7 +440,7 @@ function updateResumen(){
     if(moneda==='USD') return mins>=810&&mins<1200;  // 13:30-20:00 UTC
     return mins>=420&&mins<930;  // 07:00-15:30 UTC (EUR y resto)
   }
-  function sesionComenzada(m){const a=new Date();const d=a.getUTCDay();if(d===0||d===6)return false;const t=a.getUTCHours()*60+a.getUTCMinutes();return m==='USD'?t>=810:t>=420;}
+  function sesionComenzada(m){const a=new Date();const d=a.getDay();if(d===0||d===6)return false;const t=a.getHours()*60+a.getMinutes();return m==='USD'?t>=930:t>=540;}
   function calcVarHoyMercado(){
     let v=0;const fxH=eurUsd,fxA=eurUsdAyer||eurUsd;
     for(const i of C){
