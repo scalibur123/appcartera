@@ -1,0 +1,1881 @@
+#!/usr/bin/env python3
+"""
+update_from_excel_v3.py - SOLUCION DEFINITIVA
+
+Lee el Excel y resuelve simbolos Yahoo automaticamente desde la columna B
+(que tiene formato "Nombre (MIC:TICKER)" tipo "Repsol SA (BMEX:REP)").
+
+ESTRATEGIA EN CASCADA:
+  1. Si tickers_override.json tiene el ticker -> usar ese (override manual gana siempre)
+  2. Leer columna B o AO buscando patron (MIC:TICKER) y mapear MIC -> sufijo Yahoo
+  3. Si la columna B/AO esta vacia o #VALUE! -> usar moneda como heuristica:
+     - USD -> ticker tal cual
+     - EUR sin sufijo -> .MC (Madrid) por defecto
+  4. Si nada funciona -> dejar ticker tal cual y avisar
+
+NOTA IMPORTANTE: La columna B es una formula que da #VALUE! al leer con Python
+si el Excel no se ha guardado con valores cacheados. SOLUCION: copiar la columna B
+como VALOR a la columna AO (script export_mic_values.py lo hace automaticamente).
+"""
+
+import openpyxl
+import json
+import re
+import sys
+import subprocess
+import time
+from pathlib import Path
+from datetime import datetime, timedelta
+
+HOME = Path.home()
+PROYECTO = HOME / "APPCARTERA_NUEVA"
+EXCEL = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/INVERSION/PLUSVALIAS BOLSA 26_sinmacros_Claude.xlsm"
+HOJA = "2026"
+FILA_INI = 5
+FILA_FIN = 258   # solo se usa como respaldo si falla la deteccion automatica
+FILA_VENTAS_INI_FALLBACK = 262
+FILA_VENTAS_FIN_FALLBACK = 400
+PALABRA_SEPARADORA = "ejecuciones"              # marca el INICIO del bloque de VENTAS
+PALABRA_FINAL = "final app cartera diseno"      # marca el FINAL del bloque de VENTAS
+INDEX_HTML = PROYECTO / "index.html"
+TICKERS_JSON = PROYECTO / "tickers.json"
+OVERRIDE_JSON = PROYECTO / "tickers_override.json"
+MIC_NAMES_TXT = PROYECTO / "mic_nombres.txt"  # opcional: pegar ahi columna B manualmente
+
+# === MAPA MIC -> SUFIJO YAHOO ===
+MIC_TO_YAHOO_SFX = {
+    "BMEX": ".MC",   # Madrid (Bolsas y Mercados Españoles)
+    "XMAD": ".MC",   # Madrid (codigo alternativo)
+    "XPAR": ".PA",   # Paris (Euronext Paris)
+    "XAMS": ".AS",   # Amsterdam (Euronext Amsterdam)
+    "XBRU": ".BR",   # Bruselas (Euronext Brussels)
+    "XLIS": ".LS",   # Lisboa (Euronext Lisbon)
+    "XHEL": ".HE",   # Helsinki (Nasdaq Helsinki)
+    "XSTO": ".ST",   # Estocolmo
+    "XCSE": ".CO",   # Copenhague
+    "XOSL": ".OL",   # Oslo
+    "XFRA": ".DE",   # Frankfurt
+    "XETR": ".DE",   # Xetra (Frankfurt electronico)
+    "XMIL": ".MI",   # Milan
+    "XLON": ".L",    # Londres
+    "XWBO": ".VI",   # Viena
+    "XSWX": ".SW",   # Suiza (SIX)
+    "XVTX": ".VX",   # Suiza Virt-x
+    "XWAR": ".WA",   # Varsovia
+    "XPRA": ".PR",   # Praga
+    "XBUD": ".BD",   # Budapest
+    "XATH": ".AT",   # Atenas
+    "XIST": ".IS",   # Estambul
+    "XTAE": ".TA",   # Tel Aviv
+    # USA: sin sufijo
+    "XNAS": "",      # Nasdaq
+    "XNYS": "",      # NYSE
+    "XASE": "",      # NYSE American (AMEX)
+    "BATS": "",      # BATS / Cboe
+    "ARCX": "",      # NYSE Arca
+    "XOTC": "",      # OTC
+    "PINX": "",      # Pink Sheets
+    # Otros
+    "XTSX": ".V",    # TSX Venture
+    "XTSE": ".TO",   # Toronto
+    "XHKG": ".HK",   # Hong Kong
+    "XTKS": ".T",    # Tokio
+    "XSHG": ".SS",   # Shanghai
+    "XSHE": ".SZ",   # Shenzhen
+}
+
+REGEX_MIC = re.compile(r"\(([A-Z][A-Z0-9]{2,4}):([A-Z0-9]+)\)")
+
+
+BANCO_NORMALIZE = {
+    'r4': 'R4', 'R4': 'R4',
+    'ing': 'ING', 'Ing': 'ING', 'ING': 'ING',
+    'ibkr': 'IBKR', 'IBKR': 'IBKR', 'Ibkr': 'IBKR',
+    'revolut': 'REVOLUT', 'Revolut': 'REVOLUT',
+    'medio': 'MEDIOLANUM', 'MEDIO': 'MEDIOLANUM', 'Medio': 'MEDIOLANUM',
+    'myinv': 'MYINV', 'Myinv': 'MYINV', 'MyInv': 'MYINV',
+    'r4/ing': 'R4/ING', 'R4/ING': 'R4/ING', 'ing/r4': 'R4/ING',
+    'medio/ing': 'MEDIO/ING', 'MEDIO/ING': 'MEDIO/ING', 'ing/medio': 'MEDIO/ING',
+}
+
+def normalizar_banco(b):
+    if not b: return '-'
+    b = str(b).strip()
+    return BANCO_NORMALIZE.get(b, b.upper())
+
+
+# ══════════════════════════════════════════════════════════════════════
+# DETECCION AUTOMATICA DE BLOQUES EN LA PESTAÑA "2026"
+#
+# La pestaña 2026 tiene dos tablas apiladas:
+#   - POSICIONES ABIERTAS : desde la fila 5 hasta justo antes de la
+#                           fila que contiene la palabra "ejecuciones"
+#   - VENTAS              : desde la fila de "ejecuciones" hacia abajo
+#
+# Antes estaban fijas (5-258 y 262-400). Al crecer la tabla de posiciones
+# las ventas se desplazaban y el script leia filas de posicion como si
+# fueran ventas (venta fantasma con importe 0) y perdia las ultimas
+# posiciones abiertas. Ahora se localiza la frontera en cada ejecucion.
+# ══════════════════════════════════════════════════════════════════════
+
+_BLOQUES_CACHE = None
+
+
+def _sin_acentos(s):
+    reemplazos = {
+        'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n',
+        'Á': 'a', 'É': 'e', 'Í': 'i', 'Ó': 'o', 'Ú': 'u', 'Ü': 'u', 'Ñ': 'n',
+    }
+    limpio = "".join(reemplazos.get(c, c) for c in str(s)).lower()
+    return " ".join(limpio.split())   # colapsa espacios dobles y saltos de linea
+
+
+def detectar_bloques(forzar=False):
+    """
+    Localiza en la pestaña 2026:
+      - fila_ejecuciones : fila donde aparece la palabra "ejecuciones"
+      - pos_ini / pos_fin: rango de POSICIONES ABIERTAS
+      - ven_ini / ven_fin: rango de VENTAS
+
+    El resultado se cachea: solo se escanea el Excel una vez por ejecucion.
+    Si no encuentra la palabra, usa los rangos fijos antiguos y avisa.
+    """
+    global _BLOQUES_CACHE
+    if _BLOQUES_CACHE is not None and not forzar:
+        return _BLOQUES_CACHE
+
+    fila_ejecuciones = None
+    fila_final = None
+    ultima_fila_datos = None
+
+    try:
+        wb = openpyxl.load_workbook(open(str(EXCEL), "rb"), read_only=True, data_only=True)
+        ws = wb[HOJA]
+        candidatas_ini = []
+        candidatas_fin = []
+        for r, row in enumerate(
+            ws.iter_rows(min_row=1, max_row=2000, max_col=40, values_only=True), start=1
+        ):
+            hay_dato = False
+            for v in row:
+                if v is None:
+                    continue
+                hay_dato = True
+                if not isinstance(v, str):
+                    continue
+                texto = _sin_acentos(v)
+                if PALABRA_SEPARADORA in texto:
+                    candidatas_ini.append(r)
+                if PALABRA_FINAL in texto:
+                    candidatas_fin.append(r)
+            if hay_dato:
+                ultima_fila_datos = r
+        wb.close()
+
+        # Nos quedamos con la primera aparicion por debajo de la fila 50,
+        # para no confundirla con un titulo o una leyenda de la cabecera.
+        utiles = [r for r in candidatas_ini if r >= 50]
+        if utiles:
+            fila_ejecuciones = utiles[0]
+        elif candidatas_ini:
+            fila_ejecuciones = candidatas_ini[0]
+
+        # La marca final tiene que estar por debajo del inicio de ventas
+        if fila_ejecuciones:
+            posteriores = [r for r in candidatas_fin if r > fila_ejecuciones]
+            if posteriores:
+                fila_final = posteriores[0]
+        elif candidatas_fin:
+            fila_final = candidatas_fin[0]
+    except Exception as e:
+        print(f"⚠️  Error detectando bloques en '{HOJA}': {e}")
+
+    if fila_ejecuciones:
+        if fila_final:
+            ven_fin = fila_final - 1
+            origen_fin = f"'{PALABRA_FINAL}' en fila {fila_final}"
+        else:
+            ven_fin = max(ultima_fila_datos or 0, fila_ejecuciones + 1)
+            origen_fin = "ultima fila con datos (marca final NO encontrada)"
+
+        bloques = {
+            "fila_ejecuciones": fila_ejecuciones,
+            "fila_final": fila_final,
+            "pos_ini": FILA_INI,
+            "pos_fin": fila_ejecuciones - 1,
+            "ven_ini": fila_ejecuciones + 1,
+            "ven_fin": max(ven_fin, fila_ejecuciones + 1),
+            "detectado": True,
+        }
+        print(
+            f"📐 Bloques detectados en '{HOJA}': "
+            f"'{PALABRA_SEPARADORA}' en fila {fila_ejecuciones} · {origen_fin} → "
+            f"POSICIONES {bloques['pos_ini']}-{bloques['pos_fin']} · "
+            f"VENTAS {bloques['ven_ini']}-{bloques['ven_fin']}"
+        )
+        if not fila_final:
+            print(
+                f"⚠️  No se ha encontrado la frase final del bloque de ventas. "
+                f"Se lee hasta la ultima fila con datos."
+            )
+    else:
+        bloques = {
+            "fila_ejecuciones": None,
+            "fila_final": None,
+            "pos_ini": FILA_INI,
+            "pos_fin": FILA_FIN,
+            "ven_ini": FILA_VENTAS_INI_FALLBACK,
+            "ven_fin": FILA_VENTAS_FIN_FALLBACK,
+            "detectado": False,
+        }
+        print(
+            f"⚠️  No se ha encontrado la palabra '{PALABRA_SEPARADORA}' en '{HOJA}'. "
+            f"Usando rangos fijos de respaldo: POSICIONES {bloques['pos_ini']}-{bloques['pos_fin']} · "
+            f"VENTAS {bloques['ven_ini']}-{bloques['ven_fin']}"
+        )
+
+    _BLOQUES_CACHE = bloques
+    return bloques
+
+
+# ══════════════════════════════════════════════════════════════════════
+# SERIE DE LATENTES + DIVIDENDOS BRUTOS -> index.html
+#
+# La tarjeta HOY/SEMANA/MES/ANUAL usa:
+#   GANANCIA = (latente ahora - latente antes del periodo) + ventas + dividendos
+# La latente de ahora la calcula el JS en vivo; las pasadas salen de
+# serie_latentes.json, que genera reconstruir_historico.py con cierres de Yahoo.
+# ══════════════════════════════════════════════════════════════════════
+
+SERIE_JSON = PROYECTO / "serie_latentes.json"
+
+
+RECONSTRUCTOR = PROYECTO / "reconstruir_historico.py"
+
+
+def _base_valida(fechas, ref, margen_dias=5):
+    """¿Hay en la serie algun dia habil util como base para 'ref'?
+    Tiene que existir una fecha ANTERIOR a ref y pegada a ella. El margen es de
+    5 dias naturales: la base buena es el ultimo dia de cotizacion justo antes
+    del periodo (normalmente el viernes). Con un margen mas ancho colaria como
+    valida la base de la semana anterior y se contarian dos semanas como una."""
+    ref_s = ref.strftime("%Y-%m-%d")
+    limite = (ref - timedelta(days=margen_dias)).strftime("%Y-%m-%d")
+    return any(limite <= f < ref_s for f in fechas)
+
+
+def _ultimo_habil_exigible():
+    """Ultimo dia de cotizacion que la serie YA deberia contener.
+
+    Si hoy es dia habil y el mercado europeo ha cerrado (>= 18:00 local),
+    el propio dia de hoy. Si no, el dia habil anterior.
+
+    Con esto la serie se extiende el mismo viernes por la tarde, y el lunes
+    la base de SEMANA ya esta puesta aunque no se ejecute nada."""
+    ahora = datetime.now()
+    d = ahora.date()
+    if d.weekday() < 5 and ahora.hour >= 18:
+        return d
+    d = d - timedelta(days=1)
+    while d.weekday() >= 5:
+        d = d - timedelta(days=1)
+    return d
+
+
+def serie_necesita_regenerarse(serie):
+    """Devuelve (hace_falta, motivo). Se comprueban las tres bases que usa la app."""
+    fechas = sorted(serie.get("serie", {}).keys()) if serie else []
+    if not fechas:
+        return True, "no hay serie de latentes"
+
+    hoy = datetime.now().date()
+    lunes = hoy - timedelta(days=hoy.weekday())
+    dia1 = hoy.replace(day=1)
+    enero1 = hoy.replace(month=1, day=1)
+
+    # La serie tiene que llegar SIEMPRE hasta el ultimo dia de cotizacion
+    # cerrado. Antes solo se comprobaba que hubiera "algo" a menos de 5 dias
+    # del lunes en curso, asi que de martes a viernes la comprobacion pasaba
+    # sin extender la serie y el lunes siguiente la base se quedaba a 10 dias:
+    # la tarjeta seguia diciendo ESTA SEMANA mientras medía dos.
+    tope = _ultimo_habil_exigible().strftime("%Y-%m-%d")
+    if fechas[-1] < tope:
+        return True, f"la serie termina el {fechas[-1]} y deberia llegar al {tope}"
+
+    if not _base_valida(fechas, lunes):
+        return True, f"sin base valida para SEMANA (lunes {lunes})"
+    if not _base_valida(fechas, dia1):
+        return True, f"sin base valida para MES (dia 1 = {dia1})"
+    if not any(f < enero1.strftime("%Y-%m-%d") for f in fechas):
+        return True, f"sin base para ANUAL (anterior a {enero1})"
+    return False, ""
+
+
+def asegurar_serie_latentes():
+    """Si la serie se ha quedado corta (semana nueva, mes nuevo), lanza
+    reconstruir_historico.py automaticamente. Si falla, sigue con lo que haya."""
+    serie = {}
+    if SERIE_JSON.exists():
+        try:
+            serie = json.loads(SERIE_JSON.read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"⚠️  serie_latentes.json ilegible ({e}), se regenera")
+            serie = {}
+
+    hace_falta, motivo = serie_necesita_regenerarse(serie)
+    if not hace_falta:
+        fechas = sorted(serie.get("serie", {}).keys())
+        print(f"✅ Serie de latentes al dia ({len(fechas)} dias, hasta {fechas[-1]})")
+        return
+
+    print(f"\n🔄 Regenerando historico de latentes: {motivo}")
+    if not RECONSTRUCTOR.exists():
+        print(f"❌ No se encuentra {RECONSTRUCTOR.name}. SEMANA/MES/ANUAL saldran vacios.")
+        return
+
+    print("   Bajando cierres historicos de Yahoo, esto tarda 1-2 minutos...")
+    try:
+        r = subprocess.run([sys.executable, str(RECONSTRUCTOR)],
+                           cwd=str(PROYECTO), capture_output=True, text=True, timeout=900)
+    except subprocess.TimeoutExpired:
+        print("❌ La reconstruccion ha tardado demasiado y se ha cancelado.")
+        return
+    except Exception as e:
+        print(f"❌ No se ha podido lanzar la reconstruccion: {e}")
+        return
+
+    # Solo mostramos las lineas que importan, no los 200 tickers
+    for linea in (r.stdout or "").splitlines():
+        if any(k in linea for k in ("VALIDACION", "Δ COSTE", "Δ VALOR", "COSTE  :",
+                                    "VALOR  :", "METODO VALIDADO", "PARA AQUI",
+                                    "❌", "⚠️", "Calendario:", "Serie JSON")):
+            print("   " + linea.strip())
+    if r.returncode != 0:
+        print(f"❌ La reconstruccion ha fallado (codigo {r.returncode}).")
+        if r.stderr:
+            print("   " + r.stderr.strip().splitlines()[-1][:160])
+        return
+
+    # Comprobamos que de verdad ha quedado bien
+    try:
+        serie = json.loads(SERIE_JSON.read_text(encoding="utf-8"))
+    except Exception:
+        print("❌ La reconstruccion no ha dejado un serie_latentes.json legible.")
+        return
+    sigue, motivo2 = serie_necesita_regenerarse(serie)
+    if sigue:
+        print(f"⚠️  Tras regenerar sigue faltando base: {motivo2}")
+    else:
+        fechas = sorted(serie["serie"].keys())
+        print(f"✅ Historico regenerado: {len(fechas)} dias, hasta {fechas[-1]}\n")
+
+
+def leer_tipo_irpf():
+    """Tipo fiscal medio real: IRPF!F35, la misma celda que alimenta AA1 de la
+    hoja 2026 ('TIPO FISCAL'). Si no se puede leer, se deja el que ya hubiera."""
+    try:
+        wb = openpyxl.load_workbook(open(str(EXCEL), "rb"), read_only=True, data_only=True)
+        v = wb["IRPF"].cell(35, 6).value
+        wb.close()
+        if isinstance(v, (int, float)) and 0 < v < 1:
+            print(f"✅ Tipo fiscal leido de IRPF!F35: {v*100:.4f}%")
+            return float(v)
+        print(f"⚠️  IRPF!F35 no es un tipo valido ({v!r}), se mantiene el anterior")
+    except Exception as e:
+        print(f"⚠️  No se puede leer IRPF!F35 ({e}), se mantiene el anterior")
+    return None
+
+
+def inyectar_tipo_irpf(html):
+    tipo = leer_tipo_irpf()
+    if tipo is None:
+        return html
+    nuevo = f"/*tipo-irpf-start*/var TIPO_IRPF = {tipo!r};/*tipo-irpf-end*/"
+    if "/*tipo-irpf-start*/" in html:
+        return re.sub(r"/\*tipo-irpf-start\*/.*?/\*tipo-irpf-end\*/",
+                      lambda m: nuevo, html, flags=re.DOTALL)
+    # index.html antiguo: lo colocamos antes del primer uso
+    if "function _grp(" in html:
+        return html.replace("function _grp(", nuevo + "\nfunction netoIRPF(v){ return v * (1 - TIPO_IRPF); }\nfunction _grp(", 1)
+    print("⚠️  No se encuentra donde inyectar el tipo fiscal")
+    return html
+
+
+def leer_dividendos_brutos():
+    """Dividendos del año en curso: col A fecha, col H Total Bruto (ya en euros)."""
+    try:
+        wb = openpyxl.load_workbook(open(str(EXCEL), "rb"), read_only=True, data_only=True)
+    except Exception as e:
+        print(f"⚠️  No se pueden leer dividendos: {e}")
+        return []
+    if "dividendos 26" not in wb.sheetnames:
+        wb.close()
+        return []
+    anio = datetime.now().year
+    out = []
+    for row in wb["dividendos 26"].iter_rows(min_row=4, max_row=600, max_col=10, values_only=True):
+        f, bruto = row[0], row[7]
+        if isinstance(f, datetime) and isinstance(bruto, (int, float)) and f.year == anio:
+            out.append({"fecha": f.strftime("%Y-%m-%d"), "bruto": round(float(bruto), 2)})
+    wb.close()
+    out.sort(key=lambda x: x["fecha"])
+    print(f"✅ {len(out)} dividendos brutos leidos del Excel")
+    return out
+
+
+def inyectar_serie_y_dividendos(html):
+    # --- dividendos ---
+    divs = leer_dividendos_brutos()
+    bloque_div = ('<!--dividendos-anual-start--><script>var DIVIDENDOS_ANUAL='
+                  + json.dumps(divs, ensure_ascii=False)
+                  + ';</script><!--dividendos-anual-end-->')
+    html = re.sub(r'<!--dividendos-anual-start-->.*?<!--dividendos-anual-end-->',
+                  lambda m: bloque_div, html, flags=re.DOTALL)
+
+    # --- serie de latentes ---
+    serie = {"serie": {}}
+    if SERIE_JSON.exists():
+        try:
+            serie = json.loads(SERIE_JSON.read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"⚠️  serie_latentes.json ilegible: {e}")
+    n = len(serie.get("serie", {}))
+    bloque_serie = ('<!--serie-latentes-start--><script>var SERIE_LATENTES='
+                    + json.dumps({"serie": serie.get("serie", {}),
+                                  "generado": serie.get("generado", "")}, ensure_ascii=False)
+                    + ';</script><!--serie-latentes-end-->')
+    html = re.sub(r'<!--serie-latentes-start-->.*?<!--serie-latentes-end-->',
+                  lambda m: bloque_serie, html, flags=re.DOTALL)
+
+    # --- maximos con fecha (para el color de antiguedad) ---
+    mx = {}
+    f_mx = PROYECTO / "maximos.json"
+    if f_mx.exists():
+        try:
+            mx = json.loads(f_mx.read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"⚠️  maximos.json ilegible: {e}")
+    else:
+        print("⚠️  no existe maximos.json (ejecuta reconstruir_historico.py)")
+    # --- ultimo cierre conocido de cada simbolo (para valores suspendidos) ---
+    # Si Yahoo deja de cotizar un valor (suspension, exclusion), la posicion
+    # desaparecia del calculo: ni su valor ni su coste. Eso mejora las
+    # plusvalias en falso. Con esto se valora al ultimo cierre que tengamos.
+    ult = {}
+    f_cc = PROYECTO / "cierres_historicos.json"
+    if f_cc.exists():
+        try:
+            crudo = json.loads(f_cc.read_text(encoding="utf-8"))
+            for sim, serie in crudo.items():
+                if serie:
+                    f = max(serie)
+                    ult[sim] = {"px": serie[f], "fecha": f}
+        except Exception as e:
+            print(f"⚠️  cierres_historicos.json ilegible: {e}")
+    bloque_ult = ('<!--ultimos-start--><script>var ULTIMOS='
+                  + json.dumps(ult, ensure_ascii=False) + ';</script><!--ultimos-end-->')
+    if "<!--ultimos-start-->" in html:
+        html = re.sub(r'<!--ultimos-start-->.*?<!--ultimos-end-->',
+                      lambda m: bloque_ult, html, flags=re.DOTALL)
+    else:
+        html = html.replace('<!--serie-latentes-start-->', bloque_ult + '\n<!--serie-latentes-start-->', 1)
+    print(f"✅ Ultimos cierres inyectados: {len(ult)} simbolos")
+
+    bloque_mx = ('<!--maximos-start--><script>var MAXIMOS='
+                 + json.dumps(mx, ensure_ascii=False) + ';</script><!--maximos-end-->')
+    if "<!--maximos-start-->" in html:
+        html = re.sub(r'<!--maximos-start-->.*?<!--maximos-end-->',
+                      lambda m: bloque_mx, html, flags=re.DOTALL)
+    else:
+        html = html.replace('<!--serie-latentes-start-->', bloque_mx + '\n<!--serie-latentes-start-->', 1)
+    print(f"✅ Maximos con fecha inyectados: {len(mx)} simbolos")
+
+    # --- aviso de frescura ---
+    if n == 0:
+        print("⚠️  Serie de latentes vacia: SEMANA/MES/ANUAL saldran sin base.")
+    else:
+        print(f"✅ Serie de latentes inyectada: {n} dias")
+    return html
+
+
+def cargar_overrides():
+    if OVERRIDE_JSON.exists():
+        with open(OVERRIDE_JSON, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return {k: v for k, v in data.items() if not k.startswith("_")}
+    return {}
+
+
+def cargar_mic_externos():
+    """
+    Si existe mic_nombres.txt en el proyecto, lo lee como respaldo.
+    Es un fichero con una linea por ticker: "Nombre (MIC:TICKER)".
+    El orden NO importa. Construye un dict ticker -> mic.
+    """
+    if not MIC_NAMES_TXT.exists():
+        return {}
+    mapa = {}
+    with open(MIC_NAMES_TXT, "r", encoding="utf-8") as f:
+        for linea in f:
+            m = REGEX_MIC.search(linea)
+            if m:
+                mic, tckr = m.group(1), m.group(2)
+                mapa[tckr] = mic
+    return mapa
+
+
+def leer_diana(wb, tickers_vivos):
+    """
+    Lee la pestaña DIANA:
+      Col B  = TCKR
+      Col AC = objetivo personal ('Objetivo div2')
+      Col AF = objetivo consenso analistas ('Investing2')
+    Devuelve dos dicts: objetivos (AC) y objetivos_analistas (AF).
+    """
+    if 'DIANA' not in wb.sheetnames:
+        return {}, {}
+    ws = wb['DIANA']
+    objetivos = {}
+    objetivos_analistas = {}
+    for row in range(12, 221):
+        ticker = ws[f'B{row}'].value
+        objetivo = ws[f'AC{row}'].value
+        objetivo_af = ws[f'AF{row}'].value
+        if not ticker or not isinstance(ticker, str): continue
+        ticker = ticker.strip()
+        if ticker not in tickers_vivos: continue
+        # Objetivo personal (AC) — solo la primera aparición del ticker
+        if ticker not in objetivos and isinstance(objetivo, (int, float)):
+            objetivos[ticker] = round(float(objetivo), 4)
+        # Objetivo analistas (AF) — solo la primera aparición del ticker
+        if ticker not in objetivos_analistas and isinstance(objetivo_af, (int, float)):
+            objetivos_analistas[ticker] = round(float(objetivo_af), 4)
+    return objetivos, objetivos_analistas
+
+
+def leer_proximas_compras(wb):
+    """
+    Lee las proximas compras de la pestana 'Compras'.
+    Fila 1 = cabecera. Filas 2+ = valores hasta encontrar fila vacia en col B.
+    Columnas (segun cabecera fila 1):
+      B  = simbolo Yahoo directamente (ej: VCT.PA, MTX.DE, HOOD)
+      R  = banco
+      U  = precio condicion (ej: ">67,9")
+      V  = precio maximo de compra
+      Y  = objetivo personal
+    El ticker se extrae del simbolo: quitar sufijo (.PA, .DE, etc.)
+    """
+    hoja = 'Compras'
+    if hoja not in wb.sheetnames:
+        print(f'⚠️  Pestaña "{hoja}" no encontrada en el Excel')
+        return []
+    ws = wb[hoja]
+    proximas = []
+
+    _overrides = cargar_overrides()
+
+    for row in range(2, 500):  # fila 2 en adelante, hasta vacío
+        symbol_raw = ws.cell(row=row, column=2).value   # B = ticker
+        if not symbol_raw or not isinstance(symbol_raw, str) or not symbol_raw.strip():
+            break  # primera fila vacía = fin de lista
+
+        symbol = symbol_raw.strip()
+
+        # Extraer ticker limpio (sin sufijo de mercado)
+        tckr = symbol.split('.')[0]
+
+        # Resolver símbolo Yahoo en cascada:
+        # 1. Si ya tiene sufijo (.DE, .PA, etc.) -> usar tal cual
+        # 2. Override manual en tickers_override.json
+        # 3. Columna A: "Nombre (MIC:TICKER)" -> sufijo Yahoo via MIC_TO_YAHOO_SFX
+        # 4. Búsqueda automática en Yahoo Finance (último recurso)
+        if '.' not in symbol and '=' not in symbol:
+            if tckr in _overrides:
+                symbol = _overrides[tckr]
+            else:
+                nombre_raw = ws.cell(row=row, column=1).value  # A = nombre con MIC
+                mic_encontrado = False
+                if nombre_raw and isinstance(nombre_raw, str):
+                    m = REGEX_MIC.search(nombre_raw)
+                    if m:
+                        mic = m.group(1)
+                        if mic in MIC_TO_YAHOO_SFX:
+                            symbol = tckr + MIC_TO_YAHOO_SFX[mic]
+                            guardar_override(tckr, symbol)
+                            print(f"   ✅ {tckr} -> {symbol} (MIC:{mic} desde col A)")
+                            mic_encontrado = True
+                if not mic_encontrado:
+                    print(f"   🔍 {tckr} sin MIC en col A, buscando en Yahoo Finance...")
+                    _cands = buscar_simbolo_yahoo_auto(tckr)
+                    sym_auto = next((c for c in _cands if _yahoo_tiene_precio(c)), None)
+                    if sym_auto:
+                        symbol = sym_auto
+                        guardar_override(tckr, sym_auto)
+                        print(f"   ✅ {tckr} -> {sym_auto} (Yahoo, guardado en overrides)")
+                    else:
+                        print(f"   ⚠️  {tckr} no resuelto — quedará sin precio")
+
+        banco_raw    = ws.cell(row=row, column=21).value  # U = Banco
+        p_cond_raw   = ws.cell(row=row, column=24).value  # X = P. condición
+        p_max_raw    = ws.cell(row=row, column=25).value  # Y = Precio Max.
+        objetivo_raw = ws.cell(row=row, column=8).value   # H = Investing (objetivo)
+
+        def fmt_val(v):
+            if v is None or v == '-' or (isinstance(v, str) and ('#' in v or not v.strip())):
+                return None
+            if isinstance(v, (int, float)):
+                return round(float(v), 4)
+            return str(v).strip()
+
+        banco   = str(banco_raw).strip() if banco_raw and str(banco_raw).strip() not in ('-', '') else None
+        p_cond  = fmt_val(p_cond_raw)
+        p_max   = fmt_val(p_max_raw)
+        objetivo = fmt_val(objetivo_raw)
+
+        proximas.append({
+            'tckr':    tckr,
+            'symbol':  symbol,
+            'banco':   banco,
+            'p_cond':  p_cond,
+            'p_max':   p_max,
+            'objetivo': objetivo,
+        })
+
+    print(f'✅ {len(proximas)} proximas compras leidas de pestana Compras')
+    for p in proximas:
+        print(f"   {p['tckr']} ({p['symbol']}) banco={p['banco']} p_max={p['p_max']} cond={p['p_cond']}")
+    return proximas
+
+
+def leer_excel_con_mic():
+    """
+    Lee Excel agrupando por ticker. Intenta extraer MIC de:
+      - columna B (formato "Nombre (MIC:TICKER)")
+      - columna AO (si la macro VBA copio los valores ahi)
+      - mic_nombres.txt (fallback manual)
+    """
+    if not EXCEL.exists():
+        print(f"❌ Excel no encontrado: {EXCEL}")
+        sys.exit(1)
+
+    # Cargar dos versiones: una con valores cacheados y otra con formulas
+    wb = openpyxl.load_workbook(EXCEL, data_only=True, keep_vba=False)
+    ws = wb[HOJA]
+    B = detectar_bloques()
+    mensual_data = None
+    plusv_hoy = 0
+    plusv_semana = 0
+    # Leer datos pestaña Mensual
+    try:
+        ws_m = wb['Mensual']
+        bruto_anual = ws_m['R13'].value or 0
+        neto_anual = ws_m['S13'].value or 0
+        equiv_bruto = ws_m['S15'].value or 0
+        neto_mensual = ws_m['J13'].value or 0
+        # Plusvalías realizadas esta semana (no incluidas en F57 hasta el sábado)
+        from datetime import date, timedelta
+        hoy_d = date.today()
+        lunes_d = hoy_d - timedelta(days=hoy_d.weekday())
+        plusv_semana = 0
+        ws_ej = wb['2026']
+        for row in range(B["ven_ini"], B["ven_fin"] + 1):
+            fecha_v = ws_ej.cell(row=row, column=17).value
+            plusv = ws_ej.cell(row=row, column=25).value
+            if fecha_v and hasattr(fecha_v, 'date') and fecha_v.date() >= lunes_d and plusv:
+                plusv_semana += plusv
+        sueldo_mensual_bruto = ws_m['N13'].value or 0
+        neto_anual_nomina = neto_mensual * 14
+
+        # Promedios netos 2024/2026 desde pestaña Histórico
+        ws_hist = wb['Histórico']
+        prom_neto_conservador = ws_hist['F30'].value or 0  # 14 pagas
+        prom_neto_optimista   = ws_hist['J30'].value or 0  # 12 pagas
+
+        def calcular_bruto_desde_neto(neto_anual):
+            ss = 0.034
+            tramos_e = [(12450,0.095),(7750,0.12),(15000,0.15),(24800,0.185),(120000,0.225),(9e9,0.235)]
+            tramos_a = [(12450,0.105),(7750,0.12),(15000,0.14),(24800,0.175),(120000,0.2125),(9e9,0.2375)]
+            min_ded = 5550 + 1200 + 700
+            def neto_de_bruto(b):
+                base = b*(1-ss) - min_ded
+                ce = ca = 0; re_ = ra = base
+                for lim,t in tramos_e:
+                    if re_<=0: break
+                    x=min(re_,lim); ce+=x*t; re_-=x
+                for lim,t in tramos_a:
+                    if ra<=0: break
+                    x=min(ra,lim); ca+=x*t; ra-=x
+                return b*(1-ss)-ce-ca
+            lo,hi = neto_anual*0.8,neto_anual*2
+            for _ in range(60):
+                mid=(lo+hi)/2
+                if neto_de_bruto(mid)<neto_anual: lo=mid
+                else: hi=mid
+            return round((lo+hi)/2)
+
+        equiv_bruto_calculado = calcular_bruto_desde_neto(neto_anual_nomina)
+        
+        # Leer compras desglosadas (col D=ticker, I=fecha, K=titulos, N=coste_eur)
+        compras_por_ticker = {}
+        for row in range(B["pos_ini"], B["pos_fin"] + 1):
+            tckr_r = ws.cell(row=row, column=4).value
+            fecha_i = ws.cell(row=row, column=9).value
+            titulos_i = ws.cell(row=row, column=11).value
+            coste_i = ws.cell(row=row, column=14).value
+            if tckr_r and fecha_i and titulos_i and coste_i:
+                tk = str(tckr_r).strip()
+                if tk not in compras_por_ticker:
+                    compras_por_ticker[tk] = []
+                fecha_str = fecha_i.strftime('%d/%m/%Y') if hasattr(fecha_i, 'strftime') else str(fecha_i)[:10]
+                precio_compra = round(coste_i / titulos_i, 4) if titulos_i else 0
+                compras_por_ticker[tk].append({
+                    'fecha': fecha_str,
+                    'titulos': titulos_i,
+                    'precio': precio_compra,
+                    'coste': round(coste_i, 2)
+                })
+
+        def fmt_eur(v):
+            return f"{v:,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
+        
+        mensual_data = {
+            'bruto_anual': fmt_eur(bruto_anual),
+            'neto_anual': fmt_eur(neto_anual),
+            'equiv_bruto': fmt_eur(equiv_bruto_calculado),
+            'neto_nomina': fmt_eur(neto_anual_nomina),
+            'sueldo_bruto': fmt_eur(sueldo_mensual_bruto),
+            'sueldo_neto': fmt_eur(neto_mensual),
+            'prom_neto_conservador': fmt_eur(prom_neto_conservador),
+            'prom_neto_optimista': fmt_eur(prom_neto_optimista),
+            'plusv_semana': round(plusv_semana, 2),
+            'plusv_hoy': round(plusv_hoy, 2),
+        }
+    except Exception as e:
+        print(f"Warning: no se pudo leer pestaña Mensual: {e}")
+        mensual_data = None
+
+
+    mic_externo = cargar_mic_externos()
+    if mic_externo:
+        print(f"📄 Cargados {len(mic_externo)} mapeos MIC desde {MIC_NAMES_TXT.name}")
+
+    posiciones = {}
+    orden = []
+    sin_mic = []
+
+    for row in range(B["pos_ini"], B["pos_fin"] + 1):
+        ticker = ws[f"D{row}"].value
+        if not ticker or not str(ticker).strip():
+            continue
+        ticker = str(ticker).strip()
+        titulos_raw = ws[f"K{row}"].value
+        coste_raw = ws[f"N{row}"].value
+        # Fila sin ningun numero en titulos ni coste = cabecera o rotulo, no es posicion
+        if not isinstance(titulos_raw, (int, float)) and not isinstance(coste_raw, (int, float)):
+            continue
+        titulos = titulos_raw or 0
+        coste_eur = coste_raw or 0
+        moneda = ws[f"G{row}"].value
+        precio_excel = ws[f"E{row}"].value
+
+        # Intentar extraer MIC: B -> AO -> mic_nombres.txt
+        mic = None
+        nombre_completo = None
+
+        for col_letter in ["B", "AO"]:
+            v = ws[f"{col_letter}{row}"].value
+            if v and isinstance(v, str) and "#" not in v:
+                m = REGEX_MIC.search(v)
+                if m:
+                    mic = m.group(1)
+                    nombre_completo = v.strip()
+                    break
+
+        if not mic and ticker in mic_externo:
+            mic = mic_externo[ticker]
+
+        if ticker not in posiciones:
+            posiciones[ticker] = {
+                "tckr": ticker,
+                "nombre": nombre_completo or ticker,
+                "titulos": 0,
+                "coste_eur": 0,
+                "moneda": moneda,
+                "precio_excel": precio_excel,
+                "mic": mic,
+                "banco": normalizar_banco(ws[f"H{row}"].value),
+                "_bancos": [],
+                "objetivo": None,
+                "objetivo_analistas": None,
+            }
+            orden.append(ticker)
+            if not mic:
+                sin_mic.append(ticker)
+
+        posiciones[ticker]["titulos"] += titulos
+        posiciones[ticker]["coste_eur"] += coste_eur
+        # Un valor puede estar repartido en varias filas y varios brokers
+        # (Repsol: 1 en Mediolanum + 3 en ING). Antes solo se guardaba el
+        # banco de la primera fila y los demas se perdian.
+        _b = normalizar_banco(ws[f"H{row}"].value)
+        if _b and _b not in posiciones[ticker]["_bancos"]:
+            posiciones[ticker]["_bancos"].append(_b)
+        # Si en una fila posterior aparece el MIC, actualizar
+        if mic and not posiciones[ticker]["mic"]:
+            posiciones[ticker]["mic"] = mic
+            posiciones[ticker]["nombre"] = nombre_completo or ticker
+            if ticker in sin_mic:
+                sin_mic.remove(ticker)
+
+    # Consolidar la etiqueta de banco con todos los brokers del valor
+    for _t, _p in posiciones.items():
+        _bs = _p.pop("_bancos", [])
+        if len(_bs) > 1:
+            _p["banco"] = "/".join(_bs)
+        elif _bs:
+            _p["banco"] = _bs[0]
+
+    # Leer objetivos de pestana DIANA (AC = personal, AF = analistas)
+    tickers_vivos = set(posiciones.keys())
+    objetivos, objetivos_analistas = leer_diana(wb, tickers_vivos)
+    for t, obj in objetivos.items():
+        if t in posiciones:
+            posiciones[t]['objetivo'] = obj
+    for t, obj in objetivos_analistas.items():
+        if t in posiciones:
+            posiciones[t]['objetivo_analistas'] = obj
+    print(f'OK {len(objetivos)} objetivos personales y {len(objetivos_analistas)} objetivos analistas leidos de DIANA')
+
+    # Leer proximas compras de pestana DIANA
+    proximas_compras = leer_proximas_compras(wb)
+
+    # DEBUG
+    fubo = posiciones.get('FUBO')
+    abeo = posiciones.get('ABEO')
+    if fubo: print(f'DEBUG FUBO en posiciones: objetivo={fubo.get("objetivo")}, banco={fubo.get("banco")}')
+    if abeo: print(f'DEBUG ABEO en posiciones: objetivo={abeo.get("objetivo")}, banco={abeo.get("banco")}')
+
+    return [posiciones[t] for t in orden], sin_mic, mensual_data, compras_por_ticker, proximas_compras
+
+
+def resolver_simbolo_yahoo(p, overrides):
+    """Resuelve simbolo Yahoo en cascada: override > mic > moneda > tal cual."""
+    ticker = p["tckr"]
+
+    # 1. Override manual
+    if ticker in overrides:
+        return overrides[ticker], "override"
+
+    # 2. Si el ticker ya tiene sufijo punto, usar tal cual
+    if "." in ticker or "=" in ticker:
+        return ticker, "ya_tenia_sufijo"
+
+    # 3. MIC desde Excel
+    mic = p.get("mic")
+    if mic and mic in MIC_TO_YAHOO_SFX:
+        sfx = MIC_TO_YAHOO_SFX[mic]
+        return ticker + sfx, f"mic_{mic}"
+
+    # 4. MIC desconocido -> avisar pero seguir
+    if mic:
+        return ticker, f"mic_desconocido_{mic}"
+
+    # 5. Simbolos ya resueltos por reconstruir_historico.py
+    hist = _cargar_historico_symbols()
+    if ticker in hist:
+        return hist[ticker], "historico_symbols"
+
+    # 6. Heuristica por moneda. Si falla, verificar_precios_yahoo() lo detecta
+    #    y lo arregla solo buscando en Yahoo.
+    if p.get("moneda") == "USD":
+        return ticker, "fallback_usd_directo"
+    if p.get("moneda") == "EUR":
+        return ticker + ".MC", "fallback_madrid"
+
+    return ticker, "sin_resolver"
+
+
+_HIST_SYMS_CACHE = None
+
+
+def _cargar_historico_symbols():
+    """Simbolos que ya resolvio reconstruir_historico.py. Gratis, sin red."""
+    global _HIST_SYMS_CACHE
+    if _HIST_SYMS_CACHE is not None:
+        return _HIST_SYMS_CACHE
+    f = PROYECTO / "historico_symbols.json"
+    d = {}
+    if f.exists():
+        try:
+            d = {k: v for k, v in json.loads(f.read_text(encoding="utf-8")).items()
+                 if isinstance(v, str)}
+        except Exception:
+            d = {}
+    _HIST_SYMS_CACHE = d
+    return d
+
+
+def _yahoo_tiene_precio(symbol):
+    """¿Devuelve Yahoo un precio real para este simbolo?"""
+    import urllib.request, urllib.parse, json as _json
+    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/"
+           f"{urllib.parse.quote(symbol)}?interval=1d&range=1d")
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=8) as r:
+            data = _json.loads(r.read().decode())
+        res = data.get("chart", {}).get("result")
+        return bool(res) and bool(res[0]["meta"].get("regularMarketPrice"))
+    except Exception:
+        return False
+
+
+# Bolsas de EEUU en la nomenclatura de Yahoo
+_EXCH_USA = {"NMS", "NYQ", "NGM", "ASE", "PCX", "BTS", "NCM", "NYS"}
+
+
+def buscar_simbolo_yahoo_auto(ticker, moneda=None):
+    """
+    Busca el simbolo correcto en Yahoo dado un ticker del Excel.
+    Devuelve una LISTA de candidatos ordenados por probabilidad, para poder
+    probarlos uno a uno hasta que alguno devuelva precio.
+
+    OJO: la version anterior leia data["finance"]["result"][0]["quotes"], pero
+    el endpoint de busqueda devuelve "quotes" en la raiz. Devolvia None siempre,
+    y por eso esta via nunca resolvio nada y todo acababa en el fallback .MC.
+    """
+    import urllib.request, urllib.parse, json as _json
+    url = ("https://query2.finance.yahoo.com/v1/finance/search?q="
+           + urllib.parse.quote(ticker) + "&quotesCount=10&newsCount=0")
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = _json.loads(r.read().decode())
+    except Exception as e:
+        print(f"   ⚠️  Error buscando {ticker} en Yahoo: {e}")
+        return []
+
+    quotes = data.get("quotes")
+    if not quotes:  # forma antigua, por si acaso
+        try:
+            quotes = data["finance"]["result"][0]["quotes"]
+        except Exception:
+            quotes = []
+    quotes = [q for q in quotes if q.get("symbol")]
+    if not quotes:
+        return []
+
+    def puntua(q):
+        sym = q.get("symbol", "")
+        base = sym.split(".")[0].upper()
+        p = 0
+        if base == ticker.upper():
+            p += 100                      # el ticker base coincide
+        if q.get("quoteType") in ("EQUITY", "ETF"):
+            p += 20
+        if moneda == "USD" and "." not in sym and q.get("exchange") in _EXCH_USA:
+            p += 50
+        if moneda == "EUR" and "." in sym:
+            p += 30
+        if moneda == "EUR" and sym.endswith((".DE", ".PA", ".AS", ".MI", ".MC",
+                                             ".BR", ".LS", ".VI", ".HE", ".IR")):
+            p += 20
+        return -p
+
+    return [q["symbol"] for q in sorted(quotes, key=puntua)]
+
+
+def guardar_override(ticker, symbol):
+    """Guarda un override en tickers_override.json."""
+    import json as _json
+    data = {}
+    if OVERRIDE_JSON.exists():
+        with open(OVERRIDE_JSON, "r", encoding="utf-8") as f:
+            data = _json.load(f)
+    data[ticker] = symbol
+    with open(OVERRIDE_JSON, "w", encoding="utf-8") as f:
+        _json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker={}):
+    items = []
+    for p in posiciones:
+        tckr = p["tckr"]
+        sym = ticker_map[tckr]["yahoo"]
+        coste = round(p["coste_eur"], 4)
+        titulos = round(p["titulos"], 4) if p["titulos"] != int(p["titulos"]) else int(p["titulos"])
+        precio_medio = round(coste / titulos, 4) if titulos else 0
+        nombre = p.get("nombre", tckr)
+        if "(" in nombre:
+            nombre = nombre.split("(")[0].strip()
+        if not nombre or "#" in nombre:
+            nombre = tckr
+        item_json = {
+            "tckr": tckr,
+            "nombre": nombre,
+            "titulos": float(titulos),
+            "coste_eur": coste,
+            "precio_medio": precio_medio,
+            "moneda": p["moneda"],
+            "banco": p.get("banco", "-"),
+            "objetivo": p.get("objetivo"),
+            "objetivo_analistas": p.get("objetivo_analistas"),
+            "symbol": sym,
+            "compras": compras_por_ticker.get(tckr, []),
+        }
+        items.append(json.dumps(item_json, ensure_ascii=False, separators=(",", ":")))
+    return "const C=[" + ",".join(items) + "];"
+
+
+def asegurar_proximas_compras(html, proximas_compras):
+    """
+    Inyecta o reemplaza la pestana 'proximas' en index.html con los datos
+    de proximas compras leidos del Excel (DIANA filas 212-215).
+    Si la pestana no existe la crea. Si ya existe la reemplaza.
+    """
+    import json as _json
+    proximas_json = _json.dumps(proximas_compras, ensure_ascii=False, separators=(',', ':'))
+
+    # ---- Boton de navegacion ----
+    btn = '<button class="nav-btn" onclick="showTab(\'proximas\',this)">Próximas</button>'
+
+    # ---- Seccion HTML de la pestana ----
+    section = '''<div id="proximas" class="section">
+  <div style="padding:16px">
+    <h2 style="margin-bottom:12px;font-size:14px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Próximas compras</h2>
+    <div id="proximas-list"></div>
+  </div>
+</div>'''
+
+    # ---- Funcion JS de renderizado ----
+    render_fn = ("""
+(function(){
+  var PROXIMAS=%%PROXIMAS_JSON%%;
+
+  function fmtPrecio(v){
+    if(v==null)return '-';
+    return v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  function buildCard(p, precioReal, pct, rango){
+    var condicional=p.p_cond&&p.p_cond!==null;
+    var badgeCond=condicional
+      ?'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(255,165,0,0.15);color:#f5a623;margin-left:6px">COND</span>'
+      :'<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(76,175,80,0.15);color:var(--green);margin-left:6px">DIRECTA</span>';
+    var bancoHtml=p.banco
+      ?'<span style="font-size:11px;color:var(--muted);margin-left:6px">'+p.banco+'</span>'
+      :'';
+    var condHtml=condicional
+      ?'<div style="margin-top:4px;font-size:12px;color:#f5a623">⚡ Condición: <b>'+p.p_cond+'</b></div>'
+      :'';
+    var pmaxHtml=p.p_max!=null
+      ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Precio máx: <b style="color:var(--fg)">'+fmtPrecio(p.p_max)+'</b></div>'
+      :'';
+    var objHtml=p.objetivo!=null
+      ?'<div style="margin-top:3px;font-size:12px;color:var(--muted)">Objetivo: <b style="color:var(--green)">'+fmtPrecio(p.objetivo)+'</b></div>'
+      :'';
+    var pctStr='';
+    if(pct!=null){
+      var pctColor=pct>=0?'var(--green)':'var(--red)';
+      var pctSign=pct>=0?'+':'';
+      pctStr='<span style="font-size:12px;color:'+pctColor+';margin-left:8px">'+pctSign+pct.toFixed(2)+'%</span>';
+    }
+    var precioHtml=precioReal!=null
+      ?'<div style="margin-top:5px;font-size:14px;color:var(--muted)">Precio actual: <b style="color:var(--fg);font-size:16px">'+fmtPrecio(precioReal)+'</b>'+pctStr+'</div>'
+      :'<div style="margin-top:5px;font-size:12px;color:var(--muted)">Precio actual: <i>cargando...</i></div>';
+    var rangoHtml='';
+    if(rango&&precioReal!=null){
+      // --- Rango diario ---
+      var diaHtml='';
+      if(rango.dayHigh!=null&&rango.dayLow!=null&&rango.dayHigh>rango.dayLow){
+        var pctDia=((precioReal-rango.dayLow)/(rango.dayHigh-rango.dayLow))*100;
+        pctDia=Math.max(0,Math.min(100,pctDia));
+        var barDia=pctDia<=20?'var(--green)':pctDia>=80?'var(--red)':'var(--amber)';
+        var badgeDia='';
+        if(precioReal>=rango.dayHigh*0.999)badgeDia=' <span style="font-size:9px;font-weight:700;color:var(--red)">▲</span>';
+        else if(precioReal<=rango.dayLow*1.001)badgeDia=' <span style="font-size:9px;font-weight:700;color:var(--green)">▼</span>';
+        diaHtml='<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px">'
+          +'<span>Hoy: <b style="color:var(--fg)">'+fmtPrecio(rango.dayLow)+'</b></span>'
+          +'<span style="font-size:9px;color:var(--muted)">HOY</span>'
+          +'<span><b style="color:var(--fg)">'+fmtPrecio(rango.dayHigh)+'</b>'+badgeDia+'</span>'
+          +'</div>'
+          +'<div style="height:3px;border-radius:2px;background:var(--surface2);position:relative;margin-bottom:6px">'
+          +'<div style="position:absolute;left:0;top:0;height:3px;border-radius:2px;background:'+barDia+';width:'+pctDia.toFixed(1)+'%"></div>'
+          +'</div>';
+      }
+      // --- Rango 52 semanas ---
+      var s52Html='';
+      if(rango.high52!=null&&rango.low52!=null&&rango.high52>rango.low52){
+        var pct52=((precioReal-rango.low52)/(rango.high52-rango.low52))*100;
+        pct52=Math.max(0,Math.min(100,pct52));
+        var bar52=pct52<=20?'var(--green)':pct52>=80?'var(--red)':'var(--amber)';
+        var badge52='';
+        if(precioReal>=rango.high52*0.99)badge52=' <span style="font-size:9px;font-weight:700;color:var(--red)">▲MAX</span>';
+        else if(precioReal<=rango.low52*1.01)badge52=' <span style="font-size:9px;font-weight:700;color:var(--green)">▼MÍN</span>';
+        s52Html='<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px">'
+          +'<span>52s: <b style="color:var(--fg)">'+fmtPrecio(rango.low52)+'</b></span>'
+          +'<span style="font-size:9px;color:var(--muted)">52 SEM</span>'
+          +'<span><b style="color:var(--fg)">'+fmtPrecio(rango.high52)+'</b>'+badge52+'</span>'
+          +'</div>'
+          +'<div style="height:3px;border-radius:2px;background:var(--surface2);position:relative">'
+          +'<div style="position:absolute;left:0;top:0;height:3px;border-radius:2px;background:'+bar52+';width:'+pct52.toFixed(1)+'%"></div>'
+          +'</div>';
+      }
+      if(diaHtml||s52Html){
+        rangoHtml='<div style="margin-top:6px">'+diaHtml+s52Html+'</div>';
+      }
+    }
+    return '<div style="padding:14px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px">'
+      +'<span style="font-size:16px;font-weight:700;color:var(--fg)">'+p.tckr+'</span>'
+      +bancoHtml+badgeCond+'</div>'
+      +condHtml+precioHtml+rangoHtml+pmaxHtml+objHtml
+      +'</div>';
+  }
+
+  async function renderProximas(){
+    var el=document.getElementById('proximas-list');
+    if(!el)return;
+    if(!PROXIMAS||PROXIMAS.length===0){
+      el.innerHTML='<p style="color:var(--muted);font-size:14px">Sin próximas compras registradas.</p>';
+      return;
+    }
+    // Mostrar skeleton mientras carga
+    el.innerHTML=PROXIMAS.map(function(p){return buildCard(p,null,null,null);}).join('');
+    // Fetch precios reales al servidor (mismo endpoint que usa la cartera)
+    var symbols=PROXIMAS.map(function(p){return p.symbol;}).join(',');
+    try{
+      var r=await fetch('/?symbols='+encodeURIComponent(symbols));
+      var data=await r.json();
+      var priceMap={};
+      if(data&&data.quoteResponse&&data.quoteResponse.result){
+        data.quoteResponse.result.forEach(function(q){
+          priceMap[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent,high52:q.fiftyTwoWeekHigh||null,low52:q.fiftyTwoWeekLow||null,dayHigh:q.regularMarketDayHigh||null,dayLow:q.regularMarketDayLow||null};
+        });
+      }
+      el.innerHTML=PROXIMAS.map(function(p){
+        var q=priceMap[p.symbol];
+        return buildCard(p, q?q.price:null, q?q.pct:null, q?{high52:q.high52,low52:q.low52,dayHigh:q.dayHigh,dayLow:q.dayLow}:null);
+      }).join('');
+    }catch(e){
+      // Si falla el fetch, mostrar sin precio
+      el.innerHTML=PROXIMAS.map(function(p){return buildCard(p,null,null,null);}).join('');
+    }
+  }
+
+  var _origShowTab=window.showTab;
+  window.showTab=function(id,btn){
+    _origShowTab&&_origShowTab(id,btn);
+    if(id==='proximas')renderProximas();
+  };
+})();
+""").replace('%%PROXIMAS_JSON%%', proximas_json)
+
+    # Insertar boton de nav si no existe (antes del boton de Analistas o al final de nav)
+    if "onclick=\"showTab('proximas'" not in html:
+        if "<button class=\"nav-btn\" onclick=\"showTab('analistas'" in html:
+            html = html.replace(
+                "<button class=\"nav-btn\" onclick=\"showTab('analistas'",
+                btn + '\n  <button class="nav-btn" onclick="showTab(\'analistas\'',
+                1
+            )
+        else:
+            html = html.replace('</nav>', '  ' + btn + '\n</nav>', 1)
+
+    # Insertar seccion HTML si no existe (antes de analistas o antes de </body>)
+    if 'id="proximas"' not in html:
+        if '<div id="analistas"' in html:
+            html = html.replace('<div id="analistas"', section + '\n<div id="analistas"', 1)
+        else:
+            html = html.replace('</body>', section + '\n</body>', 1)
+
+    # Inyectar/reemplazar el bloque JS (marcado con comentario para poder reemplazarlo)
+    marker_start = '<!--proximas-compras-start-->'
+    marker_end = '<!--proximas-compras-end-->'
+    js_block = marker_start + '<script>' + render_fn + '</script>' + marker_end
+
+    if marker_start in html:
+        import re as _re
+        html = _re.sub(
+            re.escape(marker_start) + r'.*?' + re.escape(marker_end),
+            js_block,
+            html,
+            flags=re.DOTALL
+        )
+    else:
+        html = html.replace('</body>', js_block + '\n</body>', 1)
+
+    # Actualizar array de tabs para swipe si no tiene 'proximas'
+    import re as _re2
+    def add_proximas_to_tabs(m):
+        tabs_str = m.group(0)
+        if 'proximas' in tabs_str:
+            return tabs_str
+        if "'analistas'" in tabs_str:
+            return tabs_str.replace("'analistas'", "'proximas','analistas'")
+        return tabs_str.replace(']', ",'proximas']")
+    html = _re2.sub(r"const tabs=\[[^\]]+\]", add_proximas_to_tabs, html)
+
+    return html
+
+
+def asegurar_historico(html):
+    """Añade pestaña Historico y funcion loadHistorico si no están"""
+    if 'loadHistorico' not in html:
+        html = html.replace(
+            "<button class=\"nav-btn\" onclick=\"showTab('mensual',this)\">Mensual</button>",
+            "<button class=\"nav-btn\" onclick=\"showTab('mensual',this)\">Mensual</button>\n  <button class=\"nav-btn\" onclick=\"showTab('historico',this);loadHistorico()\">Historico</button>"
+        )
+        historico_section = '''<div id="historico" class="section">
+  <div style="padding:16px">
+    <h2 style="margin-bottom:12px;font-size:16px;color:var(--muted)">Historico de alertas</h2>
+    <div id="hist-list">Cargando...</div>
+  </div>
+</div>'''
+        load_fn = """
+window.loadHistorico = async function() {
+  const el = document.getElementById('hist-list');
+  try {
+    const r = await fetch('/historico');
+    const data = await r.json();
+    if (data.length === 0) { el.innerHTML = '<p style="color:var(--muted)">Sin registros aun.</p>'; return; }
+    el.innerHTML = data.map(d => {
+      const fecha = new Date(d.fecha).toLocaleString('es-ES');
+      const color = d.evento.includes('salio') ? 'var(--red)' : 'var(--green)';
+      return '<div style="padding:10px;border-bottom:1px solid var(--border)"><span style="color:'+color+';font-weight:600">' + d.ticker + '</span> <span style="color:var(--muted);font-size:12px">' + d.banco + '</span><br><span style="font-size:13px">' + d.evento + ' - ' + d.precio + '</span><br><span style="color:var(--muted);font-size:11px">' + fecha + '</span></div>';
+    }).join('');
+  } catch(e) { el.innerHTML = 'Error cargando historico'; }
+};
+"""
+        html = html.replace('</body>', historico_section + '\n</body>')
+        html = html.replace('</script>\n</body>', load_fn + '</script>\n</body>')
+    return html
+
+
+def leer_rendimiento_cartera():
+    import openpyxl
+    from datetime import datetime
+    wb = openpyxl.load_workbook(open(str(EXCEL), 'rb'), read_only=True, data_only=True)
+    ws = wb['Semanal']
+    meses = {'Enero':1,'Febrero':2,'Marzo':3,'Abril':4,'Mayo':5,'Junio':6,
+             'Julio':7,'Agosto':8,'Septiembre':9,'Octubre':10,'Noviembre':11,'Diciembre':12}
+    mes_hoy = datetime.now().month
+    total_mes = 0
+    total_anual = 0
+    for row in ws.iter_rows(min_row=4, max_row=60, values_only=True):
+        if row[3] is not None and isinstance(row[5], (int,float)) and row[5] != 0:
+            if meses.get(row[3], 0) == mes_hoy:
+                total_mes = row[5]
+            total_anual += row[5]
+    ws_irpf = wb['IRPF']
+    tipo_irpf = ws_irpf.cell(35, 6).value or 0.20925
+    return {'mes': total_mes, 'mes_n': total_mes*(1-tipo_irpf), 'anual': total_anual, 'anual_n': total_anual*(1-tipo_irpf)}
+
+def leer_ganancias_realizadas():
+    import openpyxl
+    from datetime import datetime, timedelta
+    wb = openpyxl.load_workbook(open(str(EXCEL), "rb"), read_only=True, data_only=True)
+    hoy = datetime.now()
+    inicio_semana = (hoy - timedelta(days=hoy.weekday())).replace(hour=0,minute=0,second=0,microsecond=0)
+    inicio_mes = hoy.replace(day=1,hour=0,minute=0,second=0,microsecond=0)
+    r = {"sem_b":0,"sem_n":0,"mes_b":0,"mes_n":0,"ani_b":0,"ani_n":0}
+
+    B = detectar_bloques()
+    ws = wb["2026"]
+    for row in ws.iter_rows(min_row=B["ven_ini"], max_row=B["ven_fin"], values_only=True):
+        fecha, bruta, neta = row[16], row[24], row[25]
+        if not fecha or not isinstance(fecha, datetime) or not bruta or not neta: continue
+        if fecha.year != hoy.year: continue
+        r["ani_b"] += bruta; r["ani_n"] += neta
+        if fecha >= inicio_mes: r["mes_b"] += bruta; r["mes_n"] += neta
+        if fecha >= inicio_semana: r["sem_b"] += bruta; r["sem_n"] += neta
+
+    ws2 = wb["dividendos 26"]
+    for row in ws2.iter_rows(min_row=5, max_row=500, values_only=True):
+        fecha, bruta, neta = row[0], row[7], row[8]
+        if not fecha or not isinstance(fecha, datetime) or not bruta or not neta: continue
+        if fecha.year != hoy.year: continue
+        r["ani_b"] += bruta; r["ani_n"] += neta
+        if fecha >= inicio_mes: r["mes_b"] += bruta; r["mes_n"] += neta
+        if fecha >= inicio_semana: r["sem_b"] += bruta; r["sem_n"] += neta
+
+    return r
+
+def actualizar_index_html(const_C_linea, mensual_data=None, ganancias_data=None, rendimiento_data=None, proximas_compras=None, ventas_data=None, bancos_data=None):
+    if not INDEX_HTML.exists():
+        print(f"❌ index.html no encontrado: {INDEX_HTML}")
+        sys.exit(1)
+    html = INDEX_HTML.read_text(encoding="utf-8")
+    pattern = re.compile(r"const\s+C\s*=\s*\[.*?\]\s*;", re.DOTALL)
+    if not pattern.search(html):
+        print("❌ No se encontro 'const C=[...]' en index.html")
+        sys.exit(1)
+    nuevo_html = pattern.sub(const_C_linea, html, count=1)
+    fecha_hoy = datetime.now().strftime("%-d %b %Y").replace("Jan","ene").replace("Feb","feb").replace("Mar","mar").replace("Apr","abr").replace("May","may").replace("Jun","jun").replace("Jul","jul").replace("Aug","ago").replace("Sep","sep").replace("Oct","oct").replace("Nov","nov").replace("Dec","dic")
+    nuevo_html = re.sub(r"Datos del Excel del [^.]+\.", f"Datos del Excel del {fecha_hoy}.", nuevo_html)
+    version = datetime.now().strftime("%Y%m%d%H%M%S")
+    nuevo_html = re.sub(r'content="[0-9.]+"(?=[^>]*name="app-version"|(?<=app-version")[^>]*)>', f'content="{version}">', nuevo_html)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup = INDEX_HTML.parent / f"index.html.backup_{timestamp}"
+    backup.write_text(html, encoding="utf-8")
+
+    # Actualizar HTML pestaña Mensual
+    if mensual_data:
+        import re as re2
+        nuevo_html = re2.sub(
+            r'(Bruto</span><span class="mensual-val green">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["bruto_anual"]}\g<2>',
+            nuevo_html
+        )
+        nuevo_html = re2.sub(
+            r'(<span class="plusv-label">Neto</span><span class="mensual-val green">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["neto_anual"]}\g<2>',
+            nuevo_html
+        )
+        nuevo_html = re2.sub(
+            r'(Equivale a</span><span class="mensual-val green">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["equiv_bruto"]} brutos\g<2>',
+            nuevo_html
+        )
+        nuevo_html = re2.sub(
+            r'(id="sueldo-bruto-val">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["sueldo_bruto"]}\g<2>',
+            nuevo_html
+        )
+        nuevo_html = re2.sub(
+            r'(id="sueldo-neto-val">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["sueldo_neto"]}\g<2>',
+            nuevo_html
+        )
+        # Inyectar promedios netos 14 pagas 24/26
+        nuevo_html = re2.sub(
+            r'(id="prom-neto-conservador-val">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["prom_neto_conservador"]}\g<2>',
+            nuevo_html
+        )
+        nuevo_html = re2.sub(
+            r'(id="prom-neto-optimista-val">)[^<]*(</span>)',
+            f'\g<1>{mensual_data["prom_neto_optimista"]}\g<2>',
+            nuevo_html
+        )
+        # Si los elementos no existen aún en el HTML, añadirlos tras sueldo-neto
+        if 'prom-neto-conservador-val' not in nuevo_html:
+            bloque_prom = (
+                '<div class="plusv-row"><span class="plusv-label">Prom. neto 14p 24/26</span>'
+                '<span class="mensual-val green" id="prom-neto-conservador-val">' + mensual_data['prom_neto_conservador'] + '</span></div>'
+                '<div class="plusv-row"><span class="plusv-label">Prom. neto 12p 24/26</span>'
+                '<span class="mensual-val green" id="prom-neto-optimista-val">' + mensual_data['prom_neto_optimista'] + '</span></div>'
+            )
+            nuevo_html = re2.sub(
+                r'(id="sueldo-neto-val">[^<]*</span></div>)',
+                r'\1' + bloque_prom,
+                nuevo_html
+            )
+        # Inyectar PLUSV_SEMANA
+        nuevo_html = re.sub(
+            r'var PLUSV_SEMANA=[0-9.]+;',
+            f'var PLUSV_SEMANA={mensual_data["plusv_semana"]};',
+            nuevo_html
+        )
+        if 'var PLUSV_SEMANA=' not in nuevo_html:
+            nuevo_html = nuevo_html.replace(
+                'var RENDIMIENTO_MES=',
+                f'var PLUSV_HOY={mensual_data["plusv_hoy"]};var PLUSV_SEMANA={mensual_data["plusv_semana"]};var RENDIMIENTO_MES='
+            )
+        nuevo_html = re.sub(r'var PLUSV_HOY=[0-9.]+;', f'var PLUSV_HOY={mensual_data["plusv_hoy"]};', nuevo_html)
+
+
+    if ganancias_data:
+        def fmtg(v):
+            color = "var(--green)" if v >= 0 else "var(--red)"
+            signo = "+" if v >= 0 else ""
+            num = f"{abs(v):,.2f}".replace(",","X").replace(".",",").replace("X",".")
+            return f'<span style="color:{color};font-size:20px;font-weight:500">{signo}{num} \u20ac</span>'
+        def bloque(titulo, bruto, neto, id_b=None, id_n=None, id_lbl=None):
+            ib = f' id="{id_b}"' if id_b else ''
+            ib_n = f' id="{id_n}"' if id_n else ''
+            # id_lbl: el JS escribe ahi la fecha base ("desde 14 ago"), en la
+            # linea del titulo y no pegada al importe. Filas mas juntas: 6px.
+            lbl = f' id="{id_lbl}"' if id_lbl else ''
+            return (
+                f'<div style="padding:6px 0;border-bottom:1px solid var(--border)">' +
+                f'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">' +
+                f'<span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px">{titulo}</span>' +
+                f'<span{lbl} style="font-size:11px;color:var(--muted);font-weight:400"></span></div>' +
+                f'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1px">' +
+                f'<span style="font-size:12px;color:var(--muted)">bruto</span><span{ib} style="font-size:20px;font-weight:500">{fmtg(bruto)}</span></div>' +
+                f'<div style="display:flex;justify-content:space-between;align-items:baseline">' +
+                f'<span style="font-size:12px;color:var(--muted)">neto</span><span{ib_n} style="font-size:20px;font-weight:500">{fmtg(neto)}</span></div>' +
+                f'</div>'
+            )
+        card = (
+            '<div class="card" id="card-ganancias">' +
+            '<div class="card-label">Cartera · Valores</div>' +
+            bloque("HOY", 0, 0, id_b="hoy-b", id_n="hoy-n", id_lbl="lbl-hoy") +
+            bloque("ESTA SEMANA", ganancias_data["sem_b"], ganancias_data["sem_n"], id_b="sem-b", id_n="sem-n", id_lbl="lbl-sem") +
+            bloque("ESTE MES", ganancias_data["mes_b"], ganancias_data["mes_n"], id_b="mes-b", id_n="mes-n", id_lbl="lbl-mes") +
+            bloque("ANUAL", ganancias_data["ani_b"], ganancias_data["ani_n"], id_b="anual-b", id_n="anual-n", id_lbl="lbl-anual") +
+            '</div>'
+        )
+        END_MARKER = '<!--/card-ganancias-->'
+        card_con_marker = card + END_MARKER
+        if 'id="card-ganancias"' in nuevo_html:
+            start = nuevo_html.find('<div class="card" id="card-ganancias">')
+            end = nuevo_html.find(END_MARKER)
+            if end != -1:
+                nuevo_html = nuevo_html[:start] + card_con_marker + nuevo_html[end+len(END_MARKER):]
+            else:
+                nuevo_html = nuevo_html[:start] + card_con_marker + nuevo_html[start:]
+                nuevo_html = nuevo_html.replace(card_con_marker + card_con_marker, card_con_marker)
+        else:
+            nuevo_html = nuevo_html.replace('<p class="note">', card_con_marker + '\n  <p class="note">')
+    if rendimiento_data:
+        # Inyectar como variables JS
+        js_vars = f'<script>var RENDIMIENTO_MES={rendimiento_data["mes"]};var RENDIMIENTO_MES_N={rendimiento_data["mes_n"]};var RENDIMIENTO_ANUAL={rendimiento_data["anual"]};var RENDIMIENTO_ANUAL_N={rendimiento_data["anual_n"]};</script>'
+        if 'var RENDIMIENTO_MES=' in nuevo_html:
+            import re as re4
+            nuevo_html = re4.sub(r'<script>var RENDIMIENTO_MES=.*?;</script>', js_vars, nuevo_html)
+        else:
+            nuevo_html = nuevo_html.replace('</body>', js_vars + '</body>')
+    if False and rendimiento_data:
+        def fmtr(v):
+            color = "var(--green)" if v >= 0 else "var(--red)"
+            signo = "+" if v >= 0 else ""
+            num = f"{abs(v):,.2f}".replace(",","X").replace(".",",").replace("X",".")
+            return f'<span style="color:{color};font-size:20px;font-weight:500">{signo}{num} \u20ac</span>'
+        import re as re3
+        nuevo_html = re3.sub(
+            r'ESTE MES</div>.*?bruto</span><span[^>]*>[^<]*</span>',
+            lambda m: m.group(0)[:m.group(0).rfind('<span')] + fmtr(rendimiento_data["mes"]),
+            nuevo_html, flags=re3.DOTALL, count=1
+        )
+        nuevo_html = re3.sub(
+            r'ANUAL</div>.*?bruto</span><span[^>]*>[^<]*</span>',
+            lambda m: m.group(0)[:m.group(0).rfind('<span')] + fmtr(rendimiento_data["anual"]),
+            nuevo_html, flags=re3.DOTALL, count=1
+        )
+    if ventas_data is not None:
+        nuevo_html = inyectar_ventas_anual(nuevo_html, ventas_data)
+    if bancos_data is not None:
+        if bancos_data.get('bancos'):
+            nuevo_html = inyectar_bancos(nuevo_html, bancos_data)
+    nuevo_html = asegurar_proximas_compras(nuevo_html, proximas_compras or [])
+    nuevo_html = asegurar_historico(nuevo_html)
+    nuevo_html = asegurar_marcadores_serie(nuevo_html)
+    asegurar_serie_latentes()
+    nuevo_html = inyectar_serie_y_dividendos(nuevo_html)
+    nuevo_html = inyectar_tipo_irpf(nuevo_html)
+    INDEX_HTML.write_text(nuevo_html, encoding="utf-8")
+    print(f"✅ index.html actualizado. Backup: {backup.name}")
+
+
+
+def actualizar_earnings_local():
+    import os
+    # Cargar .env si existe
+    env_file = PROYECTO / '.env'
+    if env_file.exists():
+        for line in env_file.read_text().splitlines():
+            if '=' in line and not line.startswith('#'):
+                k, v = line.split('=', 1)
+                os.environ.setdefault(k.strip(), v.strip())
+    import json, csv, io
+    from urllib.request import Request, urlopen
+    from datetime import datetime
+    from supabase import create_client
+    sb_url = os.environ.get('SUPABASE_URL', 'https://ntvupakoulwiffvdcfox.supabase.co')
+    sb_key = os.environ.get('SUPABASE_KEY', '')
+    if not sb_key:
+        print('⚠️  Sin SUPABASE_KEY, earnings omitidos'); return
+    sb = create_client(sb_url, sb_key)
+    tickers_data = json.loads((PROYECTO / 'tickers.json').read_text())
+    sufijos = ['.MC','.AS','.DE','.PA','.MI','.BR','.LS']
+    symbols = set()
+    for s in tickers_data.keys():
+        t = s.upper()
+        for sf in sufijos: t = t.replace(sf,'')
+        symbols.add(t)
+    url = 'https://www.alphavantage.co/query?function=EARNINGS_CALENDAR&horizon=3month&apikey=9JNVRNFZ3D5VBP5E'
+    data = urlopen(Request(url, headers={'User-Agent':'Mozilla/5.0'})).read().decode()
+    reader = csv.DictReader(io.StringIO(data))
+    hoy = datetime.now().strftime('%Y-%m-%d')
+    count = 0
+    for row in reader:
+        sym = row['symbol'].strip().upper()
+        if sym not in symbols: continue
+        fecha = row['reportDate'].strip()
+        if fecha < hoy: continue
+        est = row.get('estimate','').strip()
+        momento = row.get('timeOfTheDay','').strip()
+        sb.table('earnings').upsert({'symbol':sym,'nombre':row.get('name','').strip(),'fecha':fecha,'estimacion':float(est) if est else None,'momento':momento or None},on_conflict='symbol,fecha').execute()
+        count += 1
+    print(f'✅ Earnings actualizados: {count} valores')
+
+def verificar_precios_yahoo(ticker_map):
+    """
+    Verifica en tiempo real que todos los simbolos Yahoo devuelven precio.
+    Llama al mismo endpoint que usa el servidor (v8/finance/chart).
+    Si alguno falla, lo muestra en rojo con la solución exacta.
+    """
+    import urllib.request, urllib.parse, json as _json, time
+
+    simbolos = [(tckr, info['yahoo']) for tckr, info in ticker_map.items()]
+    total = len(simbolos)
+    fallos = []
+
+    print(f"\n🔍 Verificando precios de {total} tickers en Yahoo Finance...")
+
+    BATCH = 10
+    for i in range(0, len(simbolos), BATCH):
+        batch = simbolos[i:i+BATCH]
+        for tckr, sym in batch:
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(sym)}?interval=1d&range=1d"
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=6) as r:
+                    data = _json.loads(r.read().decode())
+                result = data.get("chart", {}).get("result")
+                precio = result[0]["meta"].get("regularMarketPrice") if result else None
+                if not precio:
+                    fallos.append((tckr, sym))
+            except Exception:
+                fallos.append((tckr, sym))
+        time.sleep(0.3)  # respetar rate limit Yahoo
+
+    ok = total - len(fallos)
+    if not fallos:
+        print(f"✅ {ok}/{total} tickers con precio OK")
+        return ticker_map
+
+    # ── AUTO-ARREGLO ──────────────────────────────────────────────────
+    # La columna B del Excel esta con #VALUE! en todas las filas, asi que la via
+    # del MIC no resuelve nada y los europeos nuevos caen en el fallback .MC, que
+    # casi siempre es incorrecto. En vez de pedir un override manual, se busca el
+    # simbolo en Yahoo, se comprueba que devuelve precio de verdad y se guarda.
+    print(f"\n🔧 {len(fallos)} sin precio. Buscando el simbolo correcto en Yahoo...")
+    arreglados, siguen_mal = [], []
+    for tckr, sym in fallos:
+        moneda = ticker_map[tckr].get('moneda')
+        candidatos = [c for c in buscar_simbolo_yahoo_auto(tckr, moneda) if c != sym][:4]
+        elegido = None
+        for cand in candidatos:
+            # El ticker base del candidato TIENE que ser el mismo del Excel.
+            # Sin esta comprobacion bastaba con que un simbolo parecido
+            # cotizara para adoptarlo: TRG (Tubos Reunidos, suspendida) acabo
+            # resuelto como TRGP (Targa Resources, 297 USD) y metio 5,9
+            # millones de plusvalia falsa en la cartera.
+            base = cand.split(".")[0].upper()
+            if base != tckr.upper():
+                print(f"     ✗ {tckr}: descartado {cand} (empresa distinta)")
+                continue
+            if _yahoo_tiene_precio(cand):
+                elegido = cand
+                break
+            time.sleep(0.2)
+        if elegido:
+            guardar_override(tckr, elegido)
+            ticker_map[tckr]['yahoo'] = elegido
+            ticker_map[tckr]['fuente_resolucion'] = 'auto_yahoo'
+            arreglados.append((tckr, sym, elegido))
+        else:
+            siguen_mal.append((tckr, sym, candidatos))
+        time.sleep(0.3)
+
+    if arreglados:
+        print(f"\n✅ {len(arreglados)} resueltos solos y guardados en tickers_override.json:")
+        for tckr, viejo, nuevo in arreglados:
+            print(f"     {tckr:<8} {viejo}  ->  \033[92m{nuevo}\033[0m")
+
+    if siguen_mal:
+        print(f"\n{'='*50}")
+        print(f"⚠️  {len(siguen_mal)} sin resolver, estos si necesitan mano:")
+        print("   (si alguno esta SUSPENDIDO de cotizacion, es lo esperado:")
+        print("    se quedara con su ultimo precio conocido)")
+        for tckr, sym, cands in siguen_mal:
+            moneda = ticker_map[tckr].get('moneda', '?')
+            print(f"\n  ❌ {tckr} ({moneda}) -> '{sym}' no devuelve precio")
+            if cands:
+                print(f"     Yahoo propuso, pero ninguno da precio: {', '.join(cands)}")
+            else:
+                print(f"     Yahoo no propone nada para '{tckr}'")
+            print(f"     ⚡ ACCION: busca el simbolo en finance.yahoo.com y añade")
+            print(f'     \033[91m"{tckr}": "SIMBOLO_CORRECTO"\033[0m  en tickers_override.json')
+        print(f"{'='*50}")
+        print(f"\033[91m⛔ Estos no se mostraran en la app hasta corregirlos\033[0m")
+    else:
+        print(f"\n✅ {total}/{total} tickers con precio tras el auto-arreglo")
+    return ticker_map
+
+
+def leer_ventas_anual():
+    """Lee ventas del año actual del Excel (pestaña 2026, bloque posterior a 'ejecuciones')."""
+    from datetime import datetime
+    wb2 = openpyxl.load_workbook(open(str(EXCEL), "rb"), read_only=True, data_only=True)
+    B = detectar_bloques()
+    ws2 = wb2["2026"]
+    hoy = datetime.now()
+    ventas = []
+    for row in ws2.iter_rows(min_row=B["ven_ini"], max_row=B["ven_fin"], values_only=True):
+        ticker = row[3]   # col D
+        moneda = row[6]   # col G
+        banco  = row[7]   # col H
+        fecha  = row[16]  # col Q
+        bruto  = row[24]  # col Y
+        neto   = row[25]  # col Z
+        if not ticker or not fecha or bruto is None or neto is None:
+            continue
+        if not isinstance(fecha, datetime):
+            continue
+        if fecha.year != hoy.year:
+            continue
+        # Una venta real nunca tiene bruto y neto a cero
+        if not isinstance(bruto, (int, float)) or not isinstance(neto, (int, float)):
+            continue
+        if bruto == 0 and neto == 0:
+            continue
+        ventas.append({
+            "ticker": str(ticker).strip(),
+            "fecha":  fecha.strftime("%Y-%m-%d"),
+            "bruto":  round(float(bruto), 2),
+            "neto":   round(float(neto),  2),
+            "banco":  normalizar_banco(banco),
+            "moneda": str(moneda).strip() if moneda else "EUR",
+        })
+    print(f"\u2705 {len(ventas)} ventas leidas del Excel (VENTAS_ANUAL)")
+    return ventas
+
+
+
+def asegurar_marcadores_serie(html):
+    """Recrea los marcadores de SERIE_LATENTES / DIVIDENDOS_ANUAL si faltan,
+    para que un index.html antiguo no se quede sin ellos."""
+    if "<!--serie-latentes-start-->" not in html:
+        bloque = ('<!--serie-latentes-start--><script>var SERIE_LATENTES={"serie":{}};</script>'
+                  '<!--serie-latentes-end-->\n')
+        if "var PLUSV_SEMANA=" in html:
+            html = html.replace("<script>var PLUSV_SEMANA=", bloque + "<script>var PLUSV_SEMANA=", 1)
+        else:
+            html = html.replace("</body>", bloque + "</body>", 1)
+        print("ℹ️  Marcadores de serie-latentes recreados")
+    if "<!--dividendos-anual-start-->" not in html:
+        bloque = ('<!--dividendos-anual-start--><script>var DIVIDENDOS_ANUAL=[];</script>'
+                  '<!--dividendos-anual-end-->\n')
+        if "var PLUSV_SEMANA=" in html:
+            html = html.replace("<script>var PLUSV_SEMANA=", bloque + "<script>var PLUSV_SEMANA=", 1)
+        else:
+            html = html.replace("</body>", bloque + "</body>", 1)
+        print("ℹ️  Marcadores de dividendos-anual recreados")
+    return html
+
+
+def inyectar_ventas_anual(html, ventas):
+    """Reemplaza var VENTAS_ANUAL en index.html con marcadores robustos.
+    También elimina copias duplicadas de window.renderVentas."""
+    import re as _re
+    import json as _json
+
+    ventas_json = _json.dumps(ventas, ensure_ascii=False, separators=(",", ":"))
+    bloque = (
+        "<!--ventas-anual-start-->"
+        f"<script>var VENTAS_ANUAL={ventas_json};</script>"
+        "<!--ventas-anual-end-->"
+    )
+
+    # Sustituir si ya hay marcadores
+    if "<!--ventas-anual-start-->" in html:
+        html = _re.sub(
+            r"<!--ventas-anual-start-->.*?<!--ventas-anual-end-->",
+            bloque, html, flags=_re.DOTALL
+        )
+    # Sustituir el script sin marcadores (primera vez)
+    elif "<script>var VENTAS_ANUAL=[" in html:
+        html = _re.sub(
+            r"<script>var VENTAS_ANUAL=\[.*?\];</script>",
+            bloque, html, flags=_re.DOTALL
+        )
+    else:
+        html = html.replace("</body>", bloque + "\n</body>")
+
+    # ── Eliminar renderVentas duplicados: conservar solo el primero ────────
+    patron = r"window\.renderVentas\s*=\s*function\s*\(\)"
+    ocurrencias = [m.start() for m in _re.finditer(patron, html)]
+    if len(ocurrencias) > 1:
+        # Localizar fin de la primera definición contando llaves
+        inicio = ocurrencias[0]
+        depth = 0
+        fin = -1
+        for i in range(inicio, len(html)):
+            if html[i] == "{": depth += 1
+            elif html[i] == "}":
+                depth -= 1
+                if depth == 0: fin = i; break
+        if fin != -1:
+            primera = html[:fin + 1]
+            resto = html[fin + 1:]
+            resto_limpio = _re.sub(
+                r"window\.renderVentas\s*=\s*function\s*\(\)\s*\{.*?\}\s*;",
+                "", resto, flags=_re.DOTALL
+            )
+            html = primera + resto_limpio
+            n_eliminadas = len(ocurrencias) - 1
+            print(f"\u2705 renderVentas deduplicado: {n_eliminadas} copia(s) extra eliminada(s)")
+
+    return html
+
+
+def leer_bancos_excel():
+    """
+    Lee la pestaña 'Bancos' del Excel y devuelve los SALDOS FINALES tal cual,
+    sin recalcular nada. El Excel ya suma ventas, compras y dividendos.
+      Col A (idx 0)  = Nombre del banco (se usa tal cual, no se inventa nada)
+      Col F (idx 5)  = Saldo FINAL en € (si es '—' no aplica esa moneda)
+      Col L (idx 11) = Saldo FINAL en $ (si es '—' no aplica esa moneda)
+      Fila con nombre 'TOTAL' = fila de totales (se guarda aparte, no como banco).
+    Devuelve un dict: {"bancos": [{"nombre","eur","usd"}, ...], "total": {"eur","usd"}}
+    o None si la pestaña no existe.
+    """
+    try:
+        wb = openpyxl.load_workbook(open(str(EXCEL), 'rb'), read_only=True, data_only=True)
+        if 'Bancos' not in wb.sheetnames:
+            print('⚠️  Pestaña Bancos no encontrada en Excel')
+            return None
+        ws = wb['Bancos']
+        bancos = []
+        total = {'eur': None, 'usd': None}
+        # Datos desde fila 4 (1=título, 2=subtítulo, 3=cabecera, 4+=datos)
+        for row in ws.iter_rows(min_row=4, max_row=25, values_only=True):
+            nombre = row[0]  # col A
+            if not nombre or not isinstance(nombre, str) or not nombre.strip():
+                continue
+            nombre = nombre.strip()
+            # '—' o texto -> None (esa moneda no aplica); número -> saldo real
+            eur = round(float(row[5]), 2)  if isinstance(row[5], (int, float)) else None  # col F
+            usd = round(float(row[11]), 2) if isinstance(row[11], (int, float)) else None  # col L
+            if nombre.upper() == 'TOTAL':
+                total = {'eur': eur, 'usd': usd}
+                continue
+            bancos.append({'nombre': nombre, 'eur': eur, 'usd': usd})
+        print(f'✅ Bancos leidos del Excel (F=€, L=$): {[b["nombre"] for b in bancos]}')
+        return {'bancos': bancos, 'total': total}
+    except Exception as e:
+        print(f'⚠️  Error leyendo pestaña Bancos: {e}')
+        return None
+
+
+def inyectar_bancos(html, datos):
+    """
+    Reemplaza la variable BANCOS_SALDOS en index.html con los saldos finales
+    leídos del Excel (columnas F y L). No se recalcula nada en el navegador.
+    'datos' es el dict {"bancos": [...], "total": {...}} de leer_bancos_excel().
+    """
+    import re as _re, json as _json
+
+    datos_js = _json.dumps(datos, ensure_ascii=False)
+    html = _re.sub(
+        r'var BANCOS_SALDOS\s*=\s*\{.*?\};',
+        f'var BANCOS_SALDOS = {datos_js};',
+        html, flags=_re.DOTALL
+    )
+    print(f'✅ Bancos inyectados en index.html ({len(datos.get("bancos", []))} bancos)')
+    return html
+
+
+def main():
+    print(f"📂 Leyendo Excel: {EXCEL}")
+    posiciones, sin_mic, mensual_data, compras_por_ticker, proximas_compras = leer_excel_con_mic()
+    ganancias_data = leer_ganancias_realizadas()
+    rendimiento_data = leer_rendimiento_cartera()
+    print(f"✅ {len(posiciones)} tickers unicos cargados")
+
+    overrides = cargar_overrides()
+    print(f"✅ {len(overrides)} overrides manuales")
+
+    # Resolver simbolos
+    ticker_map = {}
+    stats = {}
+    nuevos_overrides = {}
+
+    for p in posiciones:
+        sym, fuente = resolver_simbolo_yahoo(p, overrides)
+
+        # Si no se pudo resolver -> buscar automaticamente en Yahoo Finance
+        if fuente == 'sin_resolver':
+            print(f"   🔍 Buscando {p['tckr']} en Yahoo Finance...")
+            cands = buscar_simbolo_yahoo_auto(p['tckr'], p.get('moneda'))
+            sym_auto = next((c for c in cands if _yahoo_tiene_precio(c)), None)
+            if sym_auto:
+                sym = sym_auto
+                fuente = 'auto_yahoo'
+                nuevos_overrides[p['tckr']] = sym_auto
+                print(f"   ✅ {p['tckr']} -> {sym_auto} (guardado en overrides)")
+            else:
+                print(f"   ❌ {p['tckr']} no encontrado en Yahoo — verifica manualmente")
+
+        ticker_map[p["tckr"]] = {
+            "yahoo": sym,
+            "mic": p.get("mic"),
+            "moneda": p["moneda"],
+            "titulos": float(p["titulos"]),
+            "coste_eur": round(p["coste_eur"], 4),
+            "precio_excel": p["precio_excel"] if isinstance(p["precio_excel"], (int, float)) else None,
+            "fuente_resolucion": fuente,
+        }
+        stats[fuente] = stats.get(fuente, 0) + 1
+
+    # Guardar nuevos overrides encontrados automaticamente
+    if nuevos_overrides:
+        for ticker, symbol in nuevos_overrides.items():
+            guardar_override(ticker, symbol)
+        print(f"\n✅ {len(nuevos_overrides)} nuevos overrides guardados automaticamente en tickers_override.json")
+
+    print(f"\n📊 Resolucion de simbolos:")
+    for fuente, n in sorted(stats.items(), key=lambda x: -x[1]):
+        print(f"   {fuente:<25} {n}")
+
+    if sin_mic:
+        print(f"\n⚠️  {len(sin_mic)} tickers SIN MIC en Excel:")
+        for t in sin_mic[:20]:
+            print(f"     - {t}")
+        if len(sin_mic) > 20:
+            print(f"     ... y {len(sin_mic)-20} mas")
+        print(f"   Estos usaran fallback (USD directo o .MC). Si descuadran, anade")
+        print(f"   liena tipo 'Nombre (MIC:TICKER)' a {MIC_NAMES_TXT.name}")
+
+    # ══════════════════════════════════════════════════
+    # VERIFICACION DE PRECIOS + AUTO-ARREGLO
+    # Va ANTES de escribir tickers.json e index.html: si un simbolo se corrige
+    # solo, entra ya en esta misma ejecucion y no hay que volver a lanzar
+    # actualizar. Antes se verificaba despues y el arreglo llegaba tarde.
+    # ══════════════════════════════════════════════════
+    ticker_map = verificar_precios_yahoo(ticker_map)
+
+    # El auto-arreglo puede haber cambiado la fuente de resolucion
+    stats = {}
+    for info in ticker_map.values():
+        f_ = info.get("fuente_resolucion", "?")
+        stats[f_] = stats.get(f_, 0) + 1
+    print(f"\n📊 Resolucion final de simbolos:")
+    for fuente, n in sorted(stats.items(), key=lambda x: -x[1]):
+        print(f"   {fuente:<25} {n}")
+
+    with open(TICKERS_JSON, "w", encoding="utf-8") as f:
+        json.dump(ticker_map, f, indent=2, ensure_ascii=False)
+    print(f"\n✅ Guardado {TICKERS_JSON}")
+
+    const_C = construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker)
+    ventas_data = leer_ventas_anual()
+    bancos_data = leer_bancos_excel()
+    actualizar_index_html(const_C, mensual_data, ganancias_data=ganancias_data, rendimiento_data=rendimiento_data, proximas_compras=proximas_compras, ventas_data=ventas_data, bancos_data=bancos_data)
+
+    print("\n🎯 LISTO. Siguiente paso:")
+    print("   python3 validate.py")
+    try:
+        actualizar_earnings_local()
+    except Exception as e:
+        print(f"⚠️  Earnings: {e}")
+
+
+if __name__ == "__main__":
+    main()
+# version updater - añadido automaticamente
+
