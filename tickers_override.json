@@ -114,5 +114,7 @@
   "HRMY": "HRMY",
   "ABTC": "ABTC",
   "USAR": "USAR",
-  "SNPS": "SNPS"
+  "SNPS": "SNPS",
+  "ADYEN": "ADYEN.AS",
+  "MFEA": "MFEA.MI"
 }
