@@ -307,7 +307,7 @@ async function startLoad(){
     dbg(`✓ ${n} precios cargados`);
   }
   busy=false;
-  updateResumen();renderCartera();renderDiana();document.getElementById("cf-sort-pct").classList.add("active");
+  updateResumen();renderCartera();renderDiana();if(document.getElementById("mercados").classList.contains("active"))renderMercados();document.getElementById("cf-sort-pct").classList.add("active");
 }
 
 function fE(n){const s=n<0;const abs=Math.abs(n);const parts=abs.toFixed(2).split('.');const int=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (s?'-':'')+int+','+parts[1]+' €';}
