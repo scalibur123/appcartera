@@ -900,10 +900,12 @@ window.renderMercados=function(){
       +'<span style="font-size:13px"><b>'+fE(sv)+'</b> <span style="color:'+cl(sd)+'">'+sg(sp)+fNum(sp)+'%</span></span></div>';
     for(const x of b.v){
       const pt=(window.maxInfo&&maxInfo(x.sym))?maxInfo(x.sym).punto:'';
+      const rentT=x.coste?(x.val-x.coste)/x.coste*100:0;
       h+='<div onclick="showDetalle(\''+x.t+'\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;padding:7px 4px;border-bottom:1px solid var(--border)">'
         +'<b style="font-size:13px">'+x.t+pt+'</b>'
         +'<span style="font-size:13px">'+fE(x.val)
-        +' <span style="color:'+cl(x.pct)+';font-weight:600">'+sg(x.pct)+fNum(x.pct)+'%</span></span></div>';
+        +' <span style="color:'+cl(x.pct)+';font-weight:600">'+sg(x.pct)+fNum(x.pct)+'%</span>'
+        +' <span style="color:'+cl(rentT)+';font-weight:600;opacity:0.75">'+sg(rentT)+fNum(rentT)+'%</span></span></div>';
     }
     h+='</div>';
   }
