@@ -83,7 +83,7 @@ async function checkAlerts() {
 
   for (const item of C) {
     if (!item.objetivo) continue;
-    const result = await fetchPrice(item.symbol);
+    const result = await fetchPrice(item.symbol_px || item.symbol);
     const price = result ? result.price : null;
     const high52 = result ? result.high52 : null;
     if (!price) continue;
