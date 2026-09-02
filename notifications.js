@@ -7,14 +7,14 @@ if (!admin.apps.length) {
   admin.initializeApp({ credential });
 }
 
-async function sendNotification(token, title, body) {
+async function sendNotification(token, title, body, tckr) {
   try {
     // Payload SOLO data: sin bloque "notification" el navegador no pinta
     // ninguna notificacion por su cuenta. La unica que se muestra es la que
     // dibuja firebase-messaging-sw.js en onBackgroundMessage.
     await admin.messaging().send({
       token,
-      data: { title, body },
+      data: tckr ? { title, body, tckr: String(tckr) } : { title, body },
       webpush: {
         headers: { Urgency: 'high', TTL: '3600' }
       }

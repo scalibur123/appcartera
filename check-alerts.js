@@ -103,29 +103,29 @@ async function checkAlerts() {
     if (enObjetivo && !prev[key].enObjetivo) {
       dia.obj_ent++;
       await guardar(item.tckr, item.banco, 'en_objetivo', price, item.objetivo);
-      await sendNotification(token, `🎯 ${item.tckr} en objetivo`, `Precio ${price.toFixed(2)} ≥ Obj ${item.objetivo}`);
+      await sendNotification(token, `🎯 ${item.tckr} en objetivo`, `Precio ${price.toFixed(2)} ≥ Obj ${item.objetivo}`, item.tckr);
     }
     if (!enObjetivo && prev[key].enObjetivo) {
       dia.obj_sal++;
       await guardar(item.tckr, item.banco, 'salio_objetivo', price, item.objetivo);
-      await sendNotification(token, `⬇️ ${item.tckr} salió de objetivo`, `Precio ${price.toFixed(2)} < Obj ${item.objetivo}`);
+      await sendNotification(token, `⬇️ ${item.tckr} salió de objetivo`, `Precio ${price.toFixed(2)} < Obj ${item.objetivo}`, item.tckr);
     }
     const salioAhora = !enObjetivo && prev[key].enObjetivo;
     if (pendiente && !prev[key].pendiente && !salioAhora) {
       dia.pen_ent++;
       await guardar(item.tckr, item.banco, 'pendiente', price, item.objetivo);
-      await sendNotification(token, `⚠️ ${item.tckr} cerca del objetivo`, `A menos del 7% — Precio ${price.toFixed(2)}`);
+      await sendNotification(token, `⚠️ ${item.tckr} cerca del objetivo`, `A menos del 7% — Precio ${price.toFixed(2)}`, item.tckr);
     }
     if (!pendiente && prev[key].pendiente && !enObjetivo) {
       dia.pen_sal++;
       await guardar(item.tckr, item.banco, 'salio_pendiente', price, item.objetivo);
-      await sendNotification(token, `↩️ ${item.tckr} salió de pendientes`, `Precio ${price.toFixed(2)}`);
+      await sendNotification(token, `↩️ ${item.tckr} salió de pendientes`, `Precio ${price.toFixed(2)}`, item.tckr);
     }
 
     // Alerta subida >5% en el día (una sola vez)
     if (pctDia >= 5 && !yaNotifSubida) {
       await guardar(item.tckr, item.banco, 'subida_5pct', price, item.objetivo || 0);
-      await sendNotification(token, `😊 ${item.tckr} sube +${pctDia.toFixed(1)}% hoy`, `Precio ${price.toFixed(2)} · +${pctDia.toFixed(2)}%`);
+      await sendNotification(token, `😊 ${item.tckr} sube +${pctDia.toFixed(1)}% hoy`, `Precio ${price.toFixed(2)} · +${pctDia.toFixed(2)}%`, item.tckr);
       next[key].subida5notif = true;
     }
 
@@ -137,7 +137,7 @@ async function checkAlerts() {
       next[keyMax] = { cercaMax };
       if (prev[keyMax] !== undefined && cercaMax && prev[keyMax].cercaMax === false) {
         await guardar(item.tckr, item.banco, 'cerca_max52', price, high52);
-        await sendNotification(token, `📈 ${item.tckr} cerca del máximo anual`, `Precio ${price.toFixed(2)} cerca del max 52s: ${high52.toFixed(2)}`);
+        await sendNotification(token, `📈 ${item.tckr} cerca del máximo anual`, `Precio ${price.toFixed(2)} cerca del max 52s: ${high52.toFixed(2)}`, item.tckr);
       }
     }
   }
@@ -216,7 +216,7 @@ async function checkFueraMercado() {
     const etq = franja === 'after' ? 'after-hours' : 'pre-market';
     await sendNotification(token,
       `${flecha} ${item.tckr} ${r.pct >= 0 ? '+' : ''}${r.pct.toFixed(1)}% ${etq}`,
-      `Cierre ${r.cierre.toFixed(2)} → ${r.fuera.toFixed(2)}`);
+      `Cierre ${r.cierre.toFixed(2)} → ${r.fuera.toFixed(2)}`, item.tckr);
     avisados.add(item.symbol);
     enviadas++;
     await new Promise(s => setTimeout(s, 300));

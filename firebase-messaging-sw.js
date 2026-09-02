@@ -25,7 +25,8 @@ messaging.onBackgroundMessage((payload) => {
     body,
     icon: '/icon.png',
     tag: title + '|' + body,
-    renotify: false
+    renotify: false,
+    data: { tckr: n.tckr || '' }
   });
 });
 
@@ -33,10 +34,14 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((lista) => {
+      const tk = (event.notification.data && event.notification.data.tckr) || '';
       for (const c of lista) {
-        if (c.url.includes('appcartera') && 'focus' in c) return c.focus();
+        if (c.url.includes('appcartera') && 'focus' in c) {
+          if (tk) c.postMessage({ abrirValor: tk });
+          return c.focus();
+        }
       }
-      if (clients.openWindow) return clients.openWindow('/');
+      if (clients.openWindow) return clients.openWindow(tk ? '/?v=' + encodeURIComponent(tk) : '/');
     })
   );
 });

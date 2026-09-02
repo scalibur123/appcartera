@@ -734,6 +734,27 @@ function renderDiana(){
 
 startLoad();
 
+// Al pulsar una notificacion: si la app estaba cerrada llega por ?v=TCKR,
+// y si ya estaba abierta el service worker manda un postMessage.
+function abrirValorDesdeNotif(tckr){
+  if(!tckr)return;
+  const intenta=(reintentos)=>{
+    const it=C.find(i=>i.tckr===tckr);
+    if(typeof showDetalle==='function' && it && prices[it.symbol]){ showDetalle(tckr); return; }
+    if(reintentos>0)setTimeout(()=>intenta(reintentos-1),500);
+  };
+  intenta(20);
+}
+(function(){
+  const v=new URLSearchParams(location.search).get('v');
+  if(v)abrirValorDesdeNotif(v);
+  if(navigator.serviceWorker){
+    navigator.serviceWorker.addEventListener('message',e=>{
+      if(e.data&&e.data.abrirValor)abrirValorDesdeNotif(e.data.abrirValor);
+    });
+  }
+})();
+
 function setSortC(s,btn){if(cSort===s){cSort=null;btn.classList.remove('active');}else{cSort=s;document.querySelectorAll('[id^="cf-sort-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}renderCartera();}
 function toggleBancoMenu(){
   const m=document.getElementById('df-banco-menu');
