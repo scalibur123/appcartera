@@ -1172,6 +1172,7 @@ function showDetalle(tckr) {
         <div style="color:${col(varDiaPct)};font-size:14px">${fP(varDiaPct)}</div>
       </div>
     </div>
+    <div id="detalle-fuera"></div>
     <div style="background:var(--card);border-radius:12px;padding:16px;margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
         <span style="color:var(--muted)">Valor mercado</span>
@@ -1197,6 +1198,32 @@ function showDetalle(tckr) {
     ${comprasHtml}
   `;
   document.getElementById('detalle-valor').style.display = 'block';
+  if(!item.symbol.includes('.'))cargarFueraDetalle(item);
+}
+
+// Pre-market y after-hours en la ficha del valor. Solo americanas: el
+// endpoint /fuera pide a Yahoo con includePrePost y devuelve el ultimo
+// cruce fuera de sesion frente al cierre oficial.
+async function cargarFueraDetalle(item){
+  const el=document.getElementById('detalle-fuera');
+  if(!el)return;
+  try{
+    const r=await fetch('/fuera?symbols='+encodeURIComponent(item.symbol));
+    const d=await r.json();
+    const x=(d.result||[]).find(v=>v.symbol===item.symbol);
+    if(!x||x.fuera==null||Math.abs(x.pct)<0.05)return;
+    const h=new Date().getHours();
+    const etq=h<15||(h===15&&new Date().getMinutes()<30)?'PRE-MARKET':(h>=22||h<2?'AFTER-HOURS':'FUERA DE SESION');
+    const col='#ff9500';
+    const varPos=(x.fuera-x.cierre)*item.titulos/(eurUsd||1);
+    el.innerHTML='<div style="background:var(--card);border:1px solid '+col+';border-radius:12px;padding:12px;margin-bottom:8px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">'
+      +'<span style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px">'+etq+'</span>'
+      +'<span style="font-size:18px;font-weight:700;color:'+col+'">'+fNum(x.fuera)+'</span></div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:12px">'
+      +'<span style="color:var(--muted)">Cierre '+fNum(x.cierre)+'</span>'
+      +'<span style="color:'+col+';font-weight:600">'+(x.pct>=0?'+':'')+fNum(x.pct)+'% \u00b7 '+(varPos>=0?'+':'')+fNum(varPos)+' \u20ac</span></div></div>';
+  }catch(e){}
 }
 function hideDetalle() { document.getElementById('detalle-valor').style.display = 'none'; }
 </script><div id="earnings" class="section">
