@@ -1010,18 +1010,34 @@ const app = initializeApp({
   appId: "1:206685291968:web:6f2db50f8a7ed0e107f425"
 });
 const messaging = getMessaging(app);
+// Pedir y enviar el token. NO pide permiso, asi que no necesita gesto del
+// usuario: se puede llamar sola al arrancar si el permiso ya esta concedido.
+window.registrarToken = async function() {
+  try {
+    const sw = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+    const token = await getToken(messaging, {vapidKey: "BABTW9hMV1trL7bxVw0cts_Vf4lKVvarO7dZFNAx0k_X3Ln1iol6he-tX8qCApLSTAqFLVYb8c1Mzm-qi_CCCr4", serviceWorkerRegistration: sw});
+    if (token) {
+      await fetch("/save-token", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({token})});
+      return true;
+    }
+  } catch(e) { console.error("Error token:", e); }
+  return false;
+}
+function ocultarCampana(){ const b=document.getElementById('btn-campana'); if(b)b.style.display='none'; }
+// Esta si pide permiso, por eso solo se llama desde el boton.
 window.initNotifications = async function() {
   try {
     const perm = await Notification.requestPermission();
     if (perm !== "granted") return;
-    const sw = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-    const token = await getToken(messaging, {vapidKey: "BABTW9hMV1trL7bxVw0cts_Vf4lKVvarO7dZFNAx0k_X3Ln1iol6he-tX8qCApLSTAqFLVYb8c1Mzm-qi_CCCr4", serviceWorkerRegistration: sw});
-    if (token) await fetch("/save-token", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({token})});
+    if (await registrarToken()) ocultarCampana();
   } catch(e) { console.error("Error notif:", e); }
 }
-// autollamada quitada: iOS solo permite pedir permiso desde un gesto. Usa el boton.
+// Con el permiso ya concedido el token se refresca solo en cada arranque y la
+// campana no llega a verse. Solo aparece si hace falta el gesto (permiso sin
+// conceder tras reinstalar la PWA).
+if (Notification.permission === "granted") { registrarToken(); ocultarCampana(); }
 </script>
-<button onclick="initNotifications()" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));right:calc(50% - 215px + 20px);background:#4CAF50;color:white;border:none;border-radius:50%;width:50px;height:50px;font-size:20px;cursor:pointer;z-index:999;transform:translateZ(0);-webkit-backface-visibility:hidden;will-change:transform">🔔</button>
+<button id="btn-campana" onclick="initNotifications()" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));right:calc(50% - 215px + 20px);background:#4CAF50;color:white;border:none;border-radius:50%;width:50px;height:50px;font-size:20px;cursor:pointer;z-index:999;transform:translateZ(0);-webkit-backface-visibility:hidden;will-change:transform">🔔</button>
 <div id="historico" class="section">
   <div style="padding:16px">
     <h2 style="margin-bottom:12px;font-size:16px;color:var(--muted)">Historico de alertas</h2>
