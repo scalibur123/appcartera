@@ -1,0 +1,20 @@
+{
+  "A3M": "A3M.MC",
+  "ACX": "ACX.MC",
+  "ADX": "ADX.MC",
+  "CABK": "CABK.MC",
+  "CLNX": "CLNX.MC",
+  "COL": "COL.MC",
+  "ENC": "ENC.MC",
+  "FAE": "FAE.MC",
+  "FDR": "FDR.MC",
+  "ORY": "ORY.MC",
+  "REP": "REP.MC",
+  "SCYR": "SCYR.MC",
+  "SOL": "SOL.MC",
+  "TUB": "TUB.MC",
+  "ALM": "ALM.MC",
+  "GEST": "GEST.MC",
+  "TEF": "TEF.MC",
+  "_comment": "ticker -> simbolo SOLO para cotizacion en vivo. El historico sigue usando tickers_override.json"
+}

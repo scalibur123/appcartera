@@ -40,6 +40,7 @@ PALABRA_FINAL = "final app cartera diseno"      # marca el FINAL del bloque de V
 INDEX_HTML = PROYECTO / "index.html"
 TICKERS_JSON = PROYECTO / "tickers.json"
 OVERRIDE_JSON = PROYECTO / "tickers_override.json"
+PRECIO_JSON = PROYECTO / "tickers_precio.json"   # ticker -> simbolo SOLO para cotizacion en vivo
 MIC_NAMES_TXT = PROYECTO / "mic_nombres.txt"  # opcional: pegar ahi columna B manualmente
 
 # === MAPA MIC -> SUFIJO YAHOO ===
@@ -1001,6 +1002,10 @@ def guardar_override(ticker, symbol):
 
 
 def construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker={}):
+    try:
+        _px = {k: v for k, v in json.loads(PRECIO_JSON.read_text(encoding="utf-8")).items() if not k.startswith("_")}
+    except Exception:
+        _px = {}
     items = []
     for p in posiciones:
         tckr = p["tckr"]
@@ -1026,6 +1031,8 @@ def construir_const_C_compacta(posiciones, ticker_map, compras_por_ticker={}):
             "symbol": sym,
             "compras": compras_por_ticker.get(tckr, []),
         }
+        if tckr in _px and _px[tckr] != sym:
+            item_json["symbol_px"] = _px[tckr]
         items.append(json.dumps(item_json, ensure_ascii=False, separators=(",", ":")))
     return "const C=[" + ",".join(items) + "];"
 
