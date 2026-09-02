@@ -894,7 +894,8 @@ window.renderMercados=function(){
     if(!b.v.length)continue;
     const sv=b.v.reduce((a,x)=>a+x.val,0), sd=b.v.reduce((a,x)=>a+x.dia,0);
     const sp=(sv-sd)?sd/(sv-sd)*100:0;
-    b.v.sort((x,y)=>mSort==='pos'?y.val-x.val:y.pct-x.pct);
+    const _rt=z=>z.coste?(z.val-z.coste)/z.coste*100:-9999;
+    b.v.sort((x,y)=>mSort==='pos'?y.val-x.val:(mSort==='rent'?_rt(y)-_rt(x):y.pct-x.pct));
     h+='<div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 4px;border-bottom:2px solid var(--border)">'
       +'<b style="font-size:14px">'+b.n+' <span style="font-size:11px;color:var(--muted)">('+b.v.length+')</span></b>'
       +'<span style="font-size:13px"><b>'+fE(sv)+'</b> <span style="color:'+cl(sd)+'">'+sg(sp)+fNum(sp)+'%</span></span></div>';
@@ -1443,6 +1444,7 @@ window.renderVentas = function() {
     <div class="filters" style="margin-bottom:8px">
       <button class="filter-btn active" id="mf-pos" onclick="setSortM('pos',this)">↑ Posición</button>
       <button class="filter-btn" id="mf-pct" onclick="setSortM('pct',this)">↑ % día</button>
+      <button class="filter-btn" id="mf-rent" onclick="setSortM('rent',this)">↑ % total</button>
     </div>
     <div id="merc-list"></div>
   </div>
