@@ -891,7 +891,8 @@ window.renderMercados=function(){
     const ayer=usd?i.titulos*pxAyer/fxA:i.titulos*pxAyer;
     const dia=val-ayer;
     const fxEfecto=usd?i.titulos*px*(1/fxH-1/fxA):0;
-    bloques[mercadoDe(i)].v.push({t:i.tckr,sym:i.symbol,val:val,pct:pct,dia:dia,fx:fxEfecto,coste:i.coste_eur});
+    const mk=mercadoDe(i);
+    bloques[mk].v.push({t:i.tckr,sym:i.symbol,val:val,pct:pct,dia:dia,fx:fxEfecto,coste:i.coste_eur,mk:mk});
     tVal+=val;tCoste+=i.coste_eur;tDia+=dia;tFx+=fxEfecto;
   }
   const cl=v=>v>=0?'var(--green)':'var(--red)';
@@ -926,28 +927,38 @@ window.renderMercados=function(){
     + bl.map(x=>tarjeta(x.bandera,x.val,x.dia,x.coste,x.n+' val.',x.k,x.fx)).join('')
     + tarjeta('🌍 TOTAL',tVal,tDia,tCoste,C.length+' val.',null,tFx)
     + '</div>';
-  let h='';
-  for(const k of ['ESP','EUR','USA']){
-    if(mFiltro&&k!==mFiltro)continue;
-    const b=bloques[k];
-    if(!b.v.length)continue;
-    const sv=b.v.reduce((a,x)=>a+x.val,0), sd=b.v.reduce((a,x)=>a+x.dia,0);
+  const BANDERA={ESP:bloques.ESP.n.split(' ')[0],EUR:bloques.EUR.n.split(' ')[0],
+                 USA:bloques.USA.n.split(' ')[0]};
+  const _rt=z=>z.coste?(z.val-z.coste)/z.coste*100:-9999;
+  const ordenar=v=>v.sort((x,y)=>mSort==='pos'?y.val-x.val:(mSort==='rent'?_rt(y)-_rt(x):y.pct-x.pct));
+  function cabecera(nombre,v){
+    const sv=v.reduce((a,x)=>a+x.val,0), sd=v.reduce((a,x)=>a+x.dia,0);
     const sp=(sv-sd)?sd/(sv-sd)*100:0;
-    const _rt=z=>z.coste?(z.val-z.coste)/z.coste*100:-9999;
-    b.v.sort((x,y)=>mSort==='pos'?y.val-x.val:(mSort==='rent'?_rt(y)-_rt(x):y.pct-x.pct));
-    h+='<div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 4px;border-bottom:2px solid var(--border)">'
-      +'<b style="font-size:14px">'+b.n+' <span style="font-size:11px;color:var(--muted)">('+b.v.length+')</span></b>'
+    return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 4px;border-bottom:2px solid var(--border)">'
+      +'<b style="font-size:14px">'+nombre+' <span style="font-size:11px;color:var(--muted)">('+v.length+')</span></b>'
       +'<span style="font-size:13px"><b>'+fE(sv)+'</b> <span style="color:'+cl(sd)+'">'+sg(sp)+fNum(sp)+'%</span></span></div>';
-    for(const x of b.v){
-      const pt=(window.maxInfo&&maxInfo(x.sym))?maxInfo(x.sym).punto:'';
-      const rentT=x.coste?(x.val-x.coste)/x.coste*100:0;
-      h+='<div onclick="showDetalle(\''+x.t+'\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;padding:7px 4px;border-bottom:1px solid var(--border)">'
-        +'<b style="font-size:13px">'+x.t+pt+'</b>'
-        +'<span style="font-size:13px">'+fE(x.val)
-        +' <span style="color:'+cl(x.pct)+';font-weight:600">'+sg(x.pct)+fNum(x.pct)+'%</span>'
-        +' <span style="color:'+cl(rentT)+';font-weight:600;opacity:0.75">'+sg(rentT)+fNum(rentT)+'%</span></span></div>';
-    }
-    h+='</div>';
+  }
+  function fila(x,conBandera){
+    const pt=(window.maxInfo&&maxInfo(x.sym))?maxInfo(x.sym).punto:'';
+    const rentT=x.coste?(x.val-x.coste)/x.coste*100:0;
+    const bnd=conBandera?'<span style="font-size:11px;margin-right:5px">'+(BANDERA[x.mk]||'')+'</span>':'';
+    return '<div onclick="showDetalle(\''+x.t+'\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;padding:7px 4px;border-bottom:1px solid var(--border)">'
+      +'<b style="font-size:13px">'+bnd+x.t+pt+'</b>'
+      +'<span style="font-size:13px">'+fE(x.val)
+      +' <span style="color:'+cl(x.pct)+';font-weight:600">'+sg(x.pct)+fNum(x.pct)+'%</span>'
+      +' <span style="color:'+cl(rentT)+';font-weight:600;opacity:0.75">'+sg(rentT)+fNum(rentT)+'%</span></span></div>';
+  }
+  let h='';
+  if(!mFiltro){
+    // TOTAL: una sola lista con TODOS los valores y su bandera delante, no
+    // tres bloques. El orden (pos/rent/dia) se aplica sobre el conjunto.
+    const todos=ordenar(['ESP','EUR','USA'].reduce((a,k)=>a.concat(bloques[k].v),[]));
+    if(todos.length)h+='<div style="margin-top:12px">'+cabecera('\ud83c\udf0d TOTAL',todos)
+      +todos.map(x=>fila(x,true)).join('')+'</div>';
+  }else{
+    const b=bloques[mFiltro];
+    if(b&&b.v.length)h+='<div style="margin-top:12px">'+cabecera(b.n,ordenar(b.v))
+      +b.v.map(x=>fila(x,false)).join('')+'</div>';
   }
   document.getElementById('merc-list').innerHTML=h;
 };
