@@ -12,15 +12,36 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+
+// Buzon persistente: iOS mata la PWA en segundo plano y un postMessage
+// suelto se pierde si la pagina aun no tiene listener.
+const CACHE_PEND = 'notif-pendiente';
+const CLAVE_PEND = '/__notif_pendiente';
+
+async function guardarPendiente(tckr) {
+  try {
+    const c = await caches.open(CACHE_PEND);
+    await c.put(new Request(CLAVE_PEND), new Response(String(tckr || '')));
+  } catch (e) {}
+}
+
+async function leerPendiente() {
+  try {
+    const c = await caches.open(CACHE_PEND);
+    const r = await c.match(CLAVE_PEND);
+    if (!r) return '';
+    const t = (await r.text()).trim();
+    await c.delete(CLAVE_PEND);
+    return t;
+  } catch (e) { return ''; }
+}
+
 messaging.onBackgroundMessage((payload) => {
   const n = payload.notification || payload.data || {};
   const title = n.title || 'AppCartera';
   const body = n.body || '';
-
-  // El tag hace que una notificacion con el mismo titulo+cuerpo REEMPLACE
-  // a la anterior en lugar de apilarse. Si el navegador ya pinto una
-  // automaticamente (payload con bloque "notification"), esta la sustituye
-  // en vez de duplicarla.
   self.registration.showNotification(title, {
     body,
     icon: '/icon.png',
@@ -32,16 +53,37 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((lista) => {
-      const tk = (event.notification.data && event.notification.data.tckr) || '';
-      for (const c of lista) {
-        if (c.url.includes('appcartera') && 'focus' in c) {
-          if (tk) c.postMessage({ abrirValor: tk });
-          return c.focus();
-        }
+  const tk = (event.notification.data && event.notification.data.tckr) || '';
+
+  event.waitUntil((async () => {
+    const lista = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    let cli = null;
+    for (const c of lista) { if (c.url.includes('appcartera')) { cli = c; break; } }
+
+    if (tk) await guardarPendiente(tk);
+
+    if (!cli) {
+      if (self.clients.openWindow) {
+        await self.clients.openWindow(tk ? '/?v=' + encodeURIComponent(tk) : '/');
       }
-      if (clients.openWindow) return clients.openWindow(tk ? '/?v=' + encodeURIComponent(tk) : '/');
-    })
-  );
+      return;
+    }
+
+    if ('focus' in cli) { try { await cli.focus(); } catch (e) {} }
+    if (!tk) return;
+
+    for (const espera of [0, 500, 1200]) {
+      if (espera) await new Promise(r => setTimeout(r, espera));
+      try { cli.postMessage({ abrirValor: tk }); } catch (e) {}
+    }
+  })());
+});
+
+self.addEventListener('message', (event) => {
+  const d = event.data || {};
+  if (d.tipo !== 'pedirPendiente') return;
+  event.waitUntil((async () => {
+    const t = await leerPendiente();
+    if (event.ports && event.ports[0]) event.ports[0].postMessage({ tckr: t });
+  })());
 });

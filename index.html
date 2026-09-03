@@ -738,22 +738,41 @@ startLoad();
 // Al pulsar una notificacion: si la app estaba cerrada llega por ?v=TCKR,
 // y si ya estaba abierta el service worker manda un postMessage.
 function abrirValorDesdeNotif(tckr){
-  if(!tckr)return;
-  const intenta=(reintentos)=>{
-    const it=C.find(i=>i.tckr===tckr);
-    if(typeof showDetalle==='function' && it && prices[it.symbol]){ showDetalle(tckr); return; }
-    if(reintentos>0)setTimeout(()=>intenta(reintentos-1),500);
+  if(!tckr) return;
+  tckr = String(tckr).trim();
+  if(window.__notifUlt === tckr && Date.now() - (window.__notifUltT||0) < 4000) return;
+  window.__notifUlt = tckr; window.__notifUltT = Date.now();
+  const intenta = (n) => {
+    const it = C.find(i => i.tckr === tckr);
+    if(typeof showDetalle === 'function' && it && prices[it.symbol]){ showDetalle(tckr); return; }
+    if(n > 0){ setTimeout(() => intenta(n-1), 500); return; }
+    if(typeof goToCartera === 'function') goToCartera(tckr);
   };
-  intenta(20);
+  intenta(60);
+}
+function pedirPendienteAlSW(){
+  if(!navigator.serviceWorker) return;
+  navigator.serviceWorker.ready.then(reg => {
+    const sw = reg.active || navigator.serviceWorker.controller;
+    if(!sw) return;
+    const ch = new MessageChannel();
+    ch.port1.onmessage = e => { if(e.data && e.data.tckr) abrirValorDesdeNotif(e.data.tckr); };
+    sw.postMessage({tipo:'pedirPendiente'}, [ch.port2]);
+  }).catch(()=>{});
 }
 (function(){
-  const v=new URLSearchParams(location.search).get('v');
-  if(v)abrirValorDesdeNotif(v);
+  const v = new URLSearchParams(location.search).get('v');
+  if(v) abrirValorDesdeNotif(v);
   if(navigator.serviceWorker){
-    navigator.serviceWorker.addEventListener('message',e=>{
-      if(e.data&&e.data.abrirValor)abrirValorDesdeNotif(e.data.abrirValor);
+    navigator.serviceWorker.addEventListener('message', e => {
+      if(e.data && e.data.abrirValor) abrirValorDesdeNotif(e.data.abrirValor);
     });
   }
+  pedirPendienteAlSW();
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible') pedirPendienteAlSW();
+  });
+  window.addEventListener('pageshow', pedirPendienteAlSW);
 })();
 
 function setSortC(s,btn){if(cSort===s){cSort=null;btn.classList.remove('active');}else{cSort=s;document.querySelectorAll('[id^="cf-sort-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}renderCartera();}

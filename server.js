@@ -234,7 +234,13 @@ function handleStatic(req, res, urlPath) {
     '.html': 'text/html',
     '.ico': 'image/x-icon'
   };
-  res.writeHead(200, { 'Content-Type': (types[ext] || 'application/octet-stream') + '; charset=utf-8' });
+  const cab = { 'Content-Type': (types[ext] || 'application/octet-stream') + '; charset=utf-8' };
+  if (file.endsWith('firebase-messaging-sw.js')) {
+    cab['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    cab['Pragma'] = 'no-cache';
+    cab['Expires'] = '0';
+  }
+  res.writeHead(200, cab);
   res.end(fs.readFileSync(file));
 }
 
