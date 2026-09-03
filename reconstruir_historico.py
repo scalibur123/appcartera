@@ -569,18 +569,13 @@ def main():
         else:
             x["congelado"] = False
     CONGELADO.write_text(json.dumps(congelado, indent=1, ensure_ascii=False, sort_keys=True), encoding="utf-8")
-    # ── FECHA DEL MAXIMO DE CADA SIMBOLO ──────────────────────────────
-    # Saber que un valor esta al 1% de su maximo no dice nada si ese maximo
-    # fue hace cuatro meses. Aqui se guarda CUANDO lo hizo.
-    maximos = {}
-    for sim, serie in series.items():
-        if not serie:
-            continue
-        f_max = max(serie, key=lambda f: serie[f])
-        maximos[sim] = {"valor": round(serie[f_max], 4), "fecha": str(f_max),
-                        "desde": str(min(serie))}
-    SALIDA_MAXIMOS.write_text(json.dumps(maximos, ensure_ascii=False, sort_keys=True), encoding="utf-8")
-    print(f"💾 Maximos con fecha de {len(maximos)} simbolos en {SALIDA_MAXIMOS.name}")
+    # ── FECHA DEL MAXIMO: YA NO SE ESCRIBE AQUI ───────────────────────
+    # Estas series son de CIERRES y solo arrancan en la fecha de inicio de
+    # la reconstruccion, asi que daban maximos falsos (ZS: 242,08 desde
+    # diciembre cuando el real eran 336,99 del 3-nov-2025). maximos.json lo
+    # genera ahora actualizar_maximos.py, que lee de Yahoo los maximos
+    # intradia de 52 semanas: el mismo dato que muestra la app.
+    print("ℹ️  maximos.json no se toca aqui (lo genera actualizar_maximos.py)")
 
     barra("HISTORICO CONGELADO")
     print(f"   {reutilizados} dias reutilizados del archivo (no recalculados)")
