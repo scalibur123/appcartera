@@ -23,7 +23,7 @@
     "moneda": "EUR",
     "titulos": 131.0,
     "coste_eur": 14347.66,
-    "precio_excel": 201,
+    "precio_excel": 201.2,
     "fuente_resolucion": "override"
   },
   "ACX": {
@@ -32,7 +32,7 @@
     "moneda": "EUR",
     "titulos": 3358.0,
     "coste_eur": 39951.31,
-    "precio_excel": 18.11,
+    "precio_excel": 18.12,
     "fuente_resolucion": "override"
   },
   "ADS": {
@@ -59,7 +59,7 @@
     "moneda": "EUR",
     "titulos": 12.0,
     "coste_eur": 18257.76,
-    "precio_excel": 1048.2,
+    "precio_excel": 1049.2,
     "fuente_resolucion": "override"
   },
   "AED": {
@@ -104,7 +104,7 @@
     "moneda": "EUR",
     "titulos": 366.0,
     "coste_eur": 10018.42,
-    "precio_excel": 15.8,
+    "precio_excel": 15.82,
     "fuente_resolucion": "override"
   },
   "AMS": {
@@ -113,7 +113,7 @@
     "moneda": "EUR",
     "titulos": 277.0,
     "coste_eur": 13979.02,
-    "precio_excel": 57.26,
+    "precio_excel": 57.28,
     "fuente_resolucion": "override"
   },
   "AMRC": {
@@ -140,7 +140,7 @@
     "moneda": "EUR",
     "titulos": 8810.56,
     "coste_eur": 52849.8245,
-    "precio_excel": 4.56,
+    "precio_excel": 4.565,
     "fuente_resolucion": "override"
   },
   "ABI": {
@@ -149,7 +149,7 @@
     "moneda": "EUR",
     "titulos": 220.0,
     "coste_eur": 12035.8,
-    "precio_excel": 68.72,
+    "precio_excel": 68.8,
     "fuente_resolucion": "override"
   },
   "APP": {
@@ -185,7 +185,7 @@
     "moneda": "EUR",
     "titulos": 737.0,
     "coste_eur": 15123.72,
-    "precio_excel": 64.96,
+    "precio_excel": 65.14,
     "fuente_resolucion": "override"
   },
   "ARIS": {
@@ -329,7 +329,7 @@
     "moneda": "EUR",
     "titulos": 6050.0,
     "coste_eur": 29604.4,
-    "precio_excel": 13.37,
+    "precio_excel": 13.385,
     "fuente_resolucion": "override"
   },
   "CZR": {
@@ -365,7 +365,7 @@
     "moneda": "EUR",
     "titulos": 352.0,
     "coste_eur": 10997.37,
-    "precio_excel": 25.89,
+    "precio_excel": 25.91,
     "fuente_resolucion": "override"
   },
   "CERT": {
@@ -455,7 +455,7 @@
     "moneda": "EUR",
     "titulos": 827.0,
     "coste_eur": 14942.35,
-    "precio_excel": 18.85,
+    "precio_excel": 18.855,
     "fuente_resolucion": "override"
   },
   "CRBP": {
@@ -563,7 +563,7 @@
     "moneda": "EUR",
     "titulos": 1612.0,
     "coste_eur": 23474.25,
-    "precio_excel": 16.53,
+    "precio_excel": 16.54,
     "fuente_resolucion": "override"
   },
   "ENC": {
@@ -581,7 +581,7 @@
     "moneda": "EUR",
     "titulos": 85.0,
     "coste_eur": 15672.84,
-    "precio_excel": 155.15,
+    "precio_excel": 155.4,
     "fuente_resolucion": "override"
   },
   "EQT": {
@@ -608,7 +608,7 @@
     "moneda": "EUR",
     "titulos": 233.0,
     "coste_eur": 14973.6,
-    "precio_excel": 73.84,
+    "precio_excel": 73.88,
     "fuente_resolucion": "override"
   },
   "EVK": {
@@ -635,7 +635,7 @@
     "moneda": "EUR",
     "titulos": 2529.0,
     "coste_eur": 8568.02,
-    "precio_excel": 2.93,
+    "precio_excel": 2.932,
     "fuente_resolucion": "override"
   },
   "FDR": {
@@ -644,7 +644,7 @@
     "moneda": "EUR",
     "titulos": 469.0,
     "coste_eur": 12016.4,
-    "precio_excel": 18.9,
+    "precio_excel": 18.94,
     "fuente_resolucion": "override"
   },
   "FIVN": {
@@ -770,7 +770,7 @@
     "moneda": "EUR",
     "titulos": 1098.0,
     "coste_eur": 11989.37,
-    "precio_excel": 7.44,
+    "precio_excel": 7.485,
     "fuente_resolucion": "override"
   },
   "HFG": {
@@ -806,7 +806,7 @@
     "moneda": "EUR",
     "titulos": 3051.0,
     "coste_eur": 14146.13,
-    "precio_excel": 19.59,
+    "precio_excel": 19.6,
     "fuente_resolucion": "override"
   },
   "ITX": {
@@ -815,7 +815,7 @@
     "moneda": "EUR",
     "titulos": 643.0,
     "coste_eur": 19030.21,
-    "precio_excel": 56.28,
+    "precio_excel": 56.36,
     "fuente_resolucion": "override"
   },
   "INW": {
@@ -833,7 +833,7 @@
     "moneda": "EUR",
     "titulos": 1792.0,
     "coste_eur": 10014.21,
-    "precio_excel": 5.225,
+    "precio_excel": 5.23,
     "fuente_resolucion": "override"
   },
   "INPST": {
@@ -851,7 +851,7 @@
     "moneda": "EUR",
     "titulos": 5848.0,
     "coste_eur": 29933.626,
-    "precio_excel": 4.92,
+    "precio_excel": 4.924,
     "fuente_resolucion": "override"
   },
   "INTU": {
@@ -1058,7 +1058,7 @@
     "moneda": "EUR",
     "titulos": 3153.0,
     "coste_eur": 14657.532,
-    "precio_excel": 2.5,
+    "precio_excel": 2.506,
     "fuente_resolucion": "override"
   },
   "MSFT": {
@@ -1094,7 +1094,7 @@
     "moneda": "EUR",
     "titulos": 220.0,
     "coste_eur": 13131.68,
-    "precio_excel": 46.26,
+    "precio_excel": 46.31,
     "fuente_resolucion": "override"
   },
   "MNRO": {
@@ -1139,7 +1139,7 @@
     "moneda": "EUR",
     "titulos": 2000.0,
     "coste_eur": 11946,
-    "precio_excel": 4.307,
+    "precio_excel": 4.31,
     "fuente_resolucion": "override"
   },
   "OHLA": {
@@ -1157,7 +1157,7 @@
     "moneda": "EUR",
     "titulos": 425.0,
     "coste_eur": 2788.28,
-    "precio_excel": 4.14,
+    "precio_excel": 4.154,
     "fuente_resolucion": "override"
   },
   "OGN": {
@@ -1229,7 +1229,7 @@
     "moneda": "EUR",
     "titulos": 581.0,
     "coste_eur": 28821.452,
-    "precio_excel": 83.85,
+    "precio_excel": 83.7,
     "fuente_resolucion": "override"
   },
   "POOL": {
@@ -1265,7 +1265,7 @@
     "moneda": "EUR",
     "titulos": 910.0,
     "coste_eur": 16114.03,
-    "precio_excel": 18.26,
+    "precio_excel": 18.27,
     "fuente_resolucion": "override"
   },
   "REP": {
@@ -1301,7 +1301,7 @@
     "moneda": "EUR",
     "titulos": 8253.0,
     "coste_eur": 15019.72,
-    "precio_excel": 4.218,
+    "precio_excel": 4.222,
     "fuente_resolucion": "override"
   },
   "SPM": {
@@ -1310,7 +1310,7 @@
     "moneda": "EUR",
     "titulos": 4795.0,
     "coste_eur": 11087.065,
-    "precio_excel": 4.445,
+    "precio_excel": 4.441,
     "fuente_resolucion": "override"
   },
   "SGO": {
@@ -1319,7 +1319,7 @@
     "moneda": "EUR",
     "titulos": 200.0,
     "coste_eur": 15540.79,
-    "precio_excel": 74.94,
+    "precio_excel": 75.08,
     "fuente_resolucion": "override"
   },
   "SANA": {
@@ -1337,7 +1337,7 @@
     "moneda": "EUR",
     "titulos": 119.0,
     "coste_eur": 9999.1,
-    "precio_excel": 77.21,
+    "precio_excel": 77.17,
     "fuente_resolucion": "override"
   },
   "SAP": {
@@ -1346,7 +1346,7 @@
     "moneda": "EUR",
     "titulos": 45.0,
     "coste_eur": 12162.75,
-    "precio_excel": 184.48,
+    "precio_excel": 184.86,
     "fuente_resolucion": "override"
   },
   "SDGR": {
@@ -1427,7 +1427,7 @@
     "moneda": "EUR",
     "titulos": 220.0,
     "coste_eur": 12109.3,
-    "precio_excel": 57.85,
+    "precio_excel": 57.95,
     "fuente_resolucion": "override"
   },
   "SOL": {
@@ -1472,7 +1472,7 @@
     "moneda": "EUR",
     "titulos": 786.0,
     "coste_eur": 10012.92,
-    "precio_excel": 4.571,
+    "precio_excel": 4.5775,
     "fuente_resolucion": "override"
   },
   "SYENS": {
@@ -1481,7 +1481,7 @@
     "moneda": "EUR",
     "titulos": 127.0,
     "coste_eur": 11012.2,
-    "precio_excel": 80.85,
+    "precio_excel": 81,
     "fuente_resolucion": "override"
   },
   "SY1": {
@@ -1499,7 +1499,7 @@
     "moneda": "EUR",
     "titulos": 340.0,
     "coste_eur": 12561,
-    "precio_excel": 30.24,
+    "precio_excel": 30.26,
     "fuente_resolucion": "override"
   },
   "TDOC": {
@@ -1517,7 +1517,7 @@
     "moneda": "EUR",
     "titulos": 4628.0,
     "coste_eur": 20019.2248,
-    "precio_excel": 3.683,
+    "precio_excel": 3.686,
     "fuente_resolucion": "override"
   },
   "TEP": {
@@ -1526,7 +1526,7 @@
     "moneda": "EUR",
     "titulos": 89.0,
     "coste_eur": 11526.95,
-    "precio_excel": 71.36,
+    "precio_excel": 71.38,
     "fuente_resolucion": "override"
   },
   "COO": {
@@ -1643,7 +1643,7 @@
     "moneda": "EUR",
     "titulos": 311.0,
     "coste_eur": 10949.76,
-    "precio_excel": 24.26,
+    "precio_excel": 24.27,
     "fuente_resolucion": "override"
   },
   "VRLA": {
@@ -1652,7 +1652,7 @@
     "moneda": "EUR",
     "titulos": 460.0,
     "coste_eur": 14673.2,
-    "precio_excel": 19.23,
+    "precio_excel": 19.24,
     "fuente_resolucion": "override"
   },
   "VRT": {
@@ -1679,7 +1679,7 @@
     "moneda": "EUR",
     "titulos": 98.0,
     "coste_eur": 9990,
-    "precio_excel": 112.1,
+    "precio_excel": 112.2,
     "fuente_resolucion": "override"
   },
   "VIS": {
@@ -1697,7 +1697,7 @@
     "moneda": "EUR",
     "titulos": 353.0,
     "coste_eur": 10040.2,
-    "precio_excel": 18.95,
+    "precio_excel": 18.965,
     "fuente_resolucion": "override"
   },
   "WCH": {
@@ -1760,7 +1760,7 @@
     "moneda": "EUR",
     "titulos": 175.0,
     "coste_eur": 13393.0,
-    "precio_excel": 14.532,
+    "precio_excel": 14.55,
     "fuente_resolucion": "override"
   },
   "ZAL": {

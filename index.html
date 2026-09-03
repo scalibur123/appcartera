@@ -252,7 +252,7 @@ async function fetchBatch(tickers){
     const r=await fetch(`/?symbols=${encodeURIComponent(symbols)}`,{signal:AbortSignal.timeout(15000)});
     const data=await r.json();
     const out={};
-    for(const q of (data?.quoteResponse?.result||[])) {out[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent||0,high52:q.fiftyTwoWeekHigh||null}; if(q.longName) names[q.symbol]=q.longName;}
+    for(const q of (data?.quoteResponse?.result||[])) {out[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent||0,high52:q.fiftyTwoWeekHigh||null,dayHigh:q.regularMarketDayHigh||null}; if(q.longName) names[q.symbol]=q.longName;}
     return out;
   }catch(e){dbg('Error: '+e.message);return {};}
 }
@@ -817,12 +817,23 @@ window.goToCartera = function(ticker) {
 // Un valor al 1% de su maximo no es lo mismo si lo hizo hoy que hace 4 meses.
 // Devuelve {punto, titulo} segun cuando se alcanzo el maximo guardado.
 window.maxInfo = function(symbol){
+  const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  // Yahoo da el VALOR del maximo de 52 semanas pero no su fecha. Si el maximo
+  // de la sesion de hoy coincide con ese maximo, el maximo es de hoy: punto
+  // rojo al momento, sin esperar a reconstruir_historico.py.
+  const q = (window.prices && window.prices[symbol]) || null;
+  if(q && q.high52 && q.dayHigh && q.dayHigh >= q.high52*0.999){
+    const d = new Date();
+    const t = d.getDate()+' '+MES[d.getMonth()];
+    return {color:'#ff4d4d', dias:0, fecha:t,
+            titulo:'Maximo el '+t+' (hoy)',
+            punto:'<span title="Maximo el '+t+' (hoy)" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff4d4d;margin-left:4px;vertical-align:middle"></span>'};
+  }
   const M = window.MAXIMOS && window.MAXIMOS[symbol];
   if(!M) return null;
   const hoy = new Date(); hoy.setHours(12,0,0,0);
   const f = new Date(M.fecha+'T12:00:00');
   const dias = Math.round((hoy-f)/86400000);
-  const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   const pf = M.fecha.split('-');
   const txt = parseInt(pf[2],10)+' '+MES[parseInt(pf[1],10)-1];
   let color, cuando;
