@@ -738,47 +738,76 @@ startLoad();
 // Al pulsar una notificacion: si la app estaba cerrada llega por ?v=TCKR,
 // y si ya estaba abierta el service worker manda un postMessage.
 function abrirValorDesdeNotif(tckr){
+  DBG('abrir(' + tckr + ')');
   if(!tckr) return;
   tckr = String(tckr).trim();
-  if(window.__notifUlt === tckr && Date.now() - (window.__notifUltT||0) < 5000) return;
+  if(window.__notifUlt === tckr && Date.now() - (window.__notifUltT||0) < 5000){ DBG('repetido, ignoro'); return; }
   window.__notifUlt = tckr; window.__notifUltT = Date.now();
   const intenta = (n) => {
     const it = C.find(i => i.tckr === tckr);
-    if(typeof showDetalle === 'function' && it && prices[it.symbol]){ showDetalle(tckr); return; }
+    if(!it && n === 60) DBG('NO esta en C');
+    if(typeof showDetalle === 'function' && it && prices[it.symbol]){ DBG('ABRO FICHA'); showDetalle(tckr); return; }
     if(n > 0){ setTimeout(() => intenta(n-1), 500); return; }
+    DBG('sin precio, voy a Cartera');
     if(typeof goToCartera === 'function') goToCartera(tckr);
   };
   intenta(60);
 }
-function pedirPendienteAlSW(){
-  if(!navigator.serviceWorker) return;
+function DBG(t){
+  try{
+    window.__dbg = window.__dbg || [];
+    const h = new Date().toLocaleTimeString('es-ES');
+    window.__dbg.push(h + ' ' + t);
+    if(window.__dbg.length > 12) window.__dbg.shift();
+    let b = document.getElementById('dbgbox');
+    if(!b){
+      b = document.createElement('div');
+      b.id = 'dbgbox';
+      b.onclick = function(){ this.style.display='none'; };
+      b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,.85);'
+        + 'color:#0f0;font:10px monospace;padding:6px;max-height:38vh;overflow:auto;white-space:pre-wrap';
+      document.body.appendChild(b);
+    }
+    b.style.display = 'block';
+    b.textContent = window.__dbg.join('\n');
+  }catch(e){}
+}
+function pedirPendienteAlSW(origen){
+  if(!navigator.serviceWorker){ DBG('sin serviceWorker'); return; }
   navigator.serviceWorker.ready.then(reg => {
     const sw = reg.active || navigator.serviceWorker.controller;
-    if(!sw) return;
+    if(!sw){ DBG('sin sw activo'); return; }
     const ch = new MessageChannel();
-    ch.port1.onmessage = e => { if(e.data && e.data.tckr) abrirValorDesdeNotif(e.data.tckr); };
+    ch.port1.onmessage = e => {
+      const t = (e.data && e.data.tckr) || '';
+      if(t){ DBG('buzon(' + origen + ') = ' + t); abrirValorDesdeNotif(t); }
+    };
     sw.postMessage({tipo:'pedirPendiente'}, [ch.port2]);
-  }).catch(()=>{});
+  }).catch(err => DBG('error ready'));
 }
 (function(){
+  DBG('carga. controlada=' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'SI' : 'NO'));
   const v = new URLSearchParams(location.search).get('v');
-  if(v) abrirValorDesdeNotif(v);
+  if(v){ DBG('url ?v=' + v); abrirValorDesdeNotif(v); }
   if(navigator.serviceWorker){
     navigator.serviceWorker.addEventListener('message', e => {
+      DBG('MENSAJE SW: ' + JSON.stringify(e.data));
       if(e.data && e.data.abrirValor) abrirValorDesdeNotif(e.data.abrirValor);
     });
   }
-  const rafaga = () => {
+  const rafaga = (o) => {
+    DBG('rafaga(' + o + ')');
     [0,300,700,1200,2000,3000,4500,6000].forEach(ms => setTimeout(() => {
-      if(document.visibilityState === 'visible') pedirPendienteAlSW();
+      if(document.visibilityState === 'visible') pedirPendienteAlSW(o);
     }, ms));
   };
-  rafaga();
+  rafaga('inicio');
   document.addEventListener('visibilitychange', () => {
-    if(document.visibilityState === 'visible') rafaga();
+    DBG('visibilidad=' + document.visibilityState);
+    if(document.visibilityState === 'visible') rafaga('visible');
   });
-  window.addEventListener('pageshow', rafaga);
-  window.addEventListener('focus', rafaga);
+  window.addEventListener('pageshow', () => rafaga('pageshow'));
+  window.addEventListener('focus', () => rafaga('focus'));
 })();
 
 function setSortC(s,btn){if(cSort===s){cSort=null;btn.classList.remove('active');}else{cSort=s;document.querySelectorAll('[id^="cf-sort-"]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}renderCartera();}
