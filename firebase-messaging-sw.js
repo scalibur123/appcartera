@@ -52,27 +52,25 @@ messaging.onBackgroundMessage((payload) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const tk = (event.notification.data && event.notification.data.tckr) || '';
+  const destino = tk ? '/?v=' + encodeURIComponent(tk) : '/';
 
   event.waitUntil((async () => {
     if (tk) await guardarPendiente(tk);
 
-    const lista = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    let cli = null;
-    for (const c of lista) { if (c.url.includes('appcartera')) { cli = c; break; } }
-
-    if (!cli) {
-      if (self.clients.openWindow) {
-        await self.clients.openWindow(tk ? '/?v=' + encodeURIComponent(tk) : '/');
-      }
-      return;
+    // iOS congela la pagina al minimizar: avisarla no sirve de nada porque
+    // no ejecuta nada al volver. Se fuerza una carga limpia con la direccion,
+    // que es el unico camino fiable.
+    if (self.clients.openWindow) {
+      try { await self.clients.openWindow(destino); return; } catch (e) {}
     }
 
-    if ('focus' in cli) { try { await cli.focus(); } catch (e) {} }
-    if (!tk) return;
-
-    for (const espera of [0, 400, 1000, 2000]) {
-      if (espera) await new Promise(r => setTimeout(r, espera));
-      try { cli.postMessage({ abrirValor: tk }); } catch (e) {}
+    // Respaldo: si openWindow no esta disponible, avisar a la ventana viva.
+    const lista = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of lista) {
+      if (!c.url.includes('appcartera')) continue;
+      if ('focus' in c) { try { await c.focus(); } catch (e) {} }
+      if (tk) { try { c.postMessage({ abrirValor: tk }); } catch (e) {} }
+      return;
     }
   })());
 });
