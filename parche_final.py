@@ -1,55 +1,169 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 from pathlib import Path
-import sys, re, datetime
-P = Path("index.html")
-if not P.exists(): sys.exit("ERROR: no encuentro index.html")
-s0 = P.read_text(encoding="utf-8")
-tabs = sorted(set(re.findall(r"showTab\('([a-z]+)'", s0)))
-if len(tabs) < 10: sys.exit(f"ERROR: index.html incompleto, solo {len(tabs)} pestanas: {tabs}. Abortado.")
-s = s0; fallos = []
-A1 = """  let b=0;
-  for(const i of C){const p=prices[i.symbol];if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;b+=i.titulos*pe-i.coste_eur;}}"""
-B1 = """  let b=0, costeSinPrecio=0, sinPrecio=[];
-  for(const i of C){const p=prices[i.symbol];
-    if(p){const pe=i.moneda==='USD'&&eurUsd?p.price/eurUsd:p.price;b+=i.titulos*pe-i.coste_eur;}
-    else{costeSinPrecio+=i.coste_eur;sinPrecio.push(i.tckr);}}
-  (function(){
-    const costeTot=C.reduce((a,i)=>a+i.coste_eur,0);
-    if(costeSinPrecio<=0.005*costeTot)return;
-    console.warn('Sin precio: '+sinPrecio.join(', '));
-    const card=document.getElementById('card-ganancias');
-    if(!card||document.getElementById('aviso-precios'))return;
-    const d=document.createElement('div');d.id='aviso-precios';
-    d.style.cssText='background:#4a2c00;color:#ffb84d;padding:8px;border-radius:8px;font-size:12px;margin-bottom:8px';
-    d.textContent='\\u26a0 Sin precio para '+sinPrecio.length+' valores ('+
-      Math.round(costeSinPrecio).toLocaleString('es-ES')+' \\u20ac de coste). Cifras incompletas.';
-    card.parentNode.insertBefore(d,card);
-  })();"""
-if "costeSinPrecio" in s: print("1. aviso sin precio: ya estaba")
-elif A1 in s: s = s.replace(A1, B1, 1); print("1. aviso sin precio: OK")
-else: fallos.append("1. no localizo el calculo de b")
-A2 = """  function pintarBloque(idB,idN,val){"""
-B2 = """  function pintarBloque(idB,idN,val,nota){"""
-A2b = """    if(elB) elB.innerHTML='<span style="color:'+colorR(val)+';font-size:20px;font-weight:500">'+fmtR(val)+'</span>';"""
-B2b = """    const suf = nota ? '<span style="font-size:11px;color:var(--muted);font-weight:400"> '+nota+'</span>' : '';
-    if(elB) elB.innerHTML='<span style="color:'+colorR(val)+';font-size:20px;font-weight:500">'+fmtR(val)+'</span>'+suf;"""
-A2c = """        pintarBloque(cfg[0],cfg[1],(latenteAhora-base.latente)+ventasPeriodo(cfg[2])+divPeriodo(cfg[2]));"""
-B2c = """        const MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-        const pf=base.fecha.split('-');
-        const nota='desde '+parseInt(pf[2],10)+' '+MESES[parseInt(pf[1],10)-1];
-        pintarBloque(cfg[0],cfg[1],(latenteAhora-base.latente)+ventasPeriodo(cfg[2])+divPeriodo(cfg[2]),nota);"""
-if "function pintarBloque(idB,idN,val,nota)" in s: print("2. fecha base: ya estaba")
-elif A2 in s and A2b in s and A2c in s:
-    s = s.replace(A2, B2, 1).replace(A2b, B2b, 1).replace(A2c, B2c, 1); print("2. fecha base: OK")
-else: fallos.append("2. no localizo pintarBloque o su llamada")
-A3 = "\ninitNotifications();"
-B3 = "\n// autollamada quitada: iOS solo permite pedir permiso desde un gesto. Usa el boton."
-if "autollamada quitada" in s: print("3. autollamada: ya estaba")
-elif A3 in s: s = s.replace(A3, B3, 1); print("3. autollamada notificaciones: OK")
-else: fallos.append("3. no localizo initNotifications()")
-if fallos:
-    print("\n".join("   " + f for f in fallos)); sys.exit("\nABORTADO. index.html NO se ha modificado.")
-if sorted(set(re.findall(r"showTab\('([a-z]+)'", s))) != tabs:
-    sys.exit("ABORTADO: el parche alteraria las pestanas.")
-bak = Path(f"index.html.antes_parche_{datetime.datetime.now():%H%M%S}")
-bak.write_text(s0, encoding="utf-8"); P.write_text(s, encoding="utf-8")
-print(f"\nOK. {len(tabs)} pestanas intactas. Copia previa en {bak.name}")
+import shutil, datetime, sys
+
+BASE = Path.home() / "APPCARTERA_NUEVA"
+IDX  = BASE / "index.html"
+SW   = BASE / "firebase-messaging-sw.js"
+ts   = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+SW_NUEVO = r"""importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyBcOZ_G6bmj1wjkc2f97tgTh9BMi3ws9ZA",
+  authDomain: "appcartera123.firebaseapp.com",
+  projectId: "appcartera123",
+  storageBucket: "appcartera123.firebasestorage.app",
+  messagingSenderId: "206685291968",
+  appId: "1:206685291968:web:6f2db50f8a7ed0e107f425"
+});
+
+const messaging = firebase.messaging();
+
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+
+const CACHE_PEND = 'notif-pendiente';
+const CLAVE_PEND = '/__notif_pendiente';
+
+async function guardarPendiente(tckr) {
+  try {
+    const c = await caches.open(CACHE_PEND);
+    await c.put(new Request(CLAVE_PEND), new Response(String(tckr || '')));
+  } catch (e) {}
+}
+
+async function leerPendiente() {
+  try {
+    const c = await caches.open(CACHE_PEND);
+    const r = await c.match(CLAVE_PEND);
+    if (!r) return '';
+    const t = (await r.text()).trim();
+    await c.delete(CLAVE_PEND);
+    return t;
+  } catch (e) { return ''; }
+}
+
+messaging.onBackgroundMessage((payload) => {
+  const n = payload.notification || payload.data || {};
+  const title = n.title || 'AppCartera';
+  const body = n.body || '';
+  self.registration.showNotification(title, {
+    body,
+    icon: '/icon.png',
+    tag: title + '|' + body,
+    renotify: false,
+    data: { tckr: n.tckr || '' }
+  });
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const tk = (event.notification.data && event.notification.data.tckr) || '';
+
+  event.waitUntil((async () => {
+    if (tk) await guardarPendiente(tk);
+
+    const lista = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    let cli = null;
+    for (const c of lista) { if (c.url.includes('appcartera')) { cli = c; break; } }
+
+    if (!cli) {
+      if (self.clients.openWindow) {
+        await self.clients.openWindow(tk ? '/?v=' + encodeURIComponent(tk) : '/');
+      }
+      return;
+    }
+
+    if ('focus' in cli) { try { await cli.focus(); } catch (e) {} }
+    if (!tk) return;
+
+    for (const espera of [0, 400, 1000, 2000]) {
+      if (espera) await new Promise(r => setTimeout(r, espera));
+      try { cli.postMessage({ abrirValor: tk }); } catch (e) {}
+    }
+  })());
+});
+
+self.addEventListener('message', (event) => {
+  const d = event.data || {};
+  if (d.tipo !== 'pedirPendiente') return;
+  event.waitUntil((async () => {
+    const t = await leerPendiente();
+    if (event.ports && event.ports[0]) event.ports[0].postMessage({ tckr: t });
+  })());
+});
+"""
+
+shutil.copy2(SW, SW.parent / ("firebase-messaging-sw.js.backup_" + ts))
+SW.write_text(SW_NUEVO, encoding="utf-8")
+print("OK service worker reescrito")
+
+BLOQUE = """function abrirValorDesdeNotif(tckr){
+  if(!tckr) return;
+  tckr = String(tckr).trim();
+  if(window.__notifUlt === tckr && Date.now() - (window.__notifUltT||0) < 5000) return;
+  window.__notifUlt = tckr; window.__notifUltT = Date.now();
+  const intenta = (n) => {
+    const it = C.find(i => i.tckr === tckr);
+    if(typeof showDetalle === 'function' && it && prices[it.symbol]){ showDetalle(tckr); return; }
+    if(n > 0){ setTimeout(() => intenta(n-1), 500); return; }
+    if(typeof goToCartera === 'function') goToCartera(tckr);
+  };
+  intenta(60);
+}
+function pedirPendienteAlSW(){
+  if(!navigator.serviceWorker) return;
+  navigator.serviceWorker.ready.then(reg => {
+    const sw = reg.active || navigator.serviceWorker.controller;
+    if(!sw) return;
+    const ch = new MessageChannel();
+    ch.port1.onmessage = e => { if(e.data && e.data.tckr) abrirValorDesdeNotif(e.data.tckr); };
+    sw.postMessage({tipo:'pedirPendiente'}, [ch.port2]);
+  }).catch(()=>{});
+}
+(function(){
+  const v = new URLSearchParams(location.search).get('v');
+  if(v) abrirValorDesdeNotif(v);
+  if(navigator.serviceWorker){
+    navigator.serviceWorker.addEventListener('message', e => {
+      if(e.data && e.data.abrirValor) abrirValorDesdeNotif(e.data.abrirValor);
+    });
+  }
+  const rafaga = () => {
+    [0,300,700,1200,2000,3000,4500,6000].forEach(ms => setTimeout(() => {
+      if(document.visibilityState === 'visible') pedirPendienteAlSW();
+    }, ms));
+  };
+  rafaga();
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible') rafaga();
+  });
+  window.addEventListener('pageshow', rafaga);
+  window.addEventListener('focus', rafaga);
+})();"""
+
+html = IDX.read_text(encoding="utf-8")
+i = html.find("function abrirValorDesdeNotif")
+if i == -1:
+    print("ERROR no encuentro abrirValorDesdeNotif"); sys.exit(1)
+j = html.find("})();", i)
+if j == -1:
+    print("ERROR no encuentro el final del bloque"); sys.exit(1)
+j += 5
+html = html[:i] + BLOQUE + html[j:]
+
+v1 = "${p.high52 ? (p.price>=p.high52 ? '\U0001F195 Nuevo m\u00e1ximo' : fNum(p.high52)) : '\u2014'}"
+n1 = "${p.high52 ? (p.price>=p.high52 ? '\U0001F195 Nuevo m\u00e1ximo '+fNum(Math.max(p.price,p.high52)) : fNum(p.high52)) : '\u2014'}"
+if v1 in html:
+    html = html.replace(v1, n1, 1)
+    print("OK el nuevo maximo ya muestra el importe")
+elif n1 in html:
+    print("YA estaba el importe del nuevo maximo")
+
+shutil.copy2(IDX, IDX.parent / ("index.html.backup_final_" + ts))
+IDX.write_text(html, encoding="utf-8")
+print("OK index.html parcheado (pregunta 8 veces en los primeros 6 s)")
+print("Backups con sufijo _" + ts)

@@ -15,8 +15,6 @@ const messaging = firebase.messaging();
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 
-// Buzon persistente: iOS mata la PWA en segundo plano y un postMessage
-// suelto se pierde si la pagina aun no tiene listener.
 const CACHE_PEND = 'notif-pendiente';
 const CLAVE_PEND = '/__notif_pendiente';
 
@@ -56,11 +54,11 @@ self.addEventListener('notificationclick', (event) => {
   const tk = (event.notification.data && event.notification.data.tckr) || '';
 
   event.waitUntil((async () => {
+    if (tk) await guardarPendiente(tk);
+
     const lista = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     let cli = null;
     for (const c of lista) { if (c.url.includes('appcartera')) { cli = c; break; } }
-
-    if (tk) await guardarPendiente(tk);
 
     if (!cli) {
       if (self.clients.openWindow) {
@@ -72,7 +70,7 @@ self.addEventListener('notificationclick', (event) => {
     if ('focus' in cli) { try { await cli.focus(); } catch (e) {} }
     if (!tk) return;
 
-    for (const espera of [0, 500, 1200]) {
+    for (const espera of [0, 400, 1000, 2000]) {
       if (espera) await new Promise(r => setTimeout(r, espera));
       try { cli.postMessage({ abrirValor: tk }); } catch (e) {}
     }
