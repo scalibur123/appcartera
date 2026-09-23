@@ -413,6 +413,7 @@ const server = http.createServer(async (req, res) => {
       return handleBuscar(req, res, url.searchParams.get('q'));
     if (pathname === '/fuera' && symbols) return handleFuera(req, res, symbols);
     if (pathname === '/' && symbols) return handleSymbols(req, res, symbols);
+    if (pathname === '/maximos') return require('./maximos-server').handleMaximos(req, res);
     if (pathname === '/' || pathname === '/index.html') return handleIndex(req, res);
 
     return handleStatic(req, res, pathname);
@@ -579,3 +580,7 @@ setInterval(actualizarEarnings, 24*60*60*1000);
 setInterval(() => {
   https.get('https://appcartera.onrender.com', () => {}).on('error', () => {});
 }, 14 * 60 * 1000);
+
+// Maximos 52s: calculo diario en segundo plano (el primero al arrancar)
+setTimeout(() => require('./maximos-server').refrescar(), 90000);
+setInterval(() => require('./maximos-server').refrescar(), 60 * 60 * 1000);
