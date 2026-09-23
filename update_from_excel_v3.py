@@ -427,6 +427,67 @@ def leer_dividendos_brutos():
     return out
 
 
+def recalcular_maximos(html, previo):
+    """Maximo INTRADIA de 52 semanas y su fecha, pedido a Yahoo con el mismo
+    simbolo que da el precio en vivo (symbol_px si existe). Se guarda bajo
+    item.symbol, que es la clave que usa la app. Si un valor falla, se
+    conserva lo que hubiera."""
+    import urllib.request, urllib.parse
+    from concurrent.futures import ThreadPoolExecutor
+    from datetime import timezone
+    m = re.search(r"const\s+C\s*=\s*(\[.*?\])\s*;", html, re.DOTALL)
+    if not m:
+        print("⚠️  maximos: no se encuentra const C, se dejan como estaban")
+        return previo
+    try:
+        C = json.loads(m.group(1))
+    except Exception as e:
+        print(f"⚠️  maximos: const C ilegible ({e}), se dejan como estaban")
+        return previo
+    pares = {i["symbol"]: (i.get("symbol_px") or i["symbol"]) for i in C if i.get("symbol")}
+
+    def uno(par):
+        sym, src = par
+        url = (f"https://query1.finance.yahoo.com/v8/finance/chart/"
+               f"{urllib.parse.quote(src)}?range=1y&interval=1d")
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                x = json.loads(r.read().decode())["chart"]["result"][0]
+            gmt = (x.get("meta") or {}).get("gmtoffset") or 0
+            serie = [(t, h) for t, h in zip(x.get("timestamp") or [],
+                                            x["indicators"]["quote"][0].get("high") or [])
+                     if h is not None]
+            if not serie:
+                return sym, None
+            mt, mh = serie[0]
+            for t, h in serie:
+                if h >= mh:          # en empate, la fecha mas reciente
+                    mt, mh = t, h
+            f = lambda t: datetime.fromtimestamp(t + gmt, timezone.utc).strftime("%Y-%m-%d")
+            return sym, {"desde": f(serie[0][0]), "fecha": f(mt), "valor": round(float(mh), 4)}
+        except Exception:
+            return sym, None
+
+    with ThreadPoolExecutor(max_workers=6) as ex:
+        res = list(ex.map(uno, pares.items()))
+    nuevo = dict(previo)
+    fallos = []
+    for sym, v in res:
+        if v:
+            nuevo[sym] = v
+        else:
+            fallos.append(sym)
+    try:
+        (PROYECTO / "maximos.json").write_text(json.dumps(nuevo, ensure_ascii=False), encoding="utf-8")
+    except Exception as e:
+        print(f"⚠️  maximos.json no se pudo guardar: {e}")
+    print(f"✅ Maximos intradia recalculados: {len(pares) - len(fallos)}/{len(pares)}")
+    if fallos:
+        print(f"   ⚠️  sin datos (se conserva el anterior): {', '.join(fallos)}")
+    return nuevo
+
+
 def inyectar_serie_y_dividendos(html):
     # --- dividendos ---
     divs = leer_dividendos_brutos()
@@ -461,6 +522,7 @@ def inyectar_serie_y_dividendos(html):
             print(f"⚠️  maximos.json ilegible: {e}")
     else:
         print("⚠️  no existe maximos.json (ejecuta reconstruir_historico.py)")
+    mx = recalcular_maximos(html, mx)
     # --- ultimo cierre conocido de cada simbolo (para valores suspendidos) ---
     # Si Yahoo deja de cotizar un valor (suspension, exclusion), la posicion
     # desaparecia del calculo: ni su valor ni su coste. Eso mejora las

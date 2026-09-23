@@ -32,7 +32,8 @@ function fetchYahoo(symbol) {
             changePct: (m.regularMarketChangePercent != null) ? m.regularMarketChangePercent : ((m.regularMarketPrice && m.chartPreviousClose) ? ((m.regularMarketPrice - m.chartPreviousClose) / m.chartPreviousClose) * 100 : 0),
             longName: m.longName || m.shortName || null,
             high52: m.fiftyTwoWeekHigh || null,
-            dayHigh: m.regularMarketDayHigh || null
+            dayHigh: m.regularMarketDayHigh || null,
+            marketTime: m.regularMarketTime || null
           });
         } catch (e) {
           resolve({ symbol, error: 'parse_error' });
@@ -194,7 +195,8 @@ async function handleSymbols(req, res, symbolsParam) {
         regularMarketChangePercent: r.changePct,
         longName: r.longName,
         fiftyTwoWeekHigh: r.high52,
-        regularMarketDayHigh: r.dayHigh
+        regularMarketDayHigh: r.dayHigh,
+        regularMarketTime: r.marketTime
       }))
     }
   };
