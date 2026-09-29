@@ -807,7 +807,7 @@ def leer_excel_con_mic():
         mensual_data = {
             'bruto_anual': fmt_eur(bruto_anual),
             'neto_anual': fmt_eur(neto_anual),
-            'equiv_bruto': fmt_eur(equiv_bruto_calculado),
+            'equiv_bruto': fmt_eur(round(equiv_bruto)),  # celda S15 de Mensual en el Excel (unica fuente)
             'neto_nomina': fmt_eur(neto_anual_nomina),
             'sueldo_bruto': fmt_eur(sueldo_mensual_bruto),
             'sueldo_neto': fmt_eur(neto_mensual),
