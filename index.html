@@ -927,7 +927,8 @@ window.renderMercados=function(){
   const pctDiaTot=(tVal-tDia)?tDia/(tVal-tDia)*100:0;
   const rent=tCoste?(tVal-tCoste)/tCoste*100:0;
   // Cuatro tarjetas: una por mercado y otra con el total.
-  function tarjeta(bandera,val,dia,coste,n,clave,fx){
+  function tarjeta(bandera,val,dia,coste,n,clave,fx,enUsd){
+    const lat=val-coste; // acumulado en € (coste historico en €)
     const pd=(val-dia)?dia/(val-dia)*100:0;
     const rt=coste?(val-coste)/coste*100:0;
     // Pulsar una bandera filtra el detalle a ese mercado. Volver a pulsarla,
@@ -942,7 +943,8 @@ window.renderMercados=function(){
       +'<div style="font-size:15px;font-weight:600;margin-bottom:4px">'+fE(val)+'</div>'
       +'<div style="font-size:12px;color:'+cl(dia)+';font-weight:600">'+sg(pd)+fNum(pd)+'% hoy</div>'
       +'<div style="font-size:11px;color:'+cl(dia)+'">'+sg(dia)+fE(dia)+'</div>'
-      +(Math.abs(fx||0)>=1?'<div style="font-size:10px;color:var(--muted)">de los que '+sg(fx)+fE(fx)+' es divisa</div>':'')+'<div style="font-size:11px;color:'+cl(rt)+';margin-top:4px">rent. '+sg(rt)+fNum(rt)+'%</div></div>';
+      +(Math.abs(fx||0)>=1?'<div style="font-size:10px;color:var(--muted)">de los que '+sg(fx)+fE(fx)+' es divisa</div>':'')+'<div style="font-size:11px;color:'+cl(rt)+';margin-top:4px">rent. '+sg(rt)+fNum(rt)+'%</div>'
+      +'<div style="font-size:12px;font-weight:600;color:'+cl(lat)+'">'+sg(lat)+((enUsd&&fxH)?fE(lat*fxH).replace(' €',' $'):fE(lat))+'</div></div>';
   }
   const bl=['ESP','EUR','USA'].map(function(k){
     const b=bloques[k];
@@ -951,7 +953,7 @@ window.renderMercados=function(){
   });
   document.getElementById('merc-tot').innerHTML=
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    + bl.map(x=>tarjeta(x.bandera,x.val,x.dia,x.coste,x.n+' val.',x.k,x.fx)).join('')
+    + bl.map(x=>tarjeta(x.bandera,x.val,x.dia,x.coste,x.n+' val.',x.k,x.fx,x.k==='USA')).join('')
     + tarjeta('🌍 TOTAL',tVal,tDia,tCoste,C.length+' val.',null,tFx)
     + '</div>';
   const BANDERA={ESP:bloques.ESP.n.split(' ')[0],EUR:bloques.EUR.n.split(' ')[0],
