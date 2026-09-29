@@ -551,21 +551,26 @@ async function actualizarEarnings() {
       res.on("end",async ()=>{
         try{
           const lines=d.trim().split("\n").slice(1);
-          const {supabase}=require("./supabase-client");
-          let count=0;
+          const hoy=new Date().toISOString().slice(0,10);
+          const filas=new Map(); // clave symbol|fecha: evita duplicados en el upsert por lotes
           for(const line of lines){
             const parts=line.split(",");
             if(parts.length<4)continue;
             const sym=parts[0].trim().toUpperCase();
             if(!symbols.has(sym))continue;
-            const nombre=parts[1].trim();
             const fecha=parts[2].trim();
-            const estimacion=parseFloat(parts[4])||null;
-            const momento=parts[6]?parts[6].trim():null;
-            await supabase.from("earnings").upsert({symbol:sym,nombre,fecha,estimacion,momento},{onConflict:"symbol,fecha"});
-            count++;
+            if(fecha<hoy)continue;
+            filas.set(sym+"|"+fecha,{symbol:sym,nombre:parts[1].trim(),fecha,estimacion:parseFloat(parts[4])||null,momento:parts[6]?parts[6].trim():null});
           }
-          console.log("Earnings actualizados:",count,"valores de",lines.length,"lineas, symbols:",symbols.size);
+          // Si AV devuelve error o limite (JSON en vez de CSV) no hay filas: NO se toca la tabla.
+          if(!filas.size){ console.log("Earnings: 0 filas de AV, tabla sin cambios"); return resolve(); }
+          const {supabase}=require("./supabase-client");
+          // La tabla refleja el calendario ACTUAL de AV: las fechas reprogramadas desaparecen.
+          const del=await supabase.from("earnings").delete().gte("fecha",hoy);
+          if(del.error) throw del.error;
+          const ins=await supabase.from("earnings").upsert([...filas.values()],{onConflict:"symbol,fecha"});
+          if(ins.error) throw ins.error;
+          console.log("Earnings actualizados:",filas.size,"de",lines.length,"lineas, symbols:",symbols.size);
         }catch(e){console.error("Error earnings:",e.message);}
         resolve();
       });

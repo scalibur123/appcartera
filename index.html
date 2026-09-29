@@ -1045,7 +1045,9 @@ window.loadEarnings = async function() {
     let data = await r.json();
     // La tabla de Supabase guarda todo lo que alguna vez estuvo en cartera.
     // Se filtra contra las posiciones ABIERTAS: lo vendido no aparece.
-    const enCartera = new Set(C.map(i => i.symbol).concat(C.map(i => i.tckr)));
+    // Alpha Vantage usa tickers de EE. UU.: solo posiciones USD (symbol sin sufijo).
+    // Casar con tckr europeos daba colisiones (PHM Pharma Mar <-> PulteGroup, SAN, DG, EL...).
+    const enCartera = new Set(C.filter(i => !i.symbol.includes('.')).map(i => i.symbol));
     data = data.filter(d => enCartera.has(d.symbol));
     if (data.length === 0) { el.innerHTML = '<p style="color:var(--muted)">Sin earnings próximos.</p>'; return; }
     let html = '';
