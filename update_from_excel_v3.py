@@ -1594,6 +1594,7 @@ def verificar_precios_yahoo(ticker_map):
     simbolos = [(tckr, info['yahoo']) for tckr, info in ticker_map.items()]
     total = len(simbolos)
     fallos = []
+    raros = []
 
     print(f"\n🔍 Verificando precios de {total} tickers en Yahoo Finance...")
 
@@ -1607,14 +1608,32 @@ def verificar_precios_yahoo(ticker_map):
                 with urllib.request.urlopen(req, timeout=6) as r:
                     data = _json.loads(r.read().decode())
                 result = data.get("chart", {}).get("result")
-                precio = result[0]["meta"].get("regularMarketPrice") if result else None
+                meta = result[0]["meta"] if result else {}
+                precio = meta.get("regularMarketPrice")
                 if not precio:
                     fallos.append((tckr, sym))
+                    continue
+                # Tener precio no basta: MEL (Melia, EUR) acabo como MELI
+                # (MercadoLibre, USD). Moneda distinta = simbolo equivocado.
+                info = ticker_map[tckr]
+                div = (meta.get("currency") or "").upper()
+                if div and info.get("moneda") and div != info["moneda"].upper():
+                    print(f"     ✗ {tckr}: {sym} cotiza en {div}, el Excel dice {info['moneda']}")
+                    fallos.append((tckr, sym))
+                    continue
+                pm = info["coste_eur"] / info["titulos"] if info.get("titulos") else None
+                if pm and not (0.1 <= precio / pm <= 10):
+                    raros.append((tckr, sym, precio, pm))
             except Exception:
                 fallos.append((tckr, sym))
         time.sleep(0.3)  # respetar rate limit Yahoo
 
     ok = total - len(fallos)
+    if raros:
+        print(f"\n\033[91m⚠️  {len(raros)} con precio a mas de x10 del precio medio del Excel:\033[0m")
+        for tckr, sym, pr, pm in raros:
+            print(f"     {tckr:<8} {sym:<10} Yahoo {pr:,.2f}  vs  medio Excel {pm:,.2f}")
+        print("     Si no es un movimiento real, el simbolo esta mal: corrige tickers_override.json")
     if not fallos:
         print(f"✅ {ok}/{total} tickers con precio OK")
         return ticker_map

@@ -238,17 +238,20 @@ def buscar_en_yahoo(tckr, moneda):
             s = q["symbol"]
             if "." not in s and q.get("exchange") in ("NMS", "NYQ", "NGM", "ASE", "PCX", "BTS"):
                 return s
+    # El simbolo base TIENE que ser el ticker exacto. Con startswith, MEL
+    # (Melia) se resolvio como MELI (MercadoLibre) y metio 2,4 M de plusvalia
+    # falsa. Sin coincidencia exacta es mejor no resolver y avisar.
     for q in cands:
         s = q["symbol"]
-        if s.upper().startswith(tckr.upper()):
+        if s.split(".")[0].upper() == tckr.upper() and (moneda != "EUR" or "." in s):
             return s
-    return cands[0]["symbol"]
+    return None
 
 
 def resolver_simbolos(posiciones):
     barra("RESOLVIENDO SIMBOLOS DE YAHOO")
     mapa = {}
-    for f in (TICKERS_JSON, OVERRIDE_JSON, CACHE_SYMS):
+    for f in (TICKERS_JSON, CACHE_SYMS, OVERRIDE_JSON):  # el override manual gana
         if f.exists():
             try:
                 d = json.loads(f.read_text(encoding="utf-8"))

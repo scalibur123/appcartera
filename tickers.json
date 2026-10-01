@@ -1062,13 +1062,13 @@
     "fuente_resolucion": "historico_symbols"
   },
   "MEL": {
-    "yahoo": "MELI",
+    "yahoo": "MEL.MC",
     "mic": null,
     "moneda": "EUR",
     "titulos": 1465.0,
     "coste_eur": 14982.3,
     "precio_excel": 10.28,
-    "fuente_resolucion": "historico_symbols"
+    "fuente_resolucion": "override"
   },
   "MFEA": {
     "yahoo": "MFEA.MI",
