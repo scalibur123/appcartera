@@ -794,11 +794,13 @@ def leer_excel_con_mic():
                     compras_por_ticker[tk] = []
                 fecha_str = fecha_i.strftime('%d/%m/%Y') if hasattr(fecha_i, 'strftime') else str(fecha_i)[:10]
                 precio_compra = round(coste_i / titulos_i, 4) if titulos_i else 0
+                px_l = ws.cell(row=row, column=12).value  # L = precio en moneda original
                 compras_por_ticker[tk].append({
                     'fecha': fecha_str,
                     'titulos': titulos_i,
                     'precio': precio_compra,
-                    'coste': round(coste_i, 2)
+                    'coste': round(coste_i, 2),
+                    'px': round(px_l, 4) if isinstance(px_l, (int, float)) else None
                 })
 
         def fmt_eur(v):
