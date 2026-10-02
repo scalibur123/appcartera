@@ -1733,6 +1733,9 @@ def leer_ventas_anual():
             "neto":   round(float(neto),  2),
             "banco":  normalizar_banco(banco),
             "moneda": str(moneda).strip() if moneda else "EUR",
+            "titulos": row[18] if isinstance(row[18], (int, float)) else None,
+            "precio": round(float(row[19]), 4) if isinstance(row[19], (int, float)) else None,
+            "importe_eur": round(float(row[21]), 2) if isinstance(row[21], (int, float)) else None,
         })
     print(f"\u2705 {len(ventas)} ventas leidas del Excel (VENTAS_ANUAL)")
     return ventas
