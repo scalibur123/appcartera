@@ -1,8 +1,8 @@
 {
- "generado": "2026-10-14T08:26:08",
- "ultimo_dia": "2026-10-13",
- "ultimo_calculado": "2026-10-13",
- "latente_ultimo": 5184.43,
+ "generado": "2026-10-15T08:09:42",
+ "ultimo_dia": "2026-10-14",
+ "ultimo_calculado": "2026-10-14",
+ "latente_ultimo": -6274.93,
  "coste_ultimo": 2312339.77,
  "provisionales": [],
  "serie": {
@@ -220,12 +220,13 @@
   "2026-10-08": -12322.98,
   "2026-10-09": 10426.73,
   "2026-10-12": 8455.4,
-  "2026-10-13": 5184.43
+  "2026-10-13": 3434.71,
+  "2026-10-14": -6274.93
  },
  "dias_descartados": [
   "2025-12-11"
  ],
- "congelados": 214,
+ "congelados": 215,
  "salud": {
   "semana": {
    "ok": true,
@@ -245,6 +246,6 @@
    "esperada": "2025-12-31",
    "motivo": ""
   },
-  "ultimo_dia": "2026-10-13"
+  "ultimo_dia": "2026-10-14"
  }
 }
