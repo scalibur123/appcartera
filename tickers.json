@@ -203,7 +203,7 @@
     "moneda": "USD",
     "titulos": 987.0,
     "coste_eur": 12530.5721,
-    "precio_excel": 11.645,
+    "precio_excel": 11.64,
     "fuente_resolucion": "historico_symbols"
   },
   "A3M": {
@@ -320,7 +320,7 @@
     "moneda": "USD",
     "titulos": 235.0,
     "coste_eur": 7671.9362,
-    "precio_excel": 11.96,
+    "precio_excel": 11.97,
     "fuente_resolucion": "historico_symbols"
   },
   "CABK": {
@@ -392,7 +392,7 @@
     "moneda": "USD",
     "titulos": 100.0,
     "coste_eur": 3807.1178,
-    "precio_excel": 11.4,
+    "precio_excel": 11.41,
     "fuente_resolucion": "historico_symbols"
   },
   "CIE": {
@@ -500,7 +500,7 @@
     "moneda": "USD",
     "titulos": 52.0,
     "coste_eur": 11915.672,
-    "precio_excel": 234.93,
+    "precio_excel": 234.985,
     "fuente_resolucion": "historico_symbols"
   },
   "DDOG": {
@@ -590,7 +590,7 @@
     "moneda": "USD",
     "titulos": 80.0,
     "coste_eur": 13790.2511,
-    "precio_excel": 155.96,
+    "precio_excel": 156,
     "fuente_resolucion": "historico_symbols"
   },
   "EL": {
@@ -617,7 +617,7 @@
     "moneda": "USD",
     "titulos": 193.0,
     "coste_eur": 9197.8387,
-    "precio_excel": 52.53,
+    "precio_excel": 52.52,
     "fuente_resolucion": "historico_symbols"
   },
   "EGLA": {
@@ -1040,7 +1040,7 @@
     "moneda": "USD",
     "titulos": 120.0,
     "coste_eur": 9285.4139,
-    "precio_excel": 86.84,
+    "precio_excel": 86.82,
     "fuente_resolucion": "historico_symbols"
   },
   "MKC": {
@@ -1049,7 +1049,7 @@
     "moneda": "USD",
     "titulos": 125.0,
     "coste_eur": 9492.4637,
-    "precio_excel": 50.49,
+    "precio_excel": 50.48,
     "fuente_resolucion": "historico_symbols"
   },
   "MDT": {
@@ -1211,7 +1211,7 @@
     "moneda": "USD",
     "titulos": 94.0,
     "coste_eur": 10224.4894,
-    "precio_excel": 127.78,
+    "precio_excel": 127.8,
     "fuente_resolucion": "historico_symbols"
   },
   "ORY": {
@@ -1278,7 +1278,7 @@
     "fuente_resolucion": "override"
   },
   "RI": {
-    "yahoo": "RIVN",
+    "yahoo": "RI.PA",
     "mic": null,
     "moneda": "EUR",
     "titulos": 200.0,
@@ -1490,7 +1490,7 @@
     "moneda": "USD",
     "titulos": 150.0,
     "coste_eur": 9257.4441,
-    "precio_excel": 72.94,
+    "precio_excel": 72.96,
     "fuente_resolucion": "historico_symbols"
   },
   "STLAM": {
