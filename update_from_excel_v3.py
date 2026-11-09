@@ -640,10 +640,15 @@ def leer_proximas_compras(wb):
 
     _overrides = cargar_overrides()
 
-    for row in range(2, 500):  # fila 2 en adelante, hasta vacío
+    _vacias = 0
+    for row in range(2, 500):  # fila 2 en adelante; salta filas vacias sueltas
         symbol_raw = ws.cell(row=row, column=2).value   # B = ticker
         if not symbol_raw or not isinstance(symbol_raw, str) or not symbol_raw.strip():
-            break  # primera fila vacía = fin de lista
+            _vacias += 1
+            if _vacias >= 10:
+                break  # 10 filas vacias seguidas = fin de lista
+            continue
+        _vacias = 0
 
         symbol = symbol_raw.strip()
 
